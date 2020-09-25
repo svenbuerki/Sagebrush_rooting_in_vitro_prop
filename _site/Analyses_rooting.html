@@ -1367,7 +1367,56 @@ for (i in 1:length(clust)) {
     ### clustSurvHeig[i,6] &lt;-
     ### paste0(round(mean(tmp$X5_w_height),2), &#39;+/-&#39;,
     ### round(sd(tmp$X5_w_height),2))
-}</code></pre>
+}
+# Plot table
+knitr::kable(clustSurvHeig, row.names = F, caption = &quot;Seedlings survival and heights sorted by rooting clusters.&quot;)</code></pre>
+<table>
+<caption><span id="tab:survclust">Table 10.1: </span>Seedlings survival and heights sorted by rooting clusters.</caption>
+<colgroup>
+<col width="16%" />
+<col width="4%" />
+<col width="15%" />
+<col width="23%" />
+<col width="15%" />
+<col width="23%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Rooting cluster</th>
+<th align="left">N</th>
+<th align="left">3 w. surv. (%)</th>
+<th align="left">3 w. plant height (cm)</th>
+<th align="left">3 w. surv. (%)</th>
+<th align="left">5 w. plant height (cm)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">black</td>
+<td align="left">28</td>
+<td align="left">71.43</td>
+<td align="left">1.49+/-1.13</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">pink</td>
+<td align="left">104</td>
+<td align="left">70.19</td>
+<td align="left">1.5+/-1.13</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">blue</td>
+<td align="left">134</td>
+<td align="left">83.58</td>
+<td align="left">2.09+/-1.18</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="seedlings-survival-and-heights-sorted-by-rooting-clusters-and-treatments" class="section level2">
 <h2><span class="header-section-number">10.2</span> Seedlings survival and heights sorted by rooting clusters and treatments</h2>
@@ -1409,16 +1458,25 @@ for (i in 1:nrow(survheigTreat)) {
     }
 }
 # Plot table
-knitr::kable(RootingStatbyTreatC[, 1:5], row.names = F, caption = &quot;Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates; Av. No. of roots: mean +/- standard deviation.&quot;)</code></pre>
-<table>
-<caption><span id="tab:unnamed-chunk-1">Table 10.1: </span>Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates; Av. No. of roots: mean +/- standard deviation.</caption>
+knitr::kable(survheigTreat, row.names = F, caption = &quot;Seedlings survival and heights sorted by rooting clusters and treatments.&quot;)</code></pre>
+<table style="width:100%;">
+<caption><span id="tab:survclusttreat">Table 10.2: </span>Seedlings survival and heights sorted by rooting clusters and treatments.</caption>
+<colgroup>
+<col width="9%" />
+<col width="20%" />
+<col width="25%" />
+<col width="16%" />
+<col width="14%" />
+<col width="12%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">Cluster</th>
 <th align="left">Growth regulator</th>
 <th align="left">Concentration (mg/l)</th>
-<th align="right">Response (%)</th>
-<th align="left">Av. No. of roots</th>
+<th align="right">Survival (%)</th>
+<th align="left">Height (cm)</th>
+<th align="left">Treatment</th>
 </tr>
 </thead>
 <tbody>
@@ -1427,105 +1485,120 @@ knitr::kable(RootingStatbyTreatC[, 1:5], row.names = F, caption = &quot;Effect o
 <td align="left">Control</td>
 <td align="left">-</td>
 <td align="right">0.00</td>
-<td align="left">0 +/- 0</td>
-</tr>
-<tr class="even">
-<td align="left">black</td>
-<td align="left">IBA</td>
-<td align="left">05</td>
-<td align="right">11.11</td>
-<td align="left">0.22 +/- 0.74</td>
-</tr>
-<tr class="odd">
-<td align="left">black</td>
-<td align="left">IBA</td>
-<td align="left">1</td>
-<td align="right">20.00</td>
-<td align="left">0.44 +/- 1.27</td>
-</tr>
-<tr class="even">
-<td align="left">black</td>
-<td align="left">NAA</td>
-<td align="left">05</td>
-<td align="right">13.33</td>
-<td align="left">0.16 +/- 0.42</td>
-</tr>
-<tr class="odd">
-<td align="left">black</td>
-<td align="left">NAA</td>
-<td align="left">1</td>
-<td align="right">13.33</td>
-<td align="left">0.22 +/- 0.67</td>
-</tr>
-<tr class="even">
-<td align="left">blue</td>
+<td align="left">0+/-NA</td>
 <td align="left">Control</td>
-<td align="left">-</td>
-<td align="right">30.77</td>
-<td align="left">0.62 +/- 1.18</td>
-</tr>
-<tr class="odd">
-<td align="left">blue</td>
-<td align="left">IBA</td>
-<td align="left">05</td>
-<td align="right">87.18</td>
-<td align="left">2.97 +/- 2.25</td>
 </tr>
 <tr class="even">
-<td align="left">blue</td>
+<td align="left">black</td>
 <td align="left">IBA</td>
-<td align="left">1</td>
-<td align="right">87.18</td>
-<td align="left">3.59 +/- 3.41</td>
+<td align="left">05</td>
+<td align="right">80.00</td>
+<td align="left">1.68+/-1.11</td>
+<td align="left">IBA_05</td>
 </tr>
 <tr class="odd">
-<td align="left">blue</td>
-<td align="left">NAA</td>
-<td align="left">05</td>
-<td align="right">74.36</td>
-<td align="left">1.74 +/- 1.96</td>
-</tr>
-<tr class="even">
-<td align="left">blue</td>
-<td align="left">NAA</td>
+<td align="left">black</td>
+<td align="left">IBA</td>
 <td align="left">1</td>
 <td align="right">66.67</td>
-<td align="left">2.28 +/- 2.46</td>
+<td align="left">1.23+/-1.2</td>
+<td align="left">IBA_1</td>
+</tr>
+<tr class="even">
+<td align="left">black</td>
+<td align="left">NAA</td>
+<td align="left">05</td>
+<td align="right">83.33</td>
+<td align="left">1.73+/-1</td>
+<td align="left">NAA_05</td>
+</tr>
+<tr class="odd">
+<td align="left">black</td>
+<td align="left">NAA</td>
+<td align="left">1</td>
+<td align="right">70.00</td>
+<td align="left">1.55+/-1.26</td>
+<td align="left">NAA_1</td>
+</tr>
+<tr class="even">
+<td align="left">blue</td>
+<td align="left">Control</td>
+<td align="left">-</td>
+<td align="right">58.33</td>
+<td align="left">1.75+/-1.64</td>
+<td align="left">Control</td>
+</tr>
+<tr class="odd">
+<td align="left">blue</td>
+<td align="left">IBA</td>
+<td align="left">05</td>
+<td align="right">90.62</td>
+<td align="left">2.45+/-1.11</td>
+<td align="left">IBA_05</td>
+</tr>
+<tr class="even">
+<td align="left">blue</td>
+<td align="left">IBA</td>
+<td align="left">1</td>
+<td align="right">85.29</td>
+<td align="left">2+/-1.06</td>
+<td align="left">IBA_1</td>
+</tr>
+<tr class="odd">
+<td align="left">blue</td>
+<td align="left">NAA</td>
+<td align="left">05</td>
+<td align="right">81.48</td>
+<td align="left">1.76+/-1.1</td>
+<td align="left">NAA_05</td>
+</tr>
+<tr class="even">
+<td align="left">blue</td>
+<td align="left">NAA</td>
+<td align="left">1</td>
+<td align="right">86.21</td>
+<td align="left">2.24+/-1.21</td>
+<td align="left">NAA_1</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
 <td align="left">Control</td>
 <td align="left">-</td>
-<td align="right">0.00</td>
-<td align="left">0 +/- 0</td>
+<td align="right">NA</td>
+<td align="left">NA</td>
+<td align="left">Control</td>
 </tr>
 <tr class="even">
 <td align="left">pink</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">49.02</td>
-<td align="left">1.16 +/- 1.6</td>
+<td align="right">58.33</td>
+<td align="left">1.21+/-1.18</td>
+<td align="left">IBA_05</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">74.51</td>
-<td align="left">1.82 +/- 1.88</td>
+<td align="right">82.86</td>
+<td align="left">1.84+/-1.04</td>
+<td align="left">IBA_1</td>
 </tr>
 <tr class="even">
 <td align="left">pink</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">39.22</td>
-<td align="left">0.63 +/- 0.92</td>
+<td align="right">68.42</td>
+<td align="left">1.39+/-1.16</td>
+<td align="left">NAA_05</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">43.14</td>
-<td align="left">0.86 +/- 1.48</td>
+<td align="right">65.38</td>
+<td align="left">1.4+/-1.14</td>
+<td align="left">NAA_1</td>
 </tr>
 </tbody>
 </table>
