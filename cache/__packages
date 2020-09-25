@@ -1,0 +1,10 @@
+base
+knitr
+rmarkdown
+bookdown
+knitcitations
+formatR
+usethis
+devtools
+gplots
+RColorBrewer

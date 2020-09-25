@@ -1,0 +1,5 @@
+---
+title: "Development of an *in vitro* method of propagation using growth regulators for Basin Big sagebrush"
+---
+
+This website is associated to Martinez et al. and provides the reproducible workflow integrating code, data, methods and key outcomes associated to this study aiming at developing an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research.

@@ -1,0 +1,14 @@
+name: "Sagebrush research"
+navbar:
+  title: "Sagebrush research"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Reproducible workflow"
+      href: Analyses_rooting.html
+    - text: "Citations"
+      href: citation.html
+    - text: "Funding"
+      href: funding.html
+      
+
