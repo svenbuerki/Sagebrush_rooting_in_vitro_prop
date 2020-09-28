@@ -1,11 +1,6 @@
 --- 
 title: 'Development of an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research'
 author: "Peggy Martinez, Rachael Barron, Marcelo Serpe, Sven Buerki"
-date: "Boise State University (`r Sys.Date()`)"
-output:
-  bookdown::html_document2: 
-    toc: TRUE
-    toc_float: true
 link-citations: yes
 fontsize: 12pt
 bibliography: packages.bib
@@ -37,7 +32,7 @@ library(rmarkdown)
 opts_chunk$set(echo = TRUE, warning = TRUE, message = TRUE, include = TRUE)
 
 ## Code decoration
-opts_chunk$set(tidy = TRUE, tidy.opts = list(blank = FALSE, width.cutoff = 60), highlight = TRUE)
+opts_chunk$set(tidy = TRUE, R.options = list(width = 60), highlight = TRUE)
 
 ## Caching code
 opts_chunk$set(cache = 2, cache.path = "cache/")
@@ -78,7 +73,7 @@ Within the purview of this study, which aims at developing an *in vitro* method 
   + Test whether there is a significant individual effect in explaining rooting data using statistical (ANOVAs followed by Tukey tests) and clustering analyses. Best performers will be defined based on the statistical and clustering analyses. To qualify as a top performer, the individual will have to significantly outperform at least 20% of the pool of individuals (based on Tukey tests). In addition, the clustering analysis will reveal clusters of individuals sorted based on their ability to rooting independently of treatment. Results of those latter analyses will be compared and used as input for Q3.
 - **Q3:** Are treatments identified in **Q1** still valid for top performers?
     + Test whether treatments demonstrated to significantly increase rooting in Q1 are still applying to top performers (= candidates for sagebrush lines). This is done by applying the same methodology than in Q1 to a dataset including only the top performers (identified in Q2). 
-- **Q4:** Can we successfully transfer rooted shoot tips into tissue culture media and maintain seedlings *in vitro*? We are scoring survival and measuring heights of seedlings at 3 and 5 weeks.
+- **Q4:** Can we successfully transfer rooted shoot tips into tissue culture media and maintain seedlings *in vitro*? We are scoring survival and measuring heights of seedlings at 3 and 5 weeks. More specificaly, we are investigating whether rooting data predicts survival and height of seedlings.  
 
 During the experiment, calli have developed on shoot tips in the absence of growth-promoting hormones auxin and cytokinin, which was an unexpected phenotype based on preliminary experiments. Such phenotype is hypothesized to be related to endogenous auxin and cytokinin production due to the age of our sagebrush plants, which are interacting with added growth regulators (here IBA and NAA). Due to COVID, sagebrush plants had to stay in the culture chamber longer than in our previous experiment (60 days vs. 180 days). We can not test for the impact of endogenous auxin and cytokinin (since we did not measure those), but are able to test whether IBA and NAA promoted calli production. This was done by using the same statistical and clustering analyses as in Q1. Finally, clusters inferred from calli data are compared to those obtained from rooting data to ascertain whether calli production impacts rooting. 
 
@@ -468,6 +463,7 @@ heatmap.2(mat_data,
           Colv="NA") # turn off column clustering
 
 ```
+
 ```{r tablegroups, echo=T, eval=T}
 #Produce pivot table with number of individual per group and genotype composition
 #Load file with color of individuals (which group based on clusters they belong to)
@@ -698,6 +694,18 @@ knitr::kable(survheigTreat, row.names=F, caption = "Seedlings survival and heigh
 
 ```
 
+At individual level
+
+```{r echo=F, eval=F}
+x <- subset(survheig, survheig$TreatConc %in% c("IBA_05", "IBA_1") & survheig$Cluster == "blue" & survheig$X3_w_survival != "0")
+
+boxplot(as.numeric(x$X3_w_height) ~ as.vector(x$SeedID))
+
+boxplot(as.numeric(x$X3_w_height) ~ as.vector(x$SeedID), names = paste(names(seedID), as.vector(seedID), sep = "\n"), las=2, xlab = "", cex=.8)
+
+seedID <- table(as.vector(x$SeedID))
+
+```
 
 # Code and analyses associated to analyses on calli data
 
@@ -834,9 +842,7 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of grow
 
 <div id="refs"></div>
 
-# (APPENDIX) Appendix {-}
-
-# Appendix 1
+# Appendix 1 {.appendix}
 
 Citations of all R packages used to generate this report. 
 
@@ -847,7 +853,7 @@ options("citation_format" = "pandoc")
 read.bibtex(file = "packages.bib")
 ``` 
 
-# Appendix 2
+# Appendix 2 {.appendix}
 
 Version information about R, the operating system (OS) and attached or R loaded packages. This appendix was generated using `sessionInfo()`.
 
@@ -855,7 +861,7 @@ Version information about R, the operating system (OS) and attached or R loaded 
 sessionInfo()
 ```
 
-# Appendix 3
+# Appendix 3 {.appendix}
 
 Sampling at the basis of analyses presented in this study.
 
@@ -863,7 +869,7 @@ Sampling at the basis of analyses presented in this study.
 knitr::kable(MERGE, caption = "Sampling at the basis of the sagebrush rooting experiment.")
 ```
 
-# Appendix 4
+# Appendix 4 {.appendix}
 
 ## ANOVAs with model on binary rooting data
 

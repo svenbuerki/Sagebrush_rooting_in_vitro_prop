@@ -1,7 +1,13 @@
 name: "Sagebrush research"
+title: "Sagebrush research"
+description: |
+  Sagebrush research
+output_dir: "_site"
 navbar:
-  title: "Sagebrush research"
-  left:
+  logo:
+    image: Figures_report/boisestate-leftalignedmark-white.png
+    href: https://www.boisestate.edu/biology/
+  right:
     - text: "Home"
       href: index.html
     - text: "Reproducible workflow"
@@ -10,5 +16,6 @@ navbar:
       href: citation.html
     - text: "Funding"
       href: funding.html
-      
-
+output:
+  distill::distill_article: 
+    toc: true
