@@ -10,6 +10,7 @@ bibliography: packages.bib
 library(knitr)
 library(rmarkdown)
 library(bookdown)
+library(distill)
 library(knitcitations)
 library(formatR)
 library(devtools)
