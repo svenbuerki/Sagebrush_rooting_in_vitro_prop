@@ -1,0 +1,33 @@
+---
+title: "Map of sampling locations"
+---
+
+```{r packages, echo=FALSE, warning=FALSE, include=FALSE}
+#Load package
+require(leaflet)
+require(bookdown)
+```
+
+Map showing locations of the two populations sampled in this study. Seeds from one mother plant were collected in each population and used to generate the 45 individuals included in this [experiment](Analyses_rooting.html). The population `ID3` corresponds to the G1 drought-tolerant genotype, whereas the `UT2` population corresponds to G2 drought-sensitive genotype.
+
+```{r map, echo=F, eval=T, width="100%"}
+# Matrix of lat long for locations
+loc <- matrix(ncol=2, nrow=2)
+colnames(loc) <- c("lat", "long")
+rownames(loc) <- c("ID3", "UT2")
+
+# ID3 - G1 (drought-tolerant)
+loc[1,] <- c(43.336, -116.964)
+
+# UT2 - G2 (drought-sensitive)
+loc[2,] <- c(38.306, -109.387)
+
+# Convert matrix into data.frame
+loc <- as.data.frame(loc)
+
+# Produce map
+m <- leaflet() %>%
+      addTiles() %>%
+      addMarkers(lat = loc$lat, label = rownames(loc), lng = loc$long)
+m
+```

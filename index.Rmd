@@ -1,32 +1,7 @@
 ---
 title: "Introduction"
-description: | 
-  Meet the team of contributors and overview of the project.
-date: 
-author:
-  - name: "Peggy Martinez"
-    #url: https://github.com/yihui
-    affiliation: Boise State University
-    url: https://www.boisestate.edu/biology/
-    #orcid_id: 0000-0003-0645-5666
-  - name: "Rachael Barron"
-    #url: https://github.com/yihui
-    affiliation: Boise State University
-    url: https://www.boisestate.edu/biology/
-    #orcid_id: 0000-0003-0645-5666
-  - name: "Marcelo Serpe"
-    #url: https://github.com/yihui
-    affiliation: Boise State University
-    url: https://www.boisestate.edu/biology/
-    #orcid_id: 0000-0003-0645-5666
-  - name: "Sven Buerki"
-    #url: https://github.com/yihui
-    affiliation: Boise State University
-    url: https://www.boisestate.edu/biology/
-    #orcid_id: 0000-0003-0645-5666
-output: distill::distill_article
 ---
 
 # Overview of project
 
-This website is associated to Martinez et al. and provides the reproducible workflow integrating code, data, methods and key outcomes associated to this study aiming at developing an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research.
+This companion website to Martinez et al. provides the reproducible workflow integrating data, code, methods and results associated to this study aiming at developing an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research.
