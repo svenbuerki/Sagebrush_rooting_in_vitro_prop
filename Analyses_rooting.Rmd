@@ -869,11 +869,11 @@ survheigStat[1,2] <- paste0(round(mean(survheig$X3_w_height),2), "+/-", round(sd
 ###
 
 #Survivial
-#FiveWsurvAll <- table(survheig$X5_w_survival)
-#survheigStat[2,1] <- round(100*((sum(FiveWsurvAll)-FiveWsurvAll[which(names(FiveWsurvAll) == 0)])/sum(FiveWsurvAll)),2)
+FiveWsurvAll <- table(survheig$X5_w_survival)
+survheigStat[2,1] <- round(100*((sum(FiveWsurvAll)-FiveWsurvAll[which(names(FiveWsurvAll) == 0)])/sum(FiveWsurvAll)),2)
 
 #Mean plant height +/- sd
-#survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd(survheig$X5_w_height),2))
+survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd(survheig$X5_w_height),2))
 
 #List of clusters
 clust <- sort(unique(survheig$Cluster))[c(1,3,2)]
@@ -902,10 +902,10 @@ for(i in 1:length(clust)){
   #5 weeks
   ###
   #Survivial
-  #FiveWsurv <- table(tmp$X5_w_survival)
-  #clustSurvHeig[i,5] <- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
+  FiveWsurv <- table(tmp$X5_w_survival)
+  clustSurvHeig[i,5] <- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
   #Mean plant height +/- sd
-  #clustSurvHeig[i,6] <- paste0(round(mean(tmp$X5_w_height),2), "+/-", round(sd(tmp$X5_w_height),2))
+  clustSurvHeig[i,6] <- paste0(round(mean(tmp$X5_w_height),2), "+/-", round(sd(tmp$X5_w_height),2))
 }
 
 #Plot table
@@ -916,6 +916,9 @@ knitr::kable(clustSurvHeig, row.names=F, caption = "Seedlings survival and heigh
 
 ```{r survclusttreat, echo=T, eval=T}
 
+###
+#After 5 weeks
+###
 #Split survheig$Treatment to extract growth regulator and concentration
 survheig$TreatConc <- paste(sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", 2), sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", 3), sep="_")
 survheig$TreatConc[grep("Control_", survheig$TreatConc)] <- "Control"
@@ -944,10 +947,10 @@ for(i in 1:nrow(survheigTreat)){
   #N
   survheigTreat$N[i] <- nrow(foo)
   #Survivial
-  ThreeWsurv <- table(foo$X3_w_survival)
+  ThreeWsurv <- table(foo$X5_w_survival)
   survheigTreat$`Survival (%)`[i] <- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
   #Mean plant height +/- sd
-  survheigTreat$`Height (cm)`[i] <- paste0(round(mean(foo$X3_w_height),2), "+/-", round(sd(foo$X3_w_height),2))  
+  survheigTreat$`Height (cm)`[i] <- paste0(round(mean(foo$X5_w_height),2), "+/-", round(sd(foo$X5_w_height),2))  
   }
   
 }
@@ -961,7 +964,7 @@ knitr::kable(survheigTreat, row.names=F, caption = "Seedlings survival and heigh
 At individual level
 
 ```{r echo=F, eval=F}
-x <- subset(survheig, survheig$TreatConc %in% c("IBA_05", "IBA_1") & survheig$Cluster == "blue" & survheig$X3_w_survival != "0")
+x <- subset(survheigTreat, survheigTreat$TreatConc %in% c("IBA_05", "IBA_1") & survheig$Cluster == "blue" & survheig$X5_w_survival != "0")
 
 boxplot(as.numeric(x$X3_w_height) ~ as.vector(x$SeedID))
 
