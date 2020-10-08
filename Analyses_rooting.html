@@ -27,6 +27,15 @@
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+      </style>
+
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
   pre:not([class]) {
@@ -1771,16 +1780,66 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = &quot;Effect of
 </div>
 </div>
 </div>
-<div id="step-4-in-vitro-growth-of-plantules" class="section level1">
-<h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> growth of plantules</h1>
-<div id="seedlings-survival-and-heights-sorted-by-rooting-clusters" class="section level2">
-<h2><span class="header-section-number">6.1</span> Seedlings survival and heights sorted by rooting clusters</h2>
-<pre class="r"><code>#Load data on survival and height
+<div id="step-4-in-vitro-growth-of-plantlets" class="section level1">
+<h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> growth of plantlets</h1>
+<div id="sampling-and-preliminary-analysis-on-survival-and-plantlets-heights" class="section level2">
+<h2><span class="header-section-number">6.1</span> Sampling and preliminary analysis on survival and plantlets heights</h2>
+<p>Data on survival and plantlets heights are stored in <code>01_Raw_Data/Survival_height_clones.csv</code>. The code below provides statistics on the number of individual and shoot tips included in this experiment.</p>
+<pre class="r"><code>###~~~
+#Load data on survival and height
+###~~~
 survheig &lt;- read.csv(&quot;01_Raw_Data/Survival_height_clones.csv&quot;)
 
-#How many shoot tips were transfered? 
-#What are their survival and height (with standard dev.) @ 3 and 5 weeks
+###~~~
+#How many individuals where transfered corresponding how many shoot tips
+###~~~
+stats &lt;- matrix(ncol=1, nrow=4)
+colnames(stats) &lt;- &quot;Sampling&quot;
+rownames(stats) &lt;- c(&quot;Total N. ind.&quot;, &quot;N. ind. per gen,&quot;,&quot;Total N. shoot tips&quot;, &quot;N. shoot tips per gen.&quot;)
 
+#Add N ind and N shoot tips
+stats[c(1,3),] &lt;- c(length(unique(survheig$SeedID)), sum(table(survheig$SeedID)))
+
+#Tot ind per genotypes
+totindgen &lt;- table(sapply(strsplit(as.vector(unique(survheig$SeedID)), &quot;_&quot;), &#39;[[&#39;, 1))
+stats[2,1] &lt;- paste0(paste0(names(totindgen), &quot;:&quot;), totindgen, collapse = &#39;/&#39;)
+
+#N shoot per genotypes
+totgenshoot &lt;- table(sapply(strsplit(as.vector(survheig$SeedID), &quot;_&quot;), &#39;[[&#39;, 1))
+stats[4,1] &lt;- paste0(paste0(names(totgenshoot), &quot;:&quot;), totgenshoot, collapse = &#39;/&#39;)
+
+
+print(stats)</code></pre>
+<pre><code>##                        Sampling       
+## Total N. ind.          &quot;42&quot;           
+## N. ind. per gen,       &quot;G1:20/G2:22&quot;  
+## Total N. shoot tips    &quot;273&quot;          
+## N. shoot tips per gen. &quot;G1:138/G2:135&quot;</code></pre>
+<pre class="r"><code>###~~~
+#Breakdown of number of shoot tips per individual
+###~~~
+
+#Sort based on number of shoot tips
+sort(table(survheig$SeedID), decreasing=T)</code></pre>
+<pre><code>## 
+## G1_b13_1  G1_b3_1 G2_b27_1  G2_b7_1  G1_b8_1 G2_b24_1 G2_b21_1  G2_b4_1 
+##       12       12       12       12       11       11       10       10 
+## G1_b10_1  G1_b2_1 G1_b29_1 G2_b11_1 G1_b16_1 G1_b25_1  G2_b8_1  G1_b1_2 
+##        9        9        9        9        8        8        8        7 
+## G1_b21_1  G1_b5_1 G2_b16_1 G2_b20_1 G2_b21_2 G1_b20_1  G1_b4_1  G1_b9_1 
+##        7        7        7        7        7        6        6        6 
+##  G2_29_1 G2_b17_1 G2_b27_2 G1_b19_1  G2_18_1  G1_b1_1 G1_b18_1  G1_b6_1 
+##        6        6        6        5        5        4        4        4 
+## G2_b15_1  G2_b2_1 G1_b26_1 G2_b28_1  G2_b6_1  G2_b5_1 G1_b15_1 G2_b19_1 
+##        4        4        3        3        3        2        1        1 
+## G2_b25_1 G2_b26_1 
+##        1        1</code></pre>
+<div id="survival-and-plantlets-heights-at-3-and-5-weeks" class="section level3">
+<h3><span class="header-section-number">6.1.1</span> Survival and plantlets heights at 3 and 5 weeks</h3>
+<p>Results of the code provided below is summarized in Table <a href="#tab:surv">6.1</a>. After 5 weeks, a survival of 53.48% of the plantlets was observed. A significant increase of plantlets mortality has been recorded between weeks 3 and 5 and on average, plantlets did not growth significant (but see below for more details).</p>
+<pre class="r"><code>###~~~
+# Matrix to store data @ 3 and 5 weeks
+###~~~
 survheigStat &lt;- matrix(ncol=2, nrow = 2)
 colnames(survheigStat) &lt;- c(&quot;Survival (%)&quot;, &quot;Plant height (cm)&quot;)
 rownames(survheigStat) &lt;- c(&quot;Week 3&quot;, &quot;Week 5&quot;)
@@ -1789,30 +1848,63 @@ rownames(survheigStat) &lt;- c(&quot;Week 3&quot;, &quot;Week 5&quot;)
 #3 weeks
 ###
 
-#Survivial
+# Survivial
 ThreeWsurvAll &lt;- table(survheig$X3_w_survival)
 survheigStat[1,1] &lt;- round(100*((sum(ThreeWsurvAll)-ThreeWsurvAll[which(names(ThreeWsurvAll) == 0)])/sum(ThreeWsurvAll)),2)
 
-#Mean plant height +/- sd
+# Mean plant height +/- sd
 survheigStat[1,2] &lt;- paste0(round(mean(survheig$X3_w_height),2), &quot;+/-&quot;, round(sd(survheig$X3_w_height),2))
 
 ###
 #5 weeks
 ###
 
-#Survivial
-#FiveWsurvAll &lt;- table(survheig$X5_w_survival)
-#survheigStat[2,1] &lt;- round(100*((sum(FiveWsurvAll)-FiveWsurvAll[which(names(FiveWsurvAll) == 0)])/sum(FiveWsurvAll)),2)
+# Survivial
+FiveWsurvAll &lt;- table(survheig$X5_w_survival)
+survheigStat[2,1] &lt;- round(100*((sum(FiveWsurvAll)-FiveWsurvAll[which(names(FiveWsurvAll) == 0)])/sum(FiveWsurvAll)),2)
 
-#Mean plant height +/- sd
-#survheigStat[2,2] &lt;- paste0(round(mean(survheig$X5_w_height),2), &quot;+/-&quot;, round(sd(survheig$X5_w_height),2))
+# Mean plant height +/- sd
+survheigStat[2,2] &lt;- paste0(round(mean(survheig$X5_w_height),2), &quot;+/-&quot;, round(sd(survheig$X5_w_height),2))
 
-#List of clusters
+
+# Plot table
+knitr::kable(survheigStat, row.names=T, caption = &quot;Survival and plantlets heights at 3 and 5 weeks.&quot;)</code></pre>
+<table>
+<caption><span id="tab:surv">Table 6.1: </span>Survival and plantlets heights at 3 and 5 weeks.</caption>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="left">Survival (%)</th>
+<th align="left">Plant height (cm)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Week 3</td>
+<td align="left">75.82</td>
+<td align="left">1.78+/-1.21</td>
+</tr>
+<tr class="even">
+<td align="left">Week 5</td>
+<td align="left">53.48</td>
+<td align="left">1.69+/-1.65</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="survival-and-plantlets-height-sorted-by-rooting-clusters" class="section level3">
+<h3><span class="header-section-number">6.1.2</span> Survival and plantlets height sorted by rooting clusters</h3>
+<p>Table <a href="#survclust"><strong>??</strong></a> shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided.</p>
+<pre class="r"><code>###
+#Create list of clusters
+###
 clust &lt;- sort(unique(survheig$Cluster))[c(1,3,2)]
 
-#Matrix
-clustSurvHeig &lt;- matrix(ncol=6, nrow = length(clust))
-colnames(clustSurvHeig) &lt;- c(&quot;Rooting cluster&quot;, &quot;N&quot;, &quot;3 w. surv. (%)&quot;, &quot;3 w. plant height (cm)&quot;, &quot;5 w. surv. (%)&quot;, &quot;5 w. plant height (cm)&quot;)
+###~~~
+#Matrix with data on cluster, N. ind, N. shoot tips, survival and height
+###~~~
+clustSurvHeig &lt;- matrix(ncol=7, nrow = length(clust))
+colnames(clustSurvHeig) &lt;- c(&quot;Rooting cluster&quot;, &quot;N. ind.&quot;,&quot;N. shoot tips&quot;, &quot;3 w. surv. (%)&quot;, &quot;3 w. plant height (cm)&quot;, &quot;5 w. surv. (%)&quot;, &quot;5 w. plant height (cm)&quot;)
 clustSurvHeig[,1] &lt;- as.character(clust)
 
 for(i in 1:length(clust)){
@@ -1822,40 +1914,44 @@ for(i in 1:length(clust)){
   ###
   #3 weeks
   ###
-  #N
-  clustSurvHeig[i,2] &lt;- nrow(tmp)
+  #N. ind.
+  clustSurvHeig[i,2] &lt;- length(unique(tmp$SeedID))
+  #N. shoot tips
+  clustSurvHeig[i,3] &lt;- nrow(tmp)
   #Survivial
   ThreeWsurv &lt;- table(tmp$X3_w_survival)
-  clustSurvHeig[i,3] &lt;- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
+  clustSurvHeig[i,4] &lt;- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
   #Mean plant height +/- sd
-  clustSurvHeig[i,4] &lt;- paste0(round(mean(tmp$X3_w_height),2), &quot;+/-&quot;, round(sd(tmp$X3_w_height),2))
+  clustSurvHeig[i,5] &lt;- paste0(round(mean(tmp$X3_w_height),2), &quot;+/-&quot;, round(sd(tmp$X3_w_height),2))
   
   ###
   #5 weeks
   ###
   #Survivial
-  #FiveWsurv &lt;- table(tmp$X5_w_survival)
-  #clustSurvHeig[i,5] &lt;- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
+  FiveWsurv &lt;- table(tmp$X5_w_survival)
+  clustSurvHeig[i,6] &lt;- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
   #Mean plant height +/- sd
-  #clustSurvHeig[i,6] &lt;- paste0(round(mean(tmp$X5_w_height),2), &quot;+/-&quot;, round(sd(tmp$X5_w_height),2))
+  clustSurvHeig[i,7] &lt;- paste0(round(mean(tmp$X5_w_height),2), &quot;+/-&quot;, round(sd(tmp$X5_w_height),2))
 }
 
 #Plot table
-knitr::kable(clustSurvHeig, row.names=F, caption = &quot;Seedlings survival and heights sorted by rooting clusters.&quot;)</code></pre>
-<table>
-<caption><span id="tab:survclust">Table 6.1: </span>Seedlings survival and heights sorted by rooting clusters.</caption>
+knitr::kable(clustSurvHeig, row.names=F, caption = &quot;Survival and plantlets heights at 3 and 5 weeks sorted by rooting clusters.&quot;)</code></pre>
+<table style="width:100%;">
+<caption><span id="tab:survclust">Table 6.2: </span>Survival and plantlets heights at 3 and 5 weeks sorted by rooting clusters.</caption>
 <colgroup>
-<col width="16%" />
-<col width="4%" />
-<col width="15%" />
-<col width="23%" />
-<col width="15%" />
-<col width="23%" />
+<col width="14%" />
+<col width="7%" />
+<col width="12%" />
+<col width="13%" />
+<col width="20%" />
+<col width="13%" />
+<col width="20%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">Rooting cluster</th>
-<th align="left">N</th>
+<th align="left">N. ind.</th>
+<th align="left">N. shoot tips</th>
 <th align="left">3 w. surv. (%)</th>
 <th align="left">3 w. plant height (cm)</th>
 <th align="left">5 w. surv. (%)</th>
@@ -1865,43 +1961,51 @@ knitr::kable(clustSurvHeig, row.names=F, caption = &quot;Seedlings survival and 
 <tbody>
 <tr class="odd">
 <td align="left">black</td>
+<td align="left">12</td>
 <td align="left">28</td>
 <td align="left">71.43</td>
 <td align="left">1.49+/-1.13</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
+<td align="left">42.86</td>
+<td align="left">1.36+/-1.69</td>
 </tr>
 <tr class="even">
 <td align="left">pink</td>
+<td align="left">16</td>
 <td align="left">104</td>
 <td align="left">70.19</td>
 <td align="left">1.5+/-1.13</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
+<td align="left">50</td>
+<td align="left">1.48+/-1.55</td>
 </tr>
 <tr class="odd">
 <td align="left">blue</td>
+<td align="left">13</td>
 <td align="left">134</td>
 <td align="left">83.58</td>
 <td align="left">2.09+/-1.18</td>
-<td align="left">NA</td>
-<td align="left">NA</td>
+<td align="left">59.7</td>
+<td align="left">1.95+/-1.67</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div id="seedlings-survival-and-heights-sorted-by-rooting-clusters-and-treatments" class="section level2">
-<h2><span class="header-section-number">6.2</span> Seedlings survival and heights sorted by rooting clusters and treatments</h2>
-<pre class="r"><code>#Split survheig$Treatment to extract growth regulator and concentration
+<div id="survival-and-plantlets-height-at-5-weeks-sorted-by-rooting-clusters-and-treatments" class="section level3">
+<h3><span class="header-section-number">6.1.3</span> Survival and plantlets height at 5 weeks sorted by rooting clusters and treatments</h3>
+<p>Table <a href="#tab:survclusttreat">6.3</a> shows survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.</p>
+<pre class="r"><code>###~~~
+#Split survheig$Treatment to extract growth regulator and concentration
+###~~~
 survheig$TreatConc &lt;- paste(sapply(strsplit(as.vector(survheig$Treatment), split=&quot;_&quot;), &quot;[[&quot;, 2), sapply(strsplit(as.vector(survheig$Treatment), split=&quot;_&quot;), &quot;[[&quot;, 3), sep=&quot;_&quot;)
 survheig$TreatConc[grep(&quot;Control_&quot;, survheig$TreatConc)] &lt;- &quot;Control&quot;
 
-#Load file with color of individuals (which group based on clusters they belong to)
+#Vector of treatments
 treat &lt;- sort(unique(survheig$TreatConc))
 
+###~~~
 #Matrix summarizing effect of growth regulators on rooting
-survheigTreat &lt;- matrix(ncol=7, nrow=15)
-colnames(survheigTreat) &lt;- c(&quot;Cluster&quot;, &quot;N&quot;,&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, &quot;Survival (%)&quot;, &quot;Height (cm)&quot;, &quot;Treatment&quot;)
+###~~~
+survheigTreat &lt;- matrix(ncol=8, nrow=15)
+colnames(survheigTreat) &lt;- c(&quot;Cluster&quot;, &quot;N. ind.&quot;,&quot;N. shoot tips&quot;,&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, &quot;Survival (%)&quot;, &quot;Height (cm)&quot;, &quot;Treatment&quot;)
 
 #Convert to dataframe
 survheigTreat &lt;- as.data.frame(survheigTreat)
@@ -1917,35 +2021,41 @@ for(i in 1:nrow(survheigTreat)){
   foo &lt;- subset(survheig, survheig$TreatConc == survheigTreat$Treatment[i] &amp; survheig$Cluster == survheigTreat$Cluster[i])
   
   if(nrow(foo) &gt; 0){
-  #N
-  survheigTreat$N[i] &lt;- nrow(foo)
-  #Survivial
-  ThreeWsurv &lt;- table(foo$X3_w_survival)
-  survheigTreat$`Survival (%)`[i] &lt;- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
-  #Mean plant height +/- sd
-  survheigTreat$`Height (cm)`[i] &lt;- paste0(round(mean(foo$X3_w_height),2), &quot;+/-&quot;, round(sd(foo$X3_w_height),2))  
+    #N. ind.
+    survheigTreat$`N. ind.`[i] &lt;- length(unique(foo$SeedID))
+    #N. shoot tips
+    survheigTreat$`N. shoot tips`[i] &lt;- nrow(foo)
+    #Survivial
+    ThreeWsurv &lt;- table(foo$X5_w_survival)
+    survheigTreat$`Survival (%)`[i] &lt;-   round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
+    #Mean plant height +/- sd
+    survheigTreat$`Height (cm)`[i] &lt;- paste0(round(mean(foo$X5_w_height),2), &quot;+/-&quot;, round(sd(foo$X5_w_height),2))  
   }
   
 }
 
+#Save to be included in manuscript
+#write.csv(survheigTreat, file=&#39;Survival_cluster_treatment_5w.csv&#39;)
 
 #Plot table
-knitr::kable(survheigTreat, row.names=F, caption = &quot;Seedlings survival and heights sorted by rooting clusters and treatments.&quot;)</code></pre>
+knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.&quot;)</code></pre>
 <table>
-<caption><span id="tab:survclusttreat">Table 6.2: </span>Seedlings survival and heights sorted by rooting clusters and treatments.</caption>
+<caption><span id="tab:survclusttreat">Table 6.3: </span>Survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.</caption>
 <colgroup>
-<col width="9%" />
-<col width="3%" />
+<col width="7%" />
+<col width="7%" />
+<col width="13%" />
+<col width="16%" />
 <col width="20%" />
-<col width="25%" />
-<col width="15%" />
-<col width="14%" />
+<col width="12%" />
 <col width="11%" />
+<col width="9%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">Cluster</th>
-<th align="right">N</th>
+<th align="right">N. ind.</th>
+<th align="right">N. shoot tips</th>
 <th align="left">Growth regulator</th>
 <th align="left">Concentration (mg/l)</th>
 <th align="right">Survival (%)</th>
@@ -1957,6 +2067,7 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Seedlings survival and 
 <tr class="odd">
 <td align="left">black</td>
 <td align="right">1</td>
+<td align="right">1</td>
 <td align="left">Control</td>
 <td align="left">-</td>
 <td align="right">0.00</td>
@@ -1966,86 +2077,96 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Seedlings survival and 
 <tr class="even">
 <td align="left">black</td>
 <td align="right">5</td>
+<td align="right">5</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">80.00</td>
-<td align="left">1.68+/-1.11</td>
+<td align="right">40.00</td>
+<td align="left">1.2+/-1.64</td>
 <td align="left">IBA_05</td>
 </tr>
 <tr class="odd">
 <td align="left">black</td>
+<td align="right">4</td>
 <td align="right">6</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">66.67</td>
-<td align="left">1.23+/-1.2</td>
+<td align="right">33.33</td>
+<td align="left">0.9+/-1.59</td>
 <td align="left">IBA_1</td>
 </tr>
 <tr class="even">
 <td align="left">black</td>
+<td align="right">4</td>
 <td align="right">6</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">83.33</td>
-<td align="left">1.73+/-1</td>
+<td align="right">66.67</td>
+<td align="left">2.27+/-1.94</td>
 <td align="left">NAA_05</td>
 </tr>
 <tr class="odd">
 <td align="left">black</td>
+<td align="right">8</td>
 <td align="right">10</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">70.00</td>
-<td align="left">1.55+/-1.26</td>
+<td align="right">40.00</td>
+<td align="left">1.32+/-1.71</td>
 <td align="left">NAA_1</td>
 </tr>
 <tr class="even">
 <td align="left">blue</td>
+<td align="right">8</td>
 <td align="right">12</td>
 <td align="left">Control</td>
 <td align="left">-</td>
 <td align="right">58.33</td>
-<td align="left">1.75+/-1.64</td>
+<td align="left">1.97+/-1.8</td>
 <td align="left">Control</td>
 </tr>
 <tr class="odd">
 <td align="left">blue</td>
+<td align="right">13</td>
 <td align="right">32</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">90.62</td>
-<td align="left">2.45+/-1.11</td>
+<td align="right">65.62</td>
+<td align="left">2.27+/-1.7</td>
 <td align="left">IBA_05</td>
 </tr>
 <tr class="even">
 <td align="left">blue</td>
+<td align="right">13</td>
 <td align="right">34</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">85.29</td>
-<td align="left">2+/-1.06</td>
+<td align="right">64.71</td>
+<td align="left">1.95+/-1.54</td>
 <td align="left">IBA_1</td>
 </tr>
 <tr class="odd">
 <td align="left">blue</td>
+<td align="right">12</td>
 <td align="right">27</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">81.48</td>
-<td align="left">1.76+/-1.1</td>
+<td align="right">37.04</td>
+<td align="left">1.21+/-1.64</td>
 <td align="left">NAA_05</td>
 </tr>
 <tr class="even">
 <td align="left">blue</td>
+<td align="right">13</td>
 <td align="right">29</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">86.21</td>
-<td align="left">2.24+/-1.21</td>
+<td align="right">68.97</td>
+<td align="left">2.29+/-1.64</td>
 <td align="left">NAA_1</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
+<td align="right">NA</td>
 <td align="right">NA</td>
 <td align="left">Control</td>
 <td align="left">-</td>
@@ -2055,45 +2176,206 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Seedlings survival and 
 </tr>
 <tr class="even">
 <td align="left">pink</td>
+<td align="right">14</td>
 <td align="right">24</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">58.33</td>
-<td align="left">1.21+/-1.18</td>
+<td align="right">37.50</td>
+<td align="left">1.04+/-1.39</td>
 <td align="left">IBA_05</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
+<td align="right">16</td>
 <td align="right">35</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">82.86</td>
-<td align="left">1.84+/-1.04</td>
+<td align="right">60.00</td>
+<td align="left">1.82+/-1.59</td>
 <td align="left">IBA_1</td>
 </tr>
 <tr class="even">
 <td align="left">pink</td>
+<td align="right">13</td>
 <td align="right">19</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">68.42</td>
-<td align="left">1.39+/-1.16</td>
+<td align="right">42.11</td>
+<td align="left">1.28+/-1.59</td>
 <td align="left">NAA_05</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
+<td align="right">15</td>
 <td align="right">26</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">65.38</td>
-<td align="left">1.4+/-1.14</td>
+<td align="right">53.85</td>
+<td align="left">1.56+/-1.57</td>
 <td align="left">NAA_1</td>
 </tr>
 </tbody>
 </table>
-<p>At individual level</p>
+<pre class="r"><code>#Individual
+#seedID &lt;- table(as.vector(x$SeedID))
+
+#boxplot(as.numeric(x$X5_w_height) ~ as.vector(x$SeedID), names = paste(names(seedID), as.vector(seedID), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, cex=.8)</code></pre>
+</div>
+</div>
+<div id="statistical-analyses" class="section level2">
+<h2><span class="header-section-number">6.2</span> Statistical analyses</h2>
+<p>Here, we will use ANOVAs followed by Tukey tests to test whether treatment or individual predicted survival of plantlets and also to test whether plantlet heights after 5-weeks of culture is predicted by the number of roots of the shoot tips.</p>
+<div id="treatment-or-individual-effect-on-plantlet-survival" class="section level3">
+<h3><span class="header-section-number">6.2.1</span> Treatment or individual effect on plantlet survival</h3>
+<p>These analyses are done on data in <code>survheig</code>, more specifically on <code>survheig$X5_w_survival</code> and extracting treatments from <code>survheig$Treatment</code> (which contains block, treatment and replicate information in one object).</p>
+<pre class="r"><code>####~~~~
+#Infer treatment types recieved by plantles
+###~~~
+survheig$Treat &lt;- paste(sapply(strsplit(as.vector(survheig$Treatment), split=&quot;_&quot;), &quot;[[&quot;, c(2)), sapply(strsplit(as.vector(survheig$Treatment), split=&quot;_&quot;), &quot;[[&quot;, c(3)), sep=&quot;_&quot;)
+survheig$Treat[grep(&quot;Control_&quot;, survheig$Treat)] &lt;- &quot;Control&quot;
+
+###~~~
+#Turn survival into a binary data (sickly plantlets have a score of 0.5, but will be changed to 1)
+###~~~
+survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] &lt;- 1
+
+###~~~~
+#Define ANOVA model and run analysis
+###~~~
+anovaOUTsurv&lt;- aov(X5_w_survival ~ Treat * SeedID, data = survheig)
+
+
+# Summary of ANOVA
+summary(anovaOUTsurv)</code></pre>
+<pre><code>##               Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+## Treat          4  0.935  0.2337   1.284   0.2794    
+## SeedID        41 19.913  0.4857   2.670 1.35e-05 ***
+## Treat:SeedID  96 23.238  0.2421   1.331   0.0645 .  
+## Residuals    131 23.833  0.1819                     
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code># The lack of treatment effect is confirmed by this table showing that there is a 50/50 chance of survival across treatments
+table(survheig$X5_w_survival, survheig$Treat)</code></pre>
+<pre><code>##    
+##     Control IBA_05 IBA_1 NAA_05 NAA_1
+##   0       6     29    34     30    28
+##   1       7     32    46     22    39</code></pre>
+<p>The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (p-value &lt;= 0.001). When Tukey tests are conducted on individual data and with a p-value of 0.01, only one individual (<code>G2_b8_1</code>) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate).</p>
+<pre class="r"><code>###~~~
+#Tukey tests on significant variables
+###~~~
+
+# Vector with significant variables (only one here)
+significant_vars &lt;- c(&quot;SeedID&quot;)
+
+# Run Tukey tests
+anovaOUTsurv_tukey &lt;- TukeyHSD(anovaOUTsurv, significant_vars)
+
+# Save analysis
+saveRDS(anovaOUTsurv_tukey,&quot;02_Processed_data/rds_tables/TukeySurv.rds&quot;)
+
+#Investigate individual effect (***)
+IndTukeySurv &lt;- anovaOUTsurv_tukey$SeedID[which(as.numeric(anovaOUTsurv_tukey$SeedID[,4]) &lt;= 0.01),]
+
+## This analysis shows that ind G2_b8_1 has significantly higher death rate than two other individuals
+print(IndTukeySurv)</code></pre>
+<pre><code>##                        diff       lwr        upr       p adj
+## G2_b8_1-G1_b13_1 -0.9401789 -1.720203 -0.1601543 0.002565271
+## G2_b8_1-G1_b3_1  -0.9438146 -1.723839 -0.1637900 0.002380152</code></pre>
+</div>
+<div id="effect-of-number-of-roots-individual-or-rooting-clusters-on-plantlet-heights" class="section level3">
+<h3><span class="header-section-number">6.2.2</span> Effect of number of roots, individual or rooting clusters on plantlet heights</h3>
+<p>Here, we will only work on alive plantlets (<code>survheig$X5_w_survival</code> == 1) and conduct an ANOVA followed by Tukey tests as follows:</p>
+<pre class="r"><code>###~~~
+#Subset surveigh to include only alive plantlets after 5 weeks
+###~~~
+
+#All plantlets surviving after 5 weeks of culture 
+subSurvHeigh &lt;- subset(survheig, survheig$X5_w_survival != &quot;0&quot;)
+
+###~~~
+#Fetch number of roots per shoot tip
+###~~~
+
+#Fetch no. roots of shoot tips in subSurvHeigh by querying MERGE
+MERGE$BlockTreatRep &lt;- paste(MERGE$Block, MERGE$Treatment, MERGE$Replicate, sep=&quot;_&quot;)
+
+#Loop to get N roots
+subSurvHeigh$Root &lt;- &quot;NULL&quot;
+for(i in 1:nrow(subSurvHeigh)){
+  tmp &lt;- subset(MERGE, MERGE$IndGeno == subSurvHeigh$SeedID[i] &amp; MERGE$BlockTreatRep == subSurvHeigh$Treatment[i])
+  subSurvHeigh$Root[i] &lt;- tmp$Root
+}
+
+#subSurvHeigh &lt;- subSurvHeigh[-which(subSurvHeigh$Root == 0),]
+###~~~
+#Define ANOVA model and run analysis
+###~~~
+#Since it seemed that treatment had an effect
+anovaOUTRoot &lt;- aov(X5_w_height ~ Cluster * SeedID * Root, data = subSurvHeigh)
+
+
+# Summary of ANOVA
+summary(anovaOUTRoot)</code></pre>
+<pre><code>##              Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+## Cluster       2  3.195  1.5977   7.122 0.002261 ** 
+## SeedID       32 24.823  0.7757   3.458 0.000128 ***
+## Root         11  4.220  0.3836   1.710 0.106301    
+## Cluster:Root 11  1.213  0.1103   0.492 0.897377    
+## SeedID:Root  47 13.573  0.2888   1.287 0.208006    
+## Residuals    40  8.973  0.2243                     
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 2 observations deleted due to missingness</code></pre>
+<p>The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, <code>G2_b27_1</code> is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!</p>
+<pre class="r"><code>###~~~
+#Tukey tests on significant variables
+###~~~
+# Vector with significant variables (only one here)
+significant_vars &lt;- c(&quot;SeedID&quot;, &quot;Cluster&quot;)
+
+# Run Tukey tests
+anovaOUTheight_tukey &lt;- TukeyHSD(anovaOUTRoot, significant_vars)
+
+# Save analysis
+saveRDS(anovaOUTheight_tukey,&quot;02_Processed_data/rds_tables/TukeyHeight.rds&quot;)
+
+###~~~
+#Investigate cluster effect (**)
+###~~~
+ClustTukeyHeight &lt;- anovaOUTheight_tukey$Cluster[which(as.numeric(anovaOUTheight_tukey$Cluster[,4]) &lt;= 0.01),]
+
+# What are the top cluster(s) (= most efficient at growing fast)?
+#ClusterTukeyHeightTop &lt;- ClustTukeyHeight[which(ClustTukeyHeight[,1] &gt; 0),]
+
+print(anovaOUTheight_tukey$Cluster)</code></pre>
+<pre><code>##                   diff        lwr        upr       p adj
+## blue-black  0.08416667 -0.2727044  0.4410378 0.834669945
+## pink-black -0.23333333 -0.6025240  0.1358574 0.284234864
+## pink-blue  -0.31750000 -0.5228494 -0.1121506 0.001530769</code></pre>
+<pre class="r"><code>print(&quot;Blue is significantly outperforming pink!&quot;)</code></pre>
+<pre><code>## [1] &quot;Blue is significantly outperforming pink!&quot;</code></pre>
+<pre class="r"><code>###~~~
+#Investigate individual effect (***)
+###~~~
+IndTukeyHeight &lt;- anovaOUTheight_tukey$SeedID[which(as.numeric(anovaOUTheight_tukey$SeedID[,4]) &lt;= 0.01),]
+
+# What are the top performers (= most efficient at growing fast)?
+IndTukeyHeightTop &lt;- IndTukeyHeight[which(IndTukeyHeight[,1] &gt; 0),]
+
+# Extract best performing ind (first in rownames of comparison)
+P1growth &lt;- sapply(strsplit(rownames(IndTukeyHeightTop), split=&#39;-&#39;), &quot;[[&quot;,1)
+
+# Percentage of individuals that are outperformed by P1
+TopIndgrowth &lt;- 100*(sort(table(P1growth), decreasing=T)/length(unique(subSurvHeigh$SeedID)))
+
+## This analysis shows that G2_b27_1 grows significantly faster than 14.28% of the individuals in this experiment
+print(TopIndgrowth)</code></pre>
+<pre><code>## G2_b27_1 
+## 13.88889</code></pre>
 <div id="refs">
 
+</div>
 </div>
 </div>
 </div>
@@ -2164,20 +2446,20 @@ Guide</em>. ISBN 9781138359338. Boca Raton, Florida: Chapman and Hall/CRC,
 ## other attached packages:
 ## [1] RColorBrewer_1.1-2   gplots_3.0.4         devtools_2.2.1      
 ## [4] usethis_1.5.1        formatR_1.7          knitcitations_1.0.10
-## [7] bookdown_0.20        rmarkdown_2.3        knitr_1.30          
+## [7] bookdown_0.20        rmarkdown_2.4        knitr_1.30          
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Rcpp_1.0.5         highr_0.8          compiler_3.6.1     plyr_1.8.5        
 ##  [5] bitops_1.0-6       remotes_2.1.0      prettyunits_1.1.1  tools_3.6.1       
 ##  [9] testthat_2.3.1     digest_0.6.25      pkgbuild_1.0.6     pkgload_1.0.2     
 ## [13] lubridate_1.7.9    jsonlite_1.7.1     evaluate_0.14      memoise_1.1.0     
-## [17] rlang_0.4.7        bibtex_0.4.2.2     cli_2.0.1          yaml_2.2.1        
-## [21] xfun_0.17          RefManageR_1.2.12  withr_2.1.2        httr_1.4.1        
+## [17] rlang_0.4.7        bibtex_0.4.2.2     cli_2.0.2          yaml_2.2.1        
+## [21] xfun_0.18          RefManageR_1.2.12  withr_2.3.0        httr_1.4.2        
 ## [25] stringr_1.4.0      xml2_1.3.2         caTools_1.18.0     gtools_3.8.1      
-## [29] generics_0.0.2     desc_1.2.0         fs_1.3.1           rprojroot_1.3-2   
-## [33] glue_1.4.2         R6_2.4.1           processx_3.4.1     fansi_0.4.1       
+## [29] generics_0.0.2     desc_1.2.0         fs_1.5.0           rprojroot_1.3-2   
+## [33] glue_1.4.2         R6_2.4.1           processx_3.4.4     fansi_0.4.1       
 ## [37] sessioninfo_1.1.1  gdata_2.18.0       callr_3.4.1        magrittr_1.5      
-## [41] codetools_0.2-16   backports_1.1.10   ps_1.3.0           htmltools_0.5.0   
+## [41] codetools_0.2-16   backports_1.1.10   ps_1.3.4           htmltools_0.5.0   
 ## [45] ellipsis_0.3.1     assertthat_0.2.1   KernSmooth_2.23-16 stringi_1.5.3     
 ## [49] crayon_1.3.4</code></pre>
 </div>

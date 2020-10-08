@@ -838,17 +838,55 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of grow
 ```
 
 
-# Step 4: *In vitro* growth of plantules
+# Step 4: *In vitro* growth of plantlets
 
-## Seedlings survival and heights sorted by rooting clusters 
+## Sampling and preliminary analysis on survival and plantlets heights
 
-```{r survclust, echo=T, eval=T}
+Data on survival and plantlets heights are stored in `01_Raw_Data/Survival_height_clones.csv`. The code below provides statistics on the number of individual and shoot tips included in this experiment. 
+
+```{r statgrowth, echo=T, eval=T}
+###~~~
 #Load data on survival and height
+###~~~
 survheig <- read.csv("01_Raw_Data/Survival_height_clones.csv")
 
-#How many shoot tips were transfered? 
-#What are their survival and height (with standard dev.) @ 3 and 5 weeks
+###~~~
+#How many individuals where transfered corresponding how many shoot tips
+###~~~
+stats <- matrix(ncol=1, nrow=4)
+colnames(stats) <- "Sampling"
+rownames(stats) <- c("Total N. ind.", "N. ind. per gen,","Total N. shoot tips", "N. shoot tips per gen.")
 
+#Add N ind and N shoot tips
+stats[c(1,3),] <- c(length(unique(survheig$SeedID)), sum(table(survheig$SeedID)))
+
+#Tot ind per genotypes
+totindgen <- table(sapply(strsplit(as.vector(unique(survheig$SeedID)), "_"), '[[', 1))
+stats[2,1] <- paste0(paste0(names(totindgen), ":"), totindgen, collapse = '/')
+
+#N shoot per genotypes
+totgenshoot <- table(sapply(strsplit(as.vector(survheig$SeedID), "_"), '[[', 1))
+stats[4,1] <- paste0(paste0(names(totgenshoot), ":"), totgenshoot, collapse = '/')
+
+
+print(stats)
+
+###~~~
+#Breakdown of number of shoot tips per individual
+###~~~
+
+#Sort based on number of shoot tips
+sort(table(survheig$SeedID), decreasing=T)
+```
+
+### Survival and plantlets heights at 3 and 5 weeks
+
+Results of the code provided below is summarized in Table \@ref(tab:surv). After 5 weeks, a survival of 53.48% of the plantlets was observed. A significant increase of plantlets mortality has been recorded between weeks 3 and 5 and on average, plantlets did not growth significant (but see below for more details).   
+
+```{r surv, echo=T, eval=T}
+###~~~
+# Matrix to store data @ 3 and 5 weeks
+###~~~
 survheigStat <- matrix(ncol=2, nrow = 2)
 colnames(survheigStat) <- c("Survival (%)", "Plant height (cm)")
 rownames(survheigStat) <- c("Week 3", "Week 5")
@@ -857,30 +895,44 @@ rownames(survheigStat) <- c("Week 3", "Week 5")
 #3 weeks
 ###
 
-#Survivial
+# Survivial
 ThreeWsurvAll <- table(survheig$X3_w_survival)
 survheigStat[1,1] <- round(100*((sum(ThreeWsurvAll)-ThreeWsurvAll[which(names(ThreeWsurvAll) == 0)])/sum(ThreeWsurvAll)),2)
 
-#Mean plant height +/- sd
+# Mean plant height +/- sd
 survheigStat[1,2] <- paste0(round(mean(survheig$X3_w_height),2), "+/-", round(sd(survheig$X3_w_height),2))
 
 ###
 #5 weeks
 ###
 
-#Survivial
+# Survivial
 FiveWsurvAll <- table(survheig$X5_w_survival)
 survheigStat[2,1] <- round(100*((sum(FiveWsurvAll)-FiveWsurvAll[which(names(FiveWsurvAll) == 0)])/sum(FiveWsurvAll)),2)
 
-#Mean plant height +/- sd
+# Mean plant height +/- sd
 survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd(survheig$X5_w_height),2))
 
-#List of clusters
+
+# Plot table
+knitr::kable(survheigStat, row.names=T, caption = "Survival and plantlets heights at 3 and 5 weeks.")
+```
+
+### Survival and plantlets height sorted by rooting clusters
+
+Table \@ref(survclust) shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided. 
+
+```{r survclust, echo=T, eval=T}
+###
+#Create list of clusters
+###
 clust <- sort(unique(survheig$Cluster))[c(1,3,2)]
 
-#Matrix
-clustSurvHeig <- matrix(ncol=6, nrow = length(clust))
-colnames(clustSurvHeig) <- c("Rooting cluster", "N", "3 w. surv. (%)", "3 w. plant height (cm)", "5 w. surv. (%)", "5 w. plant height (cm)")
+###~~~
+#Matrix with data on cluster, N. ind, N. shoot tips, survival and height
+###~~~
+clustSurvHeig <- matrix(ncol=7, nrow = length(clust))
+colnames(clustSurvHeig) <- c("Rooting cluster", "N. ind.","N. shoot tips", "3 w. surv. (%)", "3 w. plant height (cm)", "5 w. surv. (%)", "5 w. plant height (cm)")
 clustSurvHeig[,1] <- as.character(clust)
 
 for(i in 1:length(clust)){
@@ -890,45 +942,49 @@ for(i in 1:length(clust)){
   ###
   #3 weeks
   ###
-  #N
-  clustSurvHeig[i,2] <- nrow(tmp)
+  #N. ind.
+  clustSurvHeig[i,2] <- length(unique(tmp$SeedID))
+  #N. shoot tips
+  clustSurvHeig[i,3] <- nrow(tmp)
   #Survivial
   ThreeWsurv <- table(tmp$X3_w_survival)
-  clustSurvHeig[i,3] <- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
+  clustSurvHeig[i,4] <- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
   #Mean plant height +/- sd
-  clustSurvHeig[i,4] <- paste0(round(mean(tmp$X3_w_height),2), "+/-", round(sd(tmp$X3_w_height),2))
+  clustSurvHeig[i,5] <- paste0(round(mean(tmp$X3_w_height),2), "+/-", round(sd(tmp$X3_w_height),2))
   
   ###
   #5 weeks
   ###
   #Survivial
   FiveWsurv <- table(tmp$X5_w_survival)
-  clustSurvHeig[i,5] <- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
+  clustSurvHeig[i,6] <- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
   #Mean plant height +/- sd
-  clustSurvHeig[i,6] <- paste0(round(mean(tmp$X5_w_height),2), "+/-", round(sd(tmp$X5_w_height),2))
+  clustSurvHeig[i,7] <- paste0(round(mean(tmp$X5_w_height),2), "+/-", round(sd(tmp$X5_w_height),2))
 }
 
 #Plot table
-knitr::kable(clustSurvHeig, row.names=F, caption = "Seedlings survival and heights sorted by rooting clusters.")
+knitr::kable(clustSurvHeig, row.names=F, caption = "Survival and plantlets heights at 3 and 5 weeks sorted by rooting clusters.")
 ```
 
-## Seedlings survival and heights sorted by rooting clusters and treatments
+### Survival and plantlets height at 5 weeks sorted by rooting clusters and treatments
+
+Table \@ref(tab:survclusttreat) shows survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.
 
 ```{r survclusttreat, echo=T, eval=T}
-
-###
-#After 5 weeks
-###
+###~~~
 #Split survheig$Treatment to extract growth regulator and concentration
+###~~~
 survheig$TreatConc <- paste(sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", 2), sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", 3), sep="_")
 survheig$TreatConc[grep("Control_", survheig$TreatConc)] <- "Control"
 
-#Load file with color of individuals (which group based on clusters they belong to)
+#Vector of treatments
 treat <- sort(unique(survheig$TreatConc))
 
+###~~~
 #Matrix summarizing effect of growth regulators on rooting
-survheigTreat <- matrix(ncol=7, nrow=15)
-colnames(survheigTreat) <- c("Cluster", "N","Growth regulator", "Concentration (mg/l)", "Survival (%)", "Height (cm)", "Treatment")
+###~~~
+survheigTreat <- matrix(ncol=8, nrow=15)
+colnames(survheigTreat) <- c("Cluster", "N. ind.","N. shoot tips","Growth regulator", "Concentration (mg/l)", "Survival (%)", "Height (cm)", "Treatment")
 
 #Convert to dataframe
 survheigTreat <- as.data.frame(survheigTreat)
@@ -944,34 +1000,168 @@ for(i in 1:nrow(survheigTreat)){
   foo <- subset(survheig, survheig$TreatConc == survheigTreat$Treatment[i] & survheig$Cluster == survheigTreat$Cluster[i])
   
   if(nrow(foo) > 0){
-  #N
-  survheigTreat$N[i] <- nrow(foo)
-  #Survivial
-  ThreeWsurv <- table(foo$X5_w_survival)
-  survheigTreat$`Survival (%)`[i] <- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
-  #Mean plant height +/- sd
-  survheigTreat$`Height (cm)`[i] <- paste0(round(mean(foo$X5_w_height),2), "+/-", round(sd(foo$X5_w_height),2))  
+    #N. ind.
+    survheigTreat$`N. ind.`[i] <- length(unique(foo$SeedID))
+    #N. shoot tips
+    survheigTreat$`N. shoot tips`[i] <- nrow(foo)
+    #Survivial
+    ThreeWsurv <- table(foo$X5_w_survival)
+    survheigTreat$`Survival (%)`[i] <-   round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
+    #Mean plant height +/- sd
+    survheigTreat$`Height (cm)`[i] <- paste0(round(mean(foo$X5_w_height),2), "+/-", round(sd(foo$X5_w_height),2))  
   }
   
 }
 
+#Save to be included in manuscript
+#write.csv(survheigTreat, file='Survival_cluster_treatment_5w.csv')
 
 #Plot table
-knitr::kable(survheigTreat, row.names=F, caption = "Seedlings survival and heights sorted by rooting clusters and treatments.")
+knitr::kable(survheigTreat, row.names=F, caption = "Survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.")
+
+#Individual
+#seedID <- table(as.vector(x$SeedID))
+
+#boxplot(as.numeric(x$X5_w_height) ~ as.vector(x$SeedID), names = paste(names(seedID), as.vector(seedID), sep = "\n"), las=2, xlab = "", cex=.8)
+```
+
+## Statistical analyses
+
+Here, we will use ANOVAs followed by Tukey tests to test whether treatment or individual predicted survival of plantlets and also to test whether plantlet heights after 5-weeks of culture is predicted by the number of roots of the shoot tips.
+
+### Treatment or individual effect on plantlet survival
+
+These analyses are done on data in `survheig`, more specifically on `survheig$X5_w_survival` and extracting treatments from `survheig$Treatment` (which contains block, treatment and replicate information in one object).
+
+```{r}
+####~~~~
+#Infer treatment types recieved by plantles
+###~~~
+survheig$Treat <- paste(sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", c(2)), sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", c(3)), sep="_")
+survheig$Treat[grep("Control_", survheig$Treat)] <- "Control"
+
+###~~~
+#Turn survival into a binary data (sickly plantlets have a score of 0.5, but will be changed to 1)
+###~~~
+survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
+
+###~~~~
+#Define ANOVA model and run analysis
+###~~~
+anovaOUTsurv<- aov(X5_w_survival ~ Treat * SeedID, data = survheig)
+
+
+# Summary of ANOVA
+summary(anovaOUTsurv)
+
+# The lack of treatment effect is confirmed by this table showing that there is a 50/50 chance of survival across treatments
+table(survheig$X5_w_survival, survheig$Treat)
+```
+
+The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (p-value <= 0.001). When Tukey tests are conducted on individual data and with a p-value of 0.01, only one individual (`G2_b8_1`) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate). 
+
+```{r tukeysurv, echo=T, eval=T}
+###~~~
+#Tukey tests on significant variables
+###~~~
+
+# Vector with significant variables (only one here)
+significant_vars <- c("SeedID")
+
+# Run Tukey tests
+anovaOUTsurv_tukey <- TukeyHSD(anovaOUTsurv, significant_vars)
+
+# Save analysis
+saveRDS(anovaOUTsurv_tukey,"02_Processed_data/rds_tables/TukeySurv.rds")
+
+#Investigate individual effect (***)
+IndTukeySurv <- anovaOUTsurv_tukey$SeedID[which(as.numeric(anovaOUTsurv_tukey$SeedID[,4]) <= 0.01),]
+
+## This analysis shows that ind G2_b8_1 has significantly higher death rate than two other individuals
+print(IndTukeySurv)
+```
+
+### Effect of number of roots, individual or rooting clusters on plantlet heights
+
+Here, we will only work on alive plantlets (`survheig$X5_w_survival` == 1) and conduct an ANOVA followed by Tukey tests as follows:
+
+```{r anovaroot, echo=T, eval=T}
+###~~~
+#Subset surveigh to include only alive plantlets after 5 weeks
+###~~~
+
+#All plantlets surviving after 5 weeks of culture 
+subSurvHeigh <- subset(survheig, survheig$X5_w_survival != "0")
+
+###~~~
+#Fetch number of roots per shoot tip
+###~~~
+
+#Fetch no. roots of shoot tips in subSurvHeigh by querying MERGE
+MERGE$BlockTreatRep <- paste(MERGE$Block, MERGE$Treatment, MERGE$Replicate, sep="_")
+
+#Loop to get N roots
+subSurvHeigh$Root <- "NULL"
+for(i in 1:nrow(subSurvHeigh)){
+  tmp <- subset(MERGE, MERGE$IndGeno == subSurvHeigh$SeedID[i] & MERGE$BlockTreatRep == subSurvHeigh$Treatment[i])
+  subSurvHeigh$Root[i] <- tmp$Root
+}
+
+#subSurvHeigh <- subSurvHeigh[-which(subSurvHeigh$Root == 0),]
+###~~~
+#Define ANOVA model and run analysis
+###~~~
+#Since it seemed that treatment had an effect
+anovaOUTRoot <- aov(X5_w_height ~ Cluster * SeedID * Root, data = subSurvHeigh)
+
+
+# Summary of ANOVA
+summary(anovaOUTRoot)
 
 ```
 
-At individual level
+The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, `G2_b27_1` is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!  
 
-```{r echo=F, eval=F}
-x <- subset(survheigTreat, survheigTreat$TreatConc %in% c("IBA_05", "IBA_1") & survheig$Cluster == "blue" & survheig$X5_w_survival != "0")
+```{r tukeyheight, echo=T, eval=T}
+###~~~
+#Tukey tests on significant variables
+###~~~
+# Vector with significant variables (only one here)
+significant_vars <- c("SeedID", "Cluster")
 
-boxplot(as.numeric(x$X3_w_height) ~ as.vector(x$SeedID))
+# Run Tukey tests
+anovaOUTheight_tukey <- TukeyHSD(anovaOUTRoot, significant_vars)
 
-boxplot(as.numeric(x$X3_w_height) ~ as.vector(x$SeedID), names = paste(names(seedID), as.vector(seedID), sep = "\n"), las=2, xlab = "", cex=.8)
+# Save analysis
+saveRDS(anovaOUTheight_tukey,"02_Processed_data/rds_tables/TukeyHeight.rds")
 
-seedID <- table(as.vector(x$SeedID))
+###~~~
+#Investigate cluster effect (**)
+###~~~
+ClustTukeyHeight <- anovaOUTheight_tukey$Cluster[which(as.numeric(anovaOUTheight_tukey$Cluster[,4]) <= 0.01),]
 
+# What are the top cluster(s) (= most efficient at growing fast)?
+#ClusterTukeyHeightTop <- ClustTukeyHeight[which(ClustTukeyHeight[,1] > 0),]
+
+print(anovaOUTheight_tukey$Cluster)
+print("Blue is significantly outperforming pink!")
+
+###~~~
+#Investigate individual effect (***)
+###~~~
+IndTukeyHeight <- anovaOUTheight_tukey$SeedID[which(as.numeric(anovaOUTheight_tukey$SeedID[,4]) <= 0.01),]
+
+# What are the top performers (= most efficient at growing fast)?
+IndTukeyHeightTop <- IndTukeyHeight[which(IndTukeyHeight[,1] > 0),]
+
+# Extract best performing ind (first in rownames of comparison)
+P1growth <- sapply(strsplit(rownames(IndTukeyHeightTop), split='-'), "[[",1)
+
+# Percentage of individuals that are outperformed by P1
+TopIndgrowth <- 100*(sort(table(P1growth), decreasing=T)/length(unique(subSurvHeigh$SeedID)))
+
+## This analysis shows that G2_b27_1 grows significantly faster than 14.28% of the individuals in this experiment
+print(TopIndgrowth)
 ```
 
 <div id="refs"></div>
