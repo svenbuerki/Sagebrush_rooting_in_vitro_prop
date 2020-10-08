@@ -2216,10 +2216,6 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>#Individual
-#seedID &lt;- table(as.vector(x$SeedID))
-
-#boxplot(as.numeric(x$X5_w_height) ~ as.vector(x$SeedID), names = paste(names(seedID), as.vector(seedID), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, cex=.8)</code></pre>
 </div>
 </div>
 <div id="statistical-analyses" class="section level2">
@@ -2373,6 +2369,22 @@ TopIndgrowth &lt;- 100*(sort(table(P1growth), decreasing=T)/length(unique(subSur
 print(TopIndgrowth)</code></pre>
 <pre><code>## G2_b27_1 
 ## 13.88889</code></pre>
+</div>
+<div id="boxplot-of-height-for-individuals-in-blue-rooting-cluster" class="section level3">
+<h3><span class="header-section-number">6.2.3</span> Boxplot of height for individuals in blue rooting cluster</h3>
+<pre class="r"><code>###~~~
+#Subset to only include from blue rooting cluster
+###~~~
+blueHeight &lt;- subset(subSurvHeigh, subSurvHeigh$Cluster == &#39;blue&#39;)
+
+#Individual
+seedID &lt;- table(as.vector(blueHeight$SeedID))
+
+# Create a vector named &quot;new_order&quot; containing the desired order to display individuals (smaller to taller)
+new_order &lt;- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(blueHeight$X5_w_height), median , na.rm=T))
+
+boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0(&quot;(n: &quot;, as.vector(seedID), &quot;)&quot;), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, ylab = &quot;Plantlet height (cm)&quot;, cex=.8)</code></pre>
+<p><img src="Analyses_rooting_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 <div id="refs">
 
 </div>

@@ -1019,10 +1019,6 @@ for(i in 1:nrow(survheigTreat)){
 #Plot table
 knitr::kable(survheigTreat, row.names=F, caption = "Survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.")
 
-#Individual
-#seedID <- table(as.vector(x$SeedID))
-
-#boxplot(as.numeric(x$X5_w_height) ~ as.vector(x$SeedID), names = paste(names(seedID), as.vector(seedID), sep = "\n"), las=2, xlab = "", cex=.8)
 ```
 
 ## Statistical analyses
@@ -1162,6 +1158,25 @@ TopIndgrowth <- 100*(sort(table(P1growth), decreasing=T)/length(unique(subSurvHe
 
 ## This analysis shows that G2_b27_1 grows significantly faster than 14.28% of the individuals in this experiment
 print(TopIndgrowth)
+```
+
+
+### Boxplot of height for individuals in blue rooting cluster
+
+```{r}
+###~~~
+#Subset to only include from blue rooting cluster
+###~~~
+blueHeight <- subset(subSurvHeigh, subSurvHeigh$Cluster == 'blue')
+
+#Individual
+seedID <- table(as.vector(blueHeight$SeedID))
+
+# Create a vector named "new_order" containing the desired order to display individuals (smaller to taller)
+new_order <- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(blueHeight$X5_w_height), median , na.rm=T))
+
+boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0("(n: ", as.vector(seedID), ")"), sep = "\n"), las=2, xlab = "", ylab = "Plantlet height (cm)", cex=.8)
+
 ```
 
 <div id="refs"></div>
