@@ -5,6 +5,8 @@ navbar:
   left:
     - text: "Home"
       href: index.html
+    - text: "Protocols"
+      href: protocols.html
     - text: "Reproducible workflow"
       href: Analyses_rooting.html
     - text: "Map of sampling"

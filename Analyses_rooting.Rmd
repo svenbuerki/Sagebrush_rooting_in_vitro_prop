@@ -1023,9 +1023,9 @@ knitr::kable(survheigTreat, row.names=F, caption = "Survival and plantlets heigh
 
 ## Statistical analyses
 
-Here, we will use ANOVAs followed by Tukey tests to test whether treatment or individual predicted survival of plantlets and also to test whether plantlet heights after 5-weeks of culture is predicted by the number of roots of the shoot tips.
+Here, we will use ANOVAs followed by Tukey tests to test whether treatment, individual, rooting cluster or number of roots per shoot tip predicted survival and heights of plantlets after 5-weeks of culture.
 
-### Treatment or individual effect on plantlet survival
+### Treatment, individual, cluster effects on plantlet survival
 
 These analyses are done on data in `survheig`, more specifically on `survheig$X5_w_survival` and extracting treatments from `survheig$Treatment` (which contains block, treatment and replicate information in one object).
 
@@ -1044,7 +1044,7 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 ###~~~~
 #Define ANOVA model and run analysis
 ###~~~
-anovaOUTsurv<- aov(X5_w_survival ~ Treat * SeedID, data = survheig)
+anovaOUTsurv<- aov(X5_w_survival ~ Treat * SeedID * Cluster, data = survheig)
 
 
 # Summary of ANOVA
@@ -1161,9 +1161,11 @@ print(TopIndgrowth)
 ```
 
 
-### Boxplot of height for individuals in blue rooting cluster
+## Boxplot of plantlet heights for individuals in blue rooting cluster
 
-```{r}
+Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` is the individual with the fastest growth in our experiment. 
+
+```{r boxplotheightblue, echo=T, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual."}
 ###~~~
 #Subset to only include from blue rooting cluster
 ###~~~

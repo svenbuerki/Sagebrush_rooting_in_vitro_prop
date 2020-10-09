@@ -1,7 +1,22 @@
 ---
 title: "Introduction"
+output:
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+link-citations: yes
+fontsize: 12pt
 ---
 
 # Overview of project
 
 This companion website to Martinez et al. provides the reproducible workflow integrating data, code, methods and results associated to this study aiming at developing an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research.
+
+The [data](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop), [protocols](protocols.html) and [reproducible workflow](Analyses_rooting.html) are available on this website. A map with locations where seeds from mother plants were collected by our colleagues at the US Forest Service is available [here](location_pop.html). 
+
+# Meet the team
+
+- Peggy Martinez: 
+- Rachael Barron:
+- Marcelo Serpe:
+- Sven Buerki:

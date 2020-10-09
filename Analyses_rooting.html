@@ -361,6 +361,9 @@ div.tocify {
   <a href="index.html">Home</a>
 </li>
 <li>
+  <a href="protocols.html">Protocols</a>
+</li>
+<li>
   <a href="Analyses_rooting.html">Reproducible workflow</a>
 </li>
 <li>
@@ -2220,9 +2223,9 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 </div>
 <div id="statistical-analyses" class="section level2">
 <h2><span class="header-section-number">6.2</span> Statistical analyses</h2>
-<p>Here, we will use ANOVAs followed by Tukey tests to test whether treatment or individual predicted survival of plantlets and also to test whether plantlet heights after 5-weeks of culture is predicted by the number of roots of the shoot tips.</p>
-<div id="treatment-or-individual-effect-on-plantlet-survival" class="section level3">
-<h3><span class="header-section-number">6.2.1</span> Treatment or individual effect on plantlet survival</h3>
+<p>Here, we will use ANOVAs followed by Tukey tests to test whether treatment, individual, rooting cluster or number of roots per shoot tip predicted survival and heights of plantlets after 5-weeks of culture.</p>
+<div id="treatment-individual-cluster-effects-on-plantlet-survival" class="section level3">
+<h3><span class="header-section-number">6.2.1</span> Treatment, individual, cluster effects on plantlet survival</h3>
 <p>These analyses are done on data in <code>survheig</code>, more specifically on <code>survheig$X5_w_survival</code> and extracting treatments from <code>survheig$Treatment</code> (which contains block, treatment and replicate information in one object).</p>
 <pre class="r"><code>####~~~~
 #Infer treatment types recieved by plantles
@@ -2238,18 +2241,19 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] &lt;- 1
 ###~~~~
 #Define ANOVA model and run analysis
 ###~~~
-anovaOUTsurv&lt;- aov(X5_w_survival ~ Treat * SeedID, data = survheig)
+anovaOUTsurv&lt;- aov(X5_w_survival ~ Treat * SeedID * Cluster, data = survheig)
 
 
 # Summary of ANOVA
 summary(anovaOUTsurv)</code></pre>
 <pre><code>##               Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Treat          4  0.935  0.2337   1.284   0.2794    
-## SeedID        41 19.913  0.4857   2.670 1.35e-05 ***
-## Treat:SeedID  96 23.238  0.2421   1.331   0.0645 .  
-## Residuals    131 23.833  0.1819                     
+## Treat          4  1.124  0.2811   1.563   0.1881    
+## SeedID        40 18.855  0.4714   2.622 2.43e-05 ***
+## Treat:SeedID  94 23.233  0.2472   1.375   0.0475 *  
+## Residuals    127 22.833  0.1798                     
 ## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 7 observations deleted due to missingness</code></pre>
 <pre class="r"><code># The lack of treatment effect is confirmed by this table showing that there is a 50/50 chance of survival across treatments
 table(survheig$X5_w_survival, survheig$Treat)</code></pre>
 <pre><code>##    
@@ -2370,8 +2374,10 @@ print(TopIndgrowth)</code></pre>
 <pre><code>## G2_b27_1 
 ## 13.88889</code></pre>
 </div>
-<div id="boxplot-of-height-for-individuals-in-blue-rooting-cluster" class="section level3">
-<h3><span class="header-section-number">6.2.3</span> Boxplot of height for individuals in blue rooting cluster</h3>
+</div>
+<div id="boxplot-of-plantlet-heights-for-individuals-in-blue-rooting-cluster" class="section level2">
+<h2><span class="header-section-number">6.3</span> Boxplot of plantlet heights for individuals in blue rooting cluster</h2>
+<p>Figure <a href="#fig:boxplotheightblue">6.1</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> is the individual with the fastest growth in our experiment.</p>
 <pre class="r"><code>###~~~
 #Subset to only include from blue rooting cluster
 ###~~~
@@ -2384,10 +2390,14 @@ seedID &lt;- table(as.vector(blueHeight$SeedID))
 new_order &lt;- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(blueHeight$X5_w_height), median , na.rm=T))
 
 boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0(&quot;(n: &quot;, as.vector(seedID), &quot;)&quot;), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, ylab = &quot;Plantlet height (cm)&quot;, cex=.8)</code></pre>
-<p><img src="Analyses_rooting_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<div class="figure"><span id="fig:boxplotheightblue"></span>
+<img src="Analyses_rooting_files/figure-html/boxplotheightblue-1.png" alt="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual." width="672" />
+<p class="caption">
+Figure 6.1: Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual.
+</p>
+</div>
 <div id="refs">
 
-</div>
 </div>
 </div>
 </div>
