@@ -13,6 +13,6 @@ navbar:
       href: location_pop.html
     - text: "How to cite"
       href: citation.html
-    - text: "Funding"
+    - text: "Acknowledgements"
       href: funding.html
 

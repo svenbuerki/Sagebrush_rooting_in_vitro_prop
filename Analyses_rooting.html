@@ -373,7 +373,7 @@ div.tocify {
   <a href="citation.html">How to cite</a>
 </li>
 <li>
-  <a href="funding.html">Funding</a>
+  <a href="funding.html">Acknowledgements</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -937,12 +937,14 @@ knitr::kable(treatcomp, caption = &quot;Results of Tukey tests comparing treatme
 <pre class="r"><code>###~~~
 #Boxplot comparing rooting per treatment
 ###~~~
-boxplot(MERGE$Root ~ MERGE$Treatment, xlab = &quot;Treatment&quot;, ylab = &quot;Number of roots per tip&quot;, frame = &quot;none&quot;, ylim=c(0,12.5))
+
+# Draw boxplot
+boxplot(MERGE$Root ~ MERGE$Treatment, xlab = &quot;Treatment&quot;, ylab = &quot;Number of roots per shoot tip&quot;, ylim=c(0,12.5), names = c(&quot;Control&quot;, &quot;IBA 0.5 mg/l&quot;, &quot;IBA 1 mg/l&quot;, &quot;NAA 0.5 mg/l&quot;, &quot;NAA 1 mg/l&quot;))
 
 # Add ranking based on Tukey tests
 text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;a&quot;,&quot;a&quot;,&#39;b&#39;,&#39;b&#39;))</code></pre>
 <div class="figure"><span id="fig:boxplot1"></span>
-<img src="03_Figures_report/Fig_1_Rooting_results.png" alt="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details)." width="100%" />
+<img src="Analyses_rooting_files/figure-html/boxplot1-1.png" alt="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details)." width="100%" />
 <p class="caption">
 Figure 5.1: Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details).
 </p>
@@ -2377,7 +2379,7 @@ print(TopIndgrowth)</code></pre>
 </div>
 <div id="boxplot-of-plantlet-heights-for-individuals-in-blue-rooting-cluster" class="section level2">
 <h2><span class="header-section-number">6.3</span> Boxplot of plantlet heights for individuals in blue rooting cluster</h2>
-<p>Figure <a href="#fig:boxplotheightblue">6.1</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> is the individual with the fastest growth in our experiment.</p>
+<p>Figure <a href="#fig:boxplotheightblue">6.1</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> among the top three individuals with the fastest growth in our experiment (with <code>G2_b7_1</code> being the fastest grower). The top three individuals identified by the rooting analysis are also shown on the boxplot.</p>
 <pre class="r"><code>###~~~
 #Subset to only include from blue rooting cluster
 ###~~~
@@ -2389,11 +2391,16 @@ seedID &lt;- table(as.vector(blueHeight$SeedID))
 # Create a vector named &quot;new_order&quot; containing the desired order to display individuals (smaller to taller)
 new_order &lt;- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(blueHeight$X5_w_height), median , na.rm=T))
 
-boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0(&quot;(n: &quot;, as.vector(seedID), &quot;)&quot;), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, ylab = &quot;Plantlet height (cm)&quot;, cex=.8)</code></pre>
+# Draw boxplot
+boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0(&quot;(n: &quot;, as.vector(seedID), &quot;)&quot;), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, ylab = &quot;Plantlet height (cm)&quot;, cex = .8)
+
+#Add P1, P2, P3
+top &lt;- which(names(seedID) %in% c(&quot;G2_b27_1&quot;, &quot;G2_b24_1&quot;, &quot;G2_b4_1&quot;))
+text(x=top, y=1.8, c(&quot;P1&quot;, &quot;P2&quot;, &quot;P3&quot;))</code></pre>
 <div class="figure"><span id="fig:boxplotheightblue"></span>
-<img src="Analyses_rooting_files/figure-html/boxplotheightblue-1.png" alt="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual." width="672" />
+<img src="Analyses_rooting_files/figure-html/boxplotheightblue-1.png" alt="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3)." width="672" />
 <p class="caption">
-Figure 6.1: Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual.
+Figure 6.1: Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3).
 </p>
 </div>
 <div id="refs">

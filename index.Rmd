@@ -8,15 +8,15 @@ link-citations: yes
 fontsize: 12pt
 ---
 
-# Overview of project
+# Overview of the project
 
-This companion website to Martinez et al. provides the reproducible workflow integrating data, code, methods and results associated to this study aiming at developing an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research.
+This companion website to Martinez et al. provides the workflow integrating [protocols](protocols.html), [data](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop) and [reproducible workflow](Analyses_rooting.html) associated to this research. In addition, a map with locations where seeds from mother plants were collected by our colleagues at the US Forest Service is available [here](location_pop.html). 
 
-The [data](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop), [protocols](protocols.html) and [reproducible workflow](Analyses_rooting.html) are available on this website. A map with locations where seeds from mother plants were collected by our colleagues at the US Forest Service is available [here](location_pop.html). 
+Overall, this study is aiming at developing an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research.
 
 # Meet the team
 
-- Peggy Martinez: 
-- Rachael Barron:
-- Marcelo Serpe:
-- Sven Buerki:
+- **Peggy Martinez, M.S.:** Laboratory Technician leading the sagebrush *in vitro* tissue program at Boise State University. 
+- **Rachael Barron, M.S.:** Contributes her expertise in *in vitro* tissue culture gained through her position at Simplot.
+- **Marcelo Serpe, Ph.D:** Professor at Boise State Univeristy.
+- **Sven Buerki, Ph.D** (sven.buerki@boisestate.edu): Assistant Professor at Boise State Univeristy and PI of this project funded by [GEM3](funding.html).

@@ -12,9 +12,9 @@ The wet-lab protocols used in this study for diploid *Artemisia tridentata* subs
 
 # Seed surface sterilization 
 
-![](./04_Protocols/P1_Seed_Surface_Sterilization_Artemisia_tridentata.pdf){width=100% height=400}
+![](./04_Protocols/P1_Seed_Surface_Sterilization_Artemisia_tridentata.pdf){width=100% height=600}
 
 # Media Preparation
 
-![](./04_Protocols/P2_Media_Preparation_Artemisia_tridentata.pdf){width=100% height=400}
+![](./04_Protocols/P2_Media_Preparation_Artemisia_tridentata.pdf){width=100% height=600}
 

@@ -397,17 +397,16 @@ Table \@ref(tab:tukeyroot2) allows ranking treatments as follows (from worst to 
 
 To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (`MERGE`). Figure \@ref(fig:boxplot1) supports ranking from the Tukey analysis (Table \@ref(tab:tukeyroot) and would suggest that `IBA_1` is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).
 
-```{r boxplot, echo=T, eval=F}
+```{r boxplot1, echo=T, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details).", out.width="100%"}
 ###~~~
 #Boxplot comparing rooting per treatment
 ###~~~
-boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per tip", frame = "none", ylim=c(0,12.5))
+
+# Draw boxplot
+boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per shoot tip", ylim=c(0,12.5), names = c("Control", "IBA 0.5 mg/l", "IBA 1 mg/l", "NAA 0.5 mg/l", "NAA 1 mg/l"))
 
 # Add ranking based on Tukey tests
 text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","a","a",'b','b'))
-```
-```{r boxplot1, echo=F, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details).", out.width="100%"}
-knitr::include_graphics("03_Figures_report/Fig_1_Rooting_results.png")
 ```
 
 #### Investigate individual effect on rooting data
@@ -1163,9 +1162,9 @@ print(TopIndgrowth)
 
 ## Boxplot of plantlet heights for individuals in blue rooting cluster
 
-Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` is the individual with the fastest growth in our experiment. 
+Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` among the top three individuals with the fastest growth in our experiment (with `G2_b7_1` being the fastest grower). The top three individuals identified by the rooting analysis are also shown on the boxplot.
 
-```{r boxplotheightblue, echo=T, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual."}
+```{r boxplotheightblue, echo=T, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3)."}
 ###~~~
 #Subset to only include from blue rooting cluster
 ###~~~
@@ -1177,7 +1176,12 @@ seedID <- table(as.vector(blueHeight$SeedID))
 # Create a vector named "new_order" containing the desired order to display individuals (smaller to taller)
 new_order <- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(blueHeight$X5_w_height), median , na.rm=T))
 
-boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0("(n: ", as.vector(seedID), ")"), sep = "\n"), las=2, xlab = "", ylab = "Plantlet height (cm)", cex=.8)
+# Draw boxplot
+boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0("(n: ", as.vector(seedID), ")"), sep = "\n"), las=2, xlab = "", ylab = "Plantlet height (cm)", cex = .8)
+
+#Add P1, P2, P3
+top <- which(names(seedID) %in% c("G2_b27_1", "G2_b24_1", "G2_b4_1"))
+text(x=top, y=1.8, c("P1", "P2", "P3"))
 
 ```
 

@@ -1,5 +1,13 @@
 ---
-title: "Funding"
+title: "Acknowledgements"
 ---
 
+# Funding
+
 This research was made possible by the NSF Idaho EPSCoR Program and by the NSF under award number OIA-1757324.
+
+If you want to know more about the great research done by the GEM3 community visit this [website](https://www.idahogem3.org).
+
+# Acknowledgements
+
+The authors are grateful to the members of the GEM3 project, especially Jennifer Forbey, Steve Novak, Stephanie Galla, Anthony Melton, Michael Wojahn and Denise Pfeifer at Boise State University, Andy Kliskey and Rick Schumaker at NSF Idaho EPSCoR and Bryce Richardson at US Forest Service for their support and comment on earlier versions of the manuscript. We are also especially grateful to Bryce Richardson because he supplied the seeds at the basis of this experiment and Stephanie Galla for support in generating the photographic plates. 
