@@ -8,7 +8,11 @@ link-citations: yes
 fontsize: 12pt
 ---
 
-# Overview of the project
+# Project summary
+
+Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*) is the keystone species of the sagebrush steppe, a widespread ecosystem of western North America threatened by climate change. This study aims at developing an *in vitro* method of propagation for this taxon using growth regulators to support genome sequencing and genotype-by-environment research underpinning drought research. Seedlings were generated from two diploid mother plants (2n=2x=18) collected in environments reflecting contrasting precipitation regimes. Effects of IBA and NAA (at different concentrations) on rooting of shoot tips were compared to a control treatment based on 45 individuals. Number of roots per shoot tip were quantified after 15 days and used to perform statistical (ANOVA) and clustering analyses. Rooted shoot tips were transferred into growing media to assess whether plantlets can be maintained *in vitro*. Results suggested that A. tridentata is an out-bred species as shown by the significant individual effect on rooting, survival and growth responses. IBA has been shown to significantly promote rooting of shoot tips, especially in the case of the top three performers identified by ANOVA analyses. These individuals have high survival and growth rates, making them suitable candidates for generating biomass for genome sequencing and producing clones for genotype-by-environment research.
+
+# Purpose of this website
 
 This companion website to Martinez et al. provides the workflow integrating [protocols](protocols.html), [data](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop) and [reproducible workflow](Analyses_rooting.html) associated to this research. In addition, a map with locations where seeds from mother plants were collected by our colleagues at the US Forest Service is available [here](location_pop.html). 
 
@@ -16,7 +20,7 @@ Overall, this study is aiming at developing an *in vitro* method of propagation 
 
 # Meet the team
 
-- **Peggy Martinez, M.S.:** Laboratory Technician leading the sagebrush *in vitro* tissue program at Boise State University. 
-- **Rachael Barron, M.S.:** Contributes her expertise in *in vitro* tissue culture gained through her position at Simplot.
-- **Marcelo Serpe, Ph.D:** Professor at Boise State Univeristy.
-- **Sven Buerki, Ph.D** (sven.buerki@boisestate.edu): Assistant Professor at Boise State Univeristy and PI of this project funded by [GEM3](funding.html).
+- **Peggy Martinez, M.S.** (peggymartinez@boisestate.edu):Laboratory Technician leading the sagebrush *in vitro*  culture program at Boise State University. 
+- **Rachael Barron, M.S.** (rachael.barron@simplot.com): Associate Scientist at Simplot who has contributed her expertise on *in vitro* culture to this project.
+- **Marcelo Serpe, Ph.D:** Professor at Boise State University.
+- **Sven Buerki, Ph.D** (sven.buerki@boisestate.edu): Assistant Professor at Boise State University and PI of this project funded by [GEM3](funding.html).
