@@ -274,7 +274,7 @@ for(i in 1:nrow(CallusStatbyTreat)){
 
 
 #Plot table
-knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.")
+knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates (+/- standard deviation).")
 ```
 
 
@@ -306,7 +306,7 @@ for(i in 1:nrow(RootingStatbyTreat)){
 
 
 #Plot table
-knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
+knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates +/- standard deviation; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
 ```
 
 # Step 3: Comparative analyses on tissue culture data
@@ -551,7 +551,7 @@ for(i in 1:nrow(RootingStatbyTreatC)){
 
 
 #Plot table
-knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates; Av. No. of roots: mean +/- standard deviation.")
+knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.")
 ```
 
 This will be investigated by looking at top performer individuals identified by i) ANOVA analyses and ii) clustering analysis.
@@ -918,7 +918,7 @@ survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd
 
 
 # Plot table
-knitr::kable(survheigStat, row.names=T, caption = "Survival and plantlets heights at 3 and 5 weeks.")
+knitr::kable(survheigStat, row.names=T, caption = "Survival and plantlets heights at 3 and 5 weeks (+/- standard deviations).")
 ```
 
 ### Survival and plantlets height sorted by rooting clusters
