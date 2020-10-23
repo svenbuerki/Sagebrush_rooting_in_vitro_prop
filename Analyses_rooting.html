@@ -638,45 +638,105 @@ knitr::kable(samp_mat, caption = &quot;Summary of sampling at the basis of sageb
 <div id="step-2-preliminary-analyses-on-the-effect-of-growth-regulators-on-rooting-and-calli-development-on-shoot-tips" class="section level1">
 <h1><span class="header-section-number">4</span> Step 2: Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips</h1>
 <p>Preliminary data summarizing results of our experiments are provided here to assess the effect of growth regulators on <em>in vitro</em> rooting of <em>Artemisia tridentata</em>. During the course of the experiment, calli developed on a large proportion of shoot tips, which was unexpected based on preliminary data. We are therefore summarizing these data here by treatment and will devote a portion of the analyses to investigate whether callus development was associated to treatments and whether those inhibited or promoted rooting.</p>
-<div id="effect-of-growth-regulators-on-in-vitro-rooting-of-artemisia-tridentata" class="section level2">
-<h2><span class="header-section-number">4.1</span> Effect of growth regulators on <em>in vitro</em> rooting of <em>Artemisia tridentata</em></h2>
-<p>The effect of growth regulators is provided in Table <a href="#tab:growthbyregulator">4.1</a> and compared to the control treatment (= no growth regulator). These data show a very high level of variation in rooting (see column <code>Av. No. roots</code>). We are hypothesizing that this trend is caused by an individual effect. To test this hypothesis we will conduct comparative analyses (see <strong>Step 4</strong>) to sort individuals based on their rooting abilities. Finally, the effect of growth regulators on <em>in vitro</em> rooting will be compared within each cluster.</p>
-<div id="code-to-generate-table-reftabgrowthbyregulator" class="section level3">
-<h3><span class="header-section-number">4.1.1</span> Code to generate Table <a href="#tab:growthbyregulator">4.1</a></h3>
-<pre class="r"><code># Matrix summarizing effect of growth regulators on rooting
-RootingStatbyTreat &lt;- matrix(ncol = 4, nrow = 5)
-colnames(RootingStatbyTreat) &lt;- c(&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, 
-    &quot;Response (%)&quot;, &quot;Av. No. of roots&quot;)
-rownames(RootingStatbyTreat) &lt;- sort(unique(MERGE$Treatment))
+<div id="effect-of-growth-regulators-on-in-vitro-callus-development-in-artemisia-tridentata" class="section level2">
+<h2><span class="header-section-number">4.1</span> Effect of growth regulators on <em>in vitro</em> callus development in <em>Artemisia tridentata</em></h2>
+<p>The effect of growth regulators on calli development is provided in Table <a href="#tab:growthbyregulatorcallus">4.1</a> and compared to the control treatment (= no growth regulator). These data show contrasting calli development between the control and treatments including growth hormones. Control shoot tips had limited calli development, whereas responses for those undergoing treatments were very high (&gt;70%; Table <a href="#tab:growthbyregulatorcallus">4.1</a>).</p>
+<div id="code-to-generate-table-reftabgrowthbyregulatorcallus" class="section level3">
+<h3><span class="header-section-number">4.1.1</span> Code to generate Table <a href="#tab:growthbyregulatorcallus">4.1</a></h3>
+<pre class="r"><code>#Matrix summarizing effect of growth regulators on rooting
+CallusStatbyTreat &lt;- matrix(ncol=3, nrow=5)
+colnames(CallusStatbyTreat) &lt;- c(&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, &quot;Response (%)&quot;)
+rownames(CallusStatbyTreat) &lt;- sort(unique(MERGE$Treatment))
 
-# Convert to dataframe
-RootingStatbyTreat &lt;- as.data.frame(RootingStatbyTreat)
+#Convert to dataframe
+CallusStatbyTreat &lt;- as.data.frame(CallusStatbyTreat)
 
-# Populate matrix
-RootingStatbyTreat$`Growth regulator` &lt;- sapply(strsplit(rownames(RootingStatbyTreat), 
-    split = &quot;_&quot;), &quot;[[&quot;, 1)
-RootingStatbyTreat$`Concentration (mg/l)` &lt;- c(&quot;-&quot;, sapply(strsplit(rownames(RootingStatbyTreat)[2:nrow(RootingStatbyTreat)], 
-    split = &quot;_&quot;), &quot;[[&quot;, 2))
+#Populate matrix
+CallusStatbyTreat$`Growth regulator` &lt;- sapply(strsplit(rownames(CallusStatbyTreat), split=&quot;_&quot;),&quot;[[&quot;,1)
+CallusStatbyTreat$`Concentration (mg/l)` &lt;- c(&quot;-&quot;, sapply(strsplit(rownames(CallusStatbyTreat)[2:nrow(CallusStatbyTreat)], split=&quot;_&quot;),&quot;[[&quot;,2))
 
-# Infer Response and mean no roots
-for (i in 1:nrow(RootingStatbyTreat)) {
-    foo &lt;- subset(MERGE, MERGE$Treatment == rownames(RootingStatbyTreat)[i])
-    RootingStatbyTreat$`Response (%)`[i] &lt;- round(100 * (mean(foo$RootBin)), 
-        2)
-    RootingStatbyTreat$`Av. No. of roots`[i] &lt;- paste(round(mean(foo$Root), 
-        2), &quot;+/-&quot;, round(sd(foo$Root), 2), sep = &quot; &quot;)
+#Infer Response and mean no roots
+for(i in 1:nrow(CallusStatbyTreat)){
+  foo &lt;- subset(MERGE, MERGE$Treatment == rownames(CallusStatbyTreat)[i])
+  CallusStatbyTreat$`Response (%)`[i] &lt;- paste(round(100*mean(foo$Callus),2), &quot;+/-&quot;, round(sd(foo$Callus),2), sep = &quot; &quot;) 
 }
 
 
-# Plot table
-knitr::kable(RootingStatbyTreat, row.names = F, caption = &quot;Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.&quot;)</code></pre>
+#Plot table
+knitr::kable(CallusStatbyTreat, row.names=F, caption = &quot;Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.&quot;)</code></pre>
 <table>
-<caption><span id="tab:growthbyregulator">Table 4.1: </span>Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.</caption>
+<caption><span id="tab:growthbyregulatorcallus">Table 4.1: </span>Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.</caption>
 <thead>
 <tr class="header">
 <th align="left">Growth regulator</th>
 <th align="left">Concentration (mg/l)</th>
-<th align="right">Response (%)</th>
+<th align="left">Response (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Control</td>
+<td align="left">-</td>
+<td align="left">2.96 +/- 0.17</td>
+</tr>
+<tr class="even">
+<td align="left">IBA</td>
+<td align="left">05</td>
+<td align="left">75.56 +/- 0.43</td>
+</tr>
+<tr class="odd">
+<td align="left">IBA</td>
+<td align="left">1</td>
+<td align="left">84.44 +/- 0.36</td>
+</tr>
+<tr class="even">
+<td align="left">NAA</td>
+<td align="left">05</td>
+<td align="left">81.48 +/- 0.39</td>
+</tr>
+<tr class="odd">
+<td align="left">NAA</td>
+<td align="left">1</td>
+<td align="left">87.41 +/- 0.33</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="effect-of-growth-regulators-on-in-vitro-rooting-of-artemisia-tridentata" class="section level2">
+<h2><span class="header-section-number">4.2</span> Effect of growth regulators on <em>in vitro</em> rooting of <em>Artemisia tridentata</em></h2>
+<p>The effect of growth regulators is provided in Table <a href="#tab:growthbyregulator">4.2</a> and compared to the control treatment (= no growth regulator). These data show a very high level of variation in rooting (see column <code>Av. No. roots</code>). We are hypothesizing that this trend is caused by an individual effect. To test this hypothesis we will conduct comparative analyses (see <strong>Step 4</strong>) to sort individuals based on their rooting abilities. Finally, the effect of growth regulators on <em>in vitro</em> rooting will be compared within each cluster.</p>
+<div id="code-to-generate-table-reftabgrowthbyregulator" class="section level3">
+<h3><span class="header-section-number">4.2.1</span> Code to generate Table <a href="#tab:growthbyregulator">4.2</a></h3>
+<pre class="r"><code>#Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreat &lt;- matrix(ncol=4, nrow=5)
+colnames(RootingStatbyTreat) &lt;- c(&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, &quot;Response (%)&quot;, &quot;Av. No. of roots&quot;)
+rownames(RootingStatbyTreat) &lt;- sort(unique(MERGE$Treatment))
+
+#Convert to dataframe
+RootingStatbyTreat &lt;- as.data.frame(RootingStatbyTreat)
+
+#Populate matrix
+RootingStatbyTreat$`Growth regulator` &lt;- sapply(strsplit(rownames(RootingStatbyTreat), split=&quot;_&quot;),&quot;[[&quot;,1)
+RootingStatbyTreat$`Concentration (mg/l)` &lt;- c(&quot;-&quot;, sapply(strsplit(rownames(RootingStatbyTreat)[2:nrow(RootingStatbyTreat)], split=&quot;_&quot;),&quot;[[&quot;,2))
+
+#Infer Response and mean no roots
+for(i in 1:nrow(RootingStatbyTreat)){
+  foo &lt;- subset(MERGE, MERGE$Treatment == rownames(RootingStatbyTreat)[i])
+  RootingStatbyTreat$`Response (%)`[i] &lt;- paste(round(100*(mean(foo$RootBin)),2), &quot;+/-&quot;, round(sd(foo$RootBin),2), sep=&quot; &quot;)
+  RootingStatbyTreat$`Av. No. of roots`[i] &lt;- paste(round(mean(foo$Root),2), &quot;+/-&quot;, round(sd(foo$Root),2), sep=&quot; &quot;)
+}
+
+
+#Plot table
+knitr::kable(RootingStatbyTreat, row.names=F, caption = &quot;Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.&quot;)</code></pre>
+<table>
+<caption><span id="tab:growthbyregulator">Table 4.2: </span>Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.</caption>
+<thead>
+<tr class="header">
+<th align="left">Growth regulator</th>
+<th align="left">Concentration (mg/l)</th>
+<th align="left">Response (%)</th>
 <th align="left">Av. No. of roots</th>
 </tr>
 </thead>
@@ -684,101 +744,32 @@ knitr::kable(RootingStatbyTreat, row.names = F, caption = &quot;Effect of growth
 <tr class="odd">
 <td align="left">Control</td>
 <td align="left">-</td>
-<td align="right">8.89</td>
+<td align="left">8.89 +/- 0.29</td>
 <td align="left">0.18 +/- 0.69</td>
 </tr>
 <tr class="even">
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">47.41</td>
+<td align="left">47.41 +/- 0.5</td>
 <td align="left">1.37 +/- 1.95</td>
 </tr>
 <tr class="odd">
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">60.00</td>
+<td align="left">60 +/- 0.49</td>
 <td align="left">1.87 +/- 2.59</td>
 </tr>
 <tr class="even">
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">40.74</td>
+<td align="left">40.74 +/- 0.49</td>
 <td align="left">0.79 +/- 1.37</td>
 </tr>
 <tr class="odd">
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">40.00</td>
+<td align="left">40 +/- 0.49</td>
 <td align="left">1.06 +/- 1.84</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="effect-of-growth-regulators-on-in-vitro-callus-development-in-artemisia-tridentata" class="section level2">
-<h2><span class="header-section-number">4.2</span> Effect of growth regulators on <em>in vitro</em> callus development in <em>Artemisia tridentata</em></h2>
-<p>The effect of growth regulators on calli development is provided in Table <a href="#tab:growthbyregulatorcallus">4.2</a> and compared to the control treatment (= no growth regulator). These data show contrasting calli development between the control and treatments including growth hormones. Control shoot tips had limited calli development, whereas responses for those undergoing treatments were very high (&gt;70%; Table <a href="#tab:growthbyregulatorcallus">4.2</a>).</p>
-<div id="code-to-generate-table-reftabgrowthbyregulatorcallus" class="section level3">
-<h3><span class="header-section-number">4.2.1</span> Code to generate Table <a href="#tab:growthbyregulatorcallus">4.2</a></h3>
-<pre class="r"><code># Matrix summarizing effect of growth regulators on rooting
-CallusStatbyTreat &lt;- matrix(ncol = 3, nrow = 5)
-colnames(CallusStatbyTreat) &lt;- c(&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, 
-    &quot;Response (%)&quot;)
-rownames(CallusStatbyTreat) &lt;- sort(unique(MERGE$Treatment))
-
-# Convert to dataframe
-CallusStatbyTreat &lt;- as.data.frame(CallusStatbyTreat)
-
-# Populate matrix
-CallusStatbyTreat$`Growth regulator` &lt;- sapply(strsplit(rownames(CallusStatbyTreat), 
-    split = &quot;_&quot;), &quot;[[&quot;, 1)
-CallusStatbyTreat$`Concentration (mg/l)` &lt;- c(&quot;-&quot;, sapply(strsplit(rownames(CallusStatbyTreat)[2:nrow(CallusStatbyTreat)], 
-    split = &quot;_&quot;), &quot;[[&quot;, 2))
-
-# Infer Response and mean no roots
-for (i in 1:nrow(CallusStatbyTreat)) {
-    foo &lt;- subset(MERGE, MERGE$Treatment == rownames(CallusStatbyTreat)[i])
-    CallusStatbyTreat$`Response (%)`[i] &lt;- round(100 * mean(foo$Callus), 
-        2)
-}
-
-
-# Plot table
-knitr::kable(CallusStatbyTreat, row.names = F, caption = &quot;Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.&quot;)</code></pre>
-<table>
-<caption><span id="tab:growthbyregulatorcallus">Table 4.2: </span>Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.</caption>
-<thead>
-<tr class="header">
-<th align="left">Growth regulator</th>
-<th align="left">Concentration (mg/l)</th>
-<th align="right">Response (%)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Control</td>
-<td align="left">-</td>
-<td align="right">2.96</td>
-</tr>
-<tr class="even">
-<td align="left">IBA</td>
-<td align="left">05</td>
-<td align="right">75.56</td>
-</tr>
-<tr class="odd">
-<td align="left">IBA</td>
-<td align="left">1</td>
-<td align="right">84.44</td>
-</tr>
-<tr class="even">
-<td align="left">NAA</td>
-<td align="left">05</td>
-<td align="right">81.48</td>
-</tr>
-<tr class="odd">
-<td align="left">NAA</td>
-<td align="left">1</td>
-<td align="right">87.41</td>
 </tr>
 </tbody>
 </table>
@@ -1030,9 +1021,10 @@ mat_data &lt;- table(MERGE$IndGeno, MERGE$Root)
 colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
 
 # Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
-toAdd &lt;- which(rownames(mat_data) %in% names(TopInd))
-rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P1)&quot;, &quot; (P2)&quot;, &quot; (P3)&quot;))
+toAdd &lt;- which(rownames(mat_data) %in% rownames(TopInd))
+rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P2)&quot;, &quot; (P1)&quot;, &quot; (P3)&quot;))
 
+pdf(&quot;03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf&quot;)
 # Perform clustering/heatmap and draw plot
 heatmap.2(mat_data,
           cellnote = mat_data, # same data set for cell labels
@@ -1050,7 +1042,8 @@ heatmap.2(mat_data,
           key=F,
           keysize = 0.4,
           RowSideColors = as.vector(colInd$Group),
-          Colv=&quot;NA&quot;) # turn off column clustering</code></pre>
+          Colv=&quot;NA&quot;) # turn off column clustering
+dev.off()</code></pre>
 <div class="figure"><span id="fig:heatmap2"></span>
 <img src="03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.png" alt="Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed." width="100%" />
 <p class="caption">
@@ -1134,7 +1127,7 @@ RootingStatbyTreatC$Treatment &lt;- rep(treat, 3)
 #Infer Response and mean no roots
 for(i in 1:nrow(RootingStatbyTreatC)){
   foo &lt;- subset(MERGE, MERGE$Treatment == RootingStatbyTreatC$Treatment[i] &amp; MERGE$ClusterRoot == RootingStatbyTreatC$Cluster[i])
-  RootingStatbyTreatC$`Response (%)`[i] &lt;- round(100*(mean(foo$RootBin)),2)
+  RootingStatbyTreatC$`Response (%)`[i] &lt;- paste(round(100*(mean(foo$RootBin)),2), &quot;+/-&quot;, round(sd(foo$RootBin),2), sep= &quot; &quot;)
   RootingStatbyTreatC$`Av. No. of roots`[i] &lt;- paste(round(mean(foo$Root),2), &quot;+/-&quot;, round(sd(foo$Root),2), sep=&quot; &quot;)
 }
 
@@ -1148,7 +1141,7 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = &quot;Effect of g
 <th align="left">Cluster</th>
 <th align="left">Growth regulator</th>
 <th align="left">Concentration (mg/l)</th>
-<th align="right">Response (%)</th>
+<th align="left">Response (%)</th>
 <th align="left">Av. No. of roots</th>
 </tr>
 </thead>
@@ -1157,105 +1150,105 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = &quot;Effect of g
 <td align="left">black</td>
 <td align="left">Control</td>
 <td align="left">-</td>
-<td align="right">0.00</td>
+<td align="left">0 +/- 0</td>
 <td align="left">0 +/- 0</td>
 </tr>
 <tr class="even">
 <td align="left">black</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">11.11</td>
+<td align="left">11.11 +/- 0.32</td>
 <td align="left">0.22 +/- 0.74</td>
 </tr>
 <tr class="odd">
 <td align="left">black</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">20.00</td>
+<td align="left">20 +/- 0.4</td>
 <td align="left">0.44 +/- 1.27</td>
 </tr>
 <tr class="even">
 <td align="left">black</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">13.33</td>
+<td align="left">13.33 +/- 0.34</td>
 <td align="left">0.16 +/- 0.42</td>
 </tr>
 <tr class="odd">
 <td align="left">black</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">13.33</td>
+<td align="left">13.33 +/- 0.34</td>
 <td align="left">0.22 +/- 0.67</td>
 </tr>
 <tr class="even">
 <td align="left">blue</td>
 <td align="left">Control</td>
 <td align="left">-</td>
-<td align="right">30.77</td>
+<td align="left">30.77 +/- 0.47</td>
 <td align="left">0.62 +/- 1.18</td>
 </tr>
 <tr class="odd">
 <td align="left">blue</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">87.18</td>
+<td align="left">87.18 +/- 0.34</td>
 <td align="left">2.97 +/- 2.25</td>
 </tr>
 <tr class="even">
 <td align="left">blue</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">87.18</td>
+<td align="left">87.18 +/- 0.34</td>
 <td align="left">3.59 +/- 3.41</td>
 </tr>
 <tr class="odd">
 <td align="left">blue</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">74.36</td>
+<td align="left">74.36 +/- 0.44</td>
 <td align="left">1.74 +/- 1.96</td>
 </tr>
 <tr class="even">
 <td align="left">blue</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">66.67</td>
+<td align="left">66.67 +/- 0.48</td>
 <td align="left">2.28 +/- 2.46</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
 <td align="left">Control</td>
 <td align="left">-</td>
-<td align="right">0.00</td>
+<td align="left">0 +/- 0</td>
 <td align="left">0 +/- 0</td>
 </tr>
 <tr class="even">
 <td align="left">pink</td>
 <td align="left">IBA</td>
 <td align="left">05</td>
-<td align="right">49.02</td>
+<td align="left">49.02 +/- 0.5</td>
 <td align="left">1.16 +/- 1.6</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
 <td align="left">IBA</td>
 <td align="left">1</td>
-<td align="right">74.51</td>
+<td align="left">74.51 +/- 0.44</td>
 <td align="left">1.82 +/- 1.88</td>
 </tr>
 <tr class="even">
 <td align="left">pink</td>
 <td align="left">NAA</td>
 <td align="left">05</td>
-<td align="right">39.22</td>
+<td align="left">39.22 +/- 0.49</td>
 <td align="left">0.63 +/- 0.92</td>
 </tr>
 <tr class="odd">
 <td align="left">pink</td>
 <td align="left">NAA</td>
 <td align="left">1</td>
-<td align="right">43.14</td>
+<td align="left">43.14 +/- 0.5</td>
 <td align="left">0.86 +/- 1.48</td>
 </tr>
 </tbody>
@@ -1401,7 +1394,7 @@ knitr::kable(TopInd, caption = &quot;List of individual that are outperforming a
 </div>
 <div id="statistical-analyses-for-calli-data" class="section level2">
 <h2><span class="header-section-number">5.4</span> Statistical analyses for calli data</h2>
-<p>Table <a href="#tab:growthbyregulatorcallus">4.2</a> demonstrated that &gt;70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (&lt; 3%). This preliminary result strongly suggested that calli was induced by growth regulators (in addition to the age of plants resulting in production of endogenous auxin and cytokinin) and we will be testing this hypothesis using ANOVAs.</p>
+<p>Table <a href="#tab:growthbyregulatorcallus">4.1</a> demonstrated that &gt;70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (&lt; 3%). This preliminary result strongly suggested that calli was induced by growth regulators (in addition to the age of plants resulting in production of endogenous auxin and cytokinin) and we will be testing this hypothesis using ANOVAs.</p>
 <div id="anova-with-model-based-on-calli-data" class="section level3">
 <h3><span class="header-section-number">5.4.1</span> ANOVA with model based on calli data</h3>
 <p>The model is the same as with roots and the code is available below.</p>
@@ -1594,15 +1587,16 @@ my_palette &lt;- colorRampPalette(c(&quot;green&quot;, &quot;yellow&quot;, &quot
 mat_data &lt;- table(MERGE$IndGeno, MERGE$Callus)
 
 #Load file with color of individuals (which group based on clusters they belong to)
-colInd &lt;- read.csv(&quot;Individuals.csv&quot;)
+colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
 
 #Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
-toAdd &lt;- which(rownames(mat_data) %in% names(TopInd))
-rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P1)&quot;, &quot; (P2)&quot;, &quot; (P3)&quot;))
+toAdd &lt;- which(rownames(mat_data) %in% rownames(TopInd))
+rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P2)&quot;, &quot; (P1)&quot;, &quot; (P3)&quot;))
 
+pdf(&quot;03_Figures_report/Fig_3_Heatmap_compare_ind_callus.pdf&quot;)
 #Draw plot
 heatmap.2(mat_data,
-                 cellnote = mat_callus, # same data set for cell labels
+                 cellnote = mat_data, # same data set for cell labels
                  main = &quot;&quot;, # heat map title
                  notecol=&quot;black&quot;,      # change font color of cell labels to black
                  notecex = .8, # cex of numbers in cells
@@ -1618,7 +1612,8 @@ heatmap.2(mat_data,
                  key=F,
                  keysize = 0.4,
                  RowSideColors = as.vector(colInd$Group),
-                 Colv=&quot;NA&quot;)</code></pre>
+                 Colv=&quot;NA&quot;)
+dev.off()</code></pre>
 <div class="figure"><span id="fig:heatmapplot"></span>
 <img src="03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png" alt="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed." width="100%" />
 <p class="caption">
@@ -2396,7 +2391,7 @@ boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seed
 
 #Add P1, P2, P3
 top &lt;- which(names(seedID) %in% c(&quot;G2_b27_1&quot;, &quot;G2_b24_1&quot;, &quot;G2_b4_1&quot;))
-text(x=top, y=1.8, c(&quot;P1&quot;, &quot;P2&quot;, &quot;P3&quot;))</code></pre>
+text(x=top, y=1.8, c(&quot;P2&quot;, &quot;P1&quot;, &quot;P3&quot;))</code></pre>
 <div class="figure"><span id="fig:boxplotheightblue"></span>
 <img src="Analyses_rooting_files/figure-html/boxplotheightblue-1.png" alt="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3)." width="672" />
 <p class="caption">

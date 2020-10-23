@@ -247,37 +247,6 @@ knitr::kable(samp_mat, caption = "Summary of sampling at the basis of sagebrush 
 
 Preliminary data summarizing results of our experiments are provided here to assess the effect of growth regulators on *in vitro* rooting of *Artemisia tridentata*. During the course of the experiment, calli developed on a large proportion of shoot tips, which was unexpected based on preliminary data. We are therefore summarizing these data here by treatment and will devote a portion of the analyses to investigate whether callus development was associated to treatments and whether those inhibited or promoted rooting.
 
-## Effect of growth regulators on *in vitro* rooting of *Artemisia tridentata*
-
-The effect of growth regulators is provided in Table \@ref(tab:growthbyregulator) and compared to the control treatment (= no growth regulator). These data show a very high level of variation in rooting (see column `Av. No. roots`). We are hypothesizing that this trend is caused by an individual effect. To test this hypothesis we will conduct comparative analyses (see **Step 4**) to sort individuals based on their rooting abilities. Finally, the effect of growth regulators on *in vitro* rooting will be compared within each cluster.  
-
-### Code to generate Table \@ref(tab:growthbyregulator)
-
-```{r growthbyregulator, echo=T, eval=T}
-#Matrix summarizing effect of growth regulators on rooting
-RootingStatbyTreat <- matrix(ncol=4, nrow=5)
-colnames(RootingStatbyTreat) <- c("Growth regulator", "Concentration (mg/l)", "Response (%)", "Av. No. of roots")
-rownames(RootingStatbyTreat) <- sort(unique(MERGE$Treatment))
-
-#Convert to dataframe
-RootingStatbyTreat <- as.data.frame(RootingStatbyTreat)
-
-#Populate matrix
-RootingStatbyTreat$`Growth regulator` <- sapply(strsplit(rownames(RootingStatbyTreat), split="_"),"[[",1)
-RootingStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(RootingStatbyTreat)[2:nrow(RootingStatbyTreat)], split="_"),"[[",2))
-
-#Infer Response and mean no roots
-for(i in 1:nrow(RootingStatbyTreat)){
-  foo <- subset(MERGE, MERGE$Treatment == rownames(RootingStatbyTreat)[i])
-  RootingStatbyTreat$`Response (%)`[i] <- round(100*(mean(foo$RootBin)),2)
-  RootingStatbyTreat$`Av. No. of roots`[i] <- paste(round(mean(foo$Root),2), "+/-", round(sd(foo$Root),2), sep=" ")
-}
-
-
-#Plot table
-knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
-```
-
 ## Effect of growth regulators on *in vitro* callus development in *Artemisia tridentata*
 
 The effect of growth regulators on calli development is provided in Table \@ref(tab:growthbyregulatorcallus) and compared to the control treatment (= no growth regulator). These data show contrasting calli development between the control and treatments including growth hormones. Control shoot tips had limited calli development, whereas responses for those undergoing treatments were very high (>70%; Table \@ref(tab:growthbyregulatorcallus)).
@@ -300,7 +269,7 @@ CallusStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(Call
 #Infer Response and mean no roots
 for(i in 1:nrow(CallusStatbyTreat)){
   foo <- subset(MERGE, MERGE$Treatment == rownames(CallusStatbyTreat)[i])
-  CallusStatbyTreat$`Response (%)`[i] <- round(100*mean(foo$Callus),2)
+  CallusStatbyTreat$`Response (%)`[i] <- paste(round(100*mean(foo$Callus),2), "+/-", round(sd(foo$Callus),2), sep = " ") 
 }
 
 
@@ -308,6 +277,37 @@ for(i in 1:nrow(CallusStatbyTreat)){
 knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.")
 ```
 
+
+## Effect of growth regulators on *in vitro* rooting of *Artemisia tridentata*
+
+The effect of growth regulators is provided in Table \@ref(tab:growthbyregulator) and compared to the control treatment (= no growth regulator). These data show a very high level of variation in rooting (see column `Av. No. roots`). We are hypothesizing that this trend is caused by an individual effect. To test this hypothesis we will conduct comparative analyses (see **Step 4**) to sort individuals based on their rooting abilities. Finally, the effect of growth regulators on *in vitro* rooting will be compared within each cluster.  
+
+### Code to generate Table \@ref(tab:growthbyregulator)
+
+```{r growthbyregulator, echo=T, eval=T}
+#Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreat <- matrix(ncol=4, nrow=5)
+colnames(RootingStatbyTreat) <- c("Growth regulator", "Concentration (mg/l)", "Response (%)", "Av. No. of roots")
+rownames(RootingStatbyTreat) <- sort(unique(MERGE$Treatment))
+
+#Convert to dataframe
+RootingStatbyTreat <- as.data.frame(RootingStatbyTreat)
+
+#Populate matrix
+RootingStatbyTreat$`Growth regulator` <- sapply(strsplit(rownames(RootingStatbyTreat), split="_"),"[[",1)
+RootingStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(RootingStatbyTreat)[2:nrow(RootingStatbyTreat)], split="_"),"[[",2))
+
+#Infer Response and mean no roots
+for(i in 1:nrow(RootingStatbyTreat)){
+  foo <- subset(MERGE, MERGE$Treatment == rownames(RootingStatbyTreat)[i])
+  RootingStatbyTreat$`Response (%)`[i] <- paste(round(100*(mean(foo$RootBin)),2), "+/-", round(sd(foo$RootBin),2), sep=" ")
+  RootingStatbyTreat$`Av. No. of roots`[i] <- paste(round(mean(foo$Root),2), "+/-", round(sd(foo$Root),2), sep=" ")
+}
+
+
+#Plot table
+knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
+```
 
 # Step 3: Comparative analyses on tissue culture data
 
@@ -466,9 +466,10 @@ mat_data <- table(MERGE$IndGeno, MERGE$Root)
 colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 
 # Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
-toAdd <- which(rownames(mat_data) %in% names(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)", " (P3)"))
+toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
+rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P2)", " (P1)", " (P3)"))
 
+pdf("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf")
 # Perform clustering/heatmap and draw plot
 heatmap.2(mat_data,
           cellnote = mat_data, # same data set for cell labels
@@ -487,6 +488,7 @@ heatmap.2(mat_data,
           keysize = 0.4,
           RowSideColors = as.vector(colInd$Group),
           Colv="NA") # turn off column clustering
+dev.off()
 ```
 
 ```{r heatmap2, echo=F, eval=T, fig.cap="Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed.", out.width="100%"}
@@ -543,7 +545,7 @@ RootingStatbyTreatC$Treatment <- rep(treat, 3)
 #Infer Response and mean no roots
 for(i in 1:nrow(RootingStatbyTreatC)){
   foo <- subset(MERGE, MERGE$Treatment == RootingStatbyTreatC$Treatment[i] & MERGE$ClusterRoot == RootingStatbyTreatC$Cluster[i])
-  RootingStatbyTreatC$`Response (%)`[i] <- round(100*(mean(foo$RootBin)),2)
+  RootingStatbyTreatC$`Response (%)`[i] <- paste(round(100*(mean(foo$RootBin)),2), "+/-", round(sd(foo$RootBin),2), sep= " ")
   RootingStatbyTreatC$`Av. No. of roots`[i] <- paste(round(mean(foo$Root),2), "+/-", round(sd(foo$Root),2), sep=" ")
 }
 
@@ -765,15 +767,16 @@ my_palette <- colorRampPalette(c("green", "yellow", "red"))(n = 299)
 mat_data <- table(MERGE$IndGeno, MERGE$Callus)
 
 #Load file with color of individuals (which group based on clusters they belong to)
-colInd <- read.csv("Individuals.csv")
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 
 #Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
-toAdd <- which(rownames(mat_data) %in% names(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)", " (P3)"))
+toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
+rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P2)", " (P1)", " (P3)"))
 
+pdf("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.pdf")
 #Draw plot
 heatmap.2(mat_data,
-                 cellnote = mat_callus, # same data set for cell labels
+                 cellnote = mat_data, # same data set for cell labels
                  main = "", # heat map title
                  notecol="black",      # change font color of cell labels to black
                  notecex = .8, # cex of numbers in cells
@@ -790,6 +793,7 @@ heatmap.2(mat_data,
                  keysize = 0.4,
                  RowSideColors = as.vector(colInd$Group),
                  Colv="NA")
+dev.off()
 ```
 ```{r heatmapplot, echo=F, eval=T, fig.cap="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.", out.width="100%"}
 knitr::include_graphics("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png")
@@ -1181,7 +1185,7 @@ boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seed
 
 #Add P1, P2, P3
 top <- which(names(seedID) %in% c("G2_b27_1", "G2_b24_1", "G2_b4_1"))
-text(x=top, y=1.8, c("P1", "P2", "P3"))
+text(x=top, y=1.8, c("P2", "P1", "P3"))
 
 ```
 
