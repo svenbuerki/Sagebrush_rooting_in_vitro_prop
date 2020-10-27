@@ -1,6 +1,6 @@
 --- 
 title: 'Development of an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research'
-author: "Peggy Martinez, Rachael Barron, Marcelo Serpe, Sven Buerki"
+author: "Rachael Barron, Peggy Martinez, Marcelo Serpe, Sven Buerki"
 output:
   bookdown::html_document2: 
     toc: TRUE
@@ -51,7 +51,7 @@ opts_chunk$set(cache = 2, cache.path = "cache/")
 
 # Reproducible workflow: integrating code, data, methods and key outcomes
 
-This document is associated to Martinez et al. and provides the reproducible workflow integrating data, code, methods and results associated to this study. 
+This document is associated to Barron et al. and provides the reproducible workflow integrating data, code, methods and results associated to this study. 
 
 Citations of `R` packages required to conduct this research and produce this document are provided in [Appendix 1]. Version information about `R`, the operating system (OS) and attached or `R` loaded packages are available in [Appendix 2]. The data underpinning this study are deposited on [GitHub](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop). Appendices together with the data and R code presented in this document should allow reproducibility of this study.
 

@@ -28,7 +28,7 @@ Overall, this study is aiming at developing an *in vitro* method of propagation 
 
 # Meet the team
 
-- **Peggy Martinez, M.S.** (peggymartinez@boisestate.edu):Laboratory Technician leading the sagebrush *in vitro*  culture program at Boise State University. 
 - **Rachael Barron, M.S.** (rachael.barron@simplot.com): Associate Scientist at Simplot who has contributed her expertise on *in vitro* culture to this project.
+- **Peggy Martinez, M.S.** (peggymartinez@boisestate.edu):Laboratory Technician leading the sagebrush *in vitro*  culture program at Boise State University. 
 - **Marcelo Serpe, Ph.D:** Professor at Boise State University.
 - **Sven Buerki, Ph.D** (sven.buerki@boisestate.edu): Assistant Professor at Boise State University and PI of this project funded by [GEM3](funding.html).
