@@ -12,7 +12,7 @@
 <meta name="author" content="Rachael Barron, Peggy Martinez, Marcelo Serpe, Sven Buerki" />
 
 
-<title>Development of an in vitro method of propagation using growth regulators for Basin Big sagebrush (Artemisia tridentata subsp. tridentata: 2n=2x=18) to support genome sequencing and GxE research</title>
+<title>Development of an in vitro method of propagation using growth regulators for Basin Big sagebrush (Artemisia tridentata subsp. tridentata) to support genome sequencing and GxE research</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -387,7 +387,7 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Development of an <em>in vitro</em> method of propagation using growth regulators for Basin Big sagebrush (<em>Artemisia tridentata</em> subsp. <em>tridentata</em>: 2n=2x=18) to support genome sequencing and GxE research</h1>
+<h1 class="title toc-ignore">Development of an <em>in vitro</em> method of propagation using growth regulators for Basin Big sagebrush (<em>Artemisia tridentata</em> subsp. <em>tridentata</em>) to support genome sequencing and GxE research</h1>
 <h4 class="author">Rachael Barron, Peggy Martinez, Marcelo Serpe, Sven Buerki</h4>
 
 </div>
@@ -407,7 +407,7 @@ div.tocify {
 <li><strong>Step 2:</strong> Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips.</li>
 <li><strong>Step 3:</strong> Comparative analyses on tissue culture data. This was done following a two-tier approach:
 <ul>
-<li>Statistical analyses (test for normality and conduct ANOVAs and multiple pairwise-comparison tests with <em>p</em>-value &lt;= 0.01).</li>
+<li>Statistical analyses (test for normality and conduct parametric or non-parametric statistics and multiple pairwise-comparison tests with <em>p</em>-value &lt;= 0.01).</li>
 <li>Clustering analyses.</li>
 </ul></li>
 <li><strong>Step 4:</strong> <em>In vitro</em> growth of plantules.
@@ -824,7 +824,7 @@ N  &lt;- nrow(MERGE)
 p  &lt;- length(coef(M2))  
 sum(E2^2) / (N - p)</code></pre>
 <pre><code>## [1] 0.9629885</code></pre>
-<pre class="r"><code># Likelihood ratio test
+<pre class="r"><code># Likelihood ratio test (can&#39;t apply anova on zeroinfl models)
 lrtest(M1, M2)</code></pre>
 <pre><code>## Likelihood ratio test
 ## 
@@ -1189,8 +1189,8 @@ knitr::kable(TopInd, caption = &quot;List of individual that are outperforming a
 <p>The analyses reported in Table <a href="#tab:kruskalInd">5.2</a> demonstrate that only two individuals (G2_b27_1, G2_b7_1, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.</p>
 </div>
 </div>
-<div id="clustering-analysis-of-number-of-roots-per-shoot-tip" class="section level2">
-<h2><span class="header-section-number">5.2</span> Clustering analysis of number of roots per shoot tip</h2>
+<div id="clustering-analysis-on-rooting-data" class="section level2">
+<h2><span class="header-section-number">5.2</span> Clustering analysis on rooting data</h2>
 <p>A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using <code>Root</code> variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table <a href="#tab:tablegroups">5.3</a>) based on individual rooting performances (Figure <a href="#fig:heatmap2">5.3</a>):</p>
 <ul>
 <li>Black cluster: No to very little rooting.</li>
@@ -1444,7 +1444,7 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = &quot;Effect of g
 </tr>
 </tbody>
 </table>
-<p>This will be investigated by looking at top performer individuals identified by i) ANOVA analyses and ii) clustering analysis.</p>
+<p>This will be investigated by looking at top performer individuals identified by i) statistical analyses and ii) clustering analysis.</p>
 </div>
 </div>
 <div id="statistical-analyses-on-callus-data" class="section level2">
@@ -1659,8 +1659,9 @@ knitr::kable(signCalTreatInd, row.names=F, caption = &quot;Significant (p-value 
 </table>
 </div>
 </div>
-<div id="clustering-analysis-of-calli-data" class="section level3">
-<h3><span class="header-section-number">5.3.4</span> Clustering analysis of calli data</h3>
+</div>
+<div id="clustering-analysis-on-callus-data" class="section level2">
+<h2><span class="header-section-number">5.4</span> Clustering analysis on callus data</h2>
 <p>The code to produce the clustering analysis based on <code>Callus</code> data and associated heatmap is provided below and Figure <a href="#fig:heatmapplot">5.5</a> shows results of the analysis. Outcomes of this analysis are:</p>
 <ul>
 <li>Three clusters based on calli production:
@@ -1716,9 +1717,8 @@ dev.off()</code></pre>
 Figure 5.5: Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.
 </p>
 </div>
-</div>
 <div id="effect-of-growth-regulators-on-in-vitro-calli-production-in-artemisia-tridentata-sorted-by-rooting-clusters" class="section level3">
-<h3><span class="header-section-number">5.3.5</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h3>
+<h3><span class="header-section-number">5.4.1</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h3>
 <p>Table <a href="#tab:growthbyregulatorclustercallus">5.7</a> shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.3</a>).</p>
 <pre class="r"><code>###~~~
 #Effect of growth regulators on calli production sorted by rooting cluster
@@ -1878,8 +1878,8 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = &quot;Effect of
 </div>
 <div id="step-4-in-vitro-growth-of-plantlets" class="section level1">
 <h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> growth of plantlets</h1>
-<div id="sampling-and-preliminary-analysis-on-survival-and-plantlets-heights" class="section level2">
-<h2><span class="header-section-number">6.1</span> Sampling and preliminary analysis on survival and plantlets heights</h2>
+<div id="sampling-and-preliminary-analyses" class="section level2">
+<h2><span class="header-section-number">6.1</span> Sampling and preliminary analyses</h2>
 <p>Data on survival and plantlets heights are stored in <code>01_Raw_Data/Survival_height_clones.csv</code>. The code below provides statistics on the number of individual and shoot tips included in this experiment.</p>
 <pre class="r"><code>###~~~
 #Load data on survival and height
@@ -1930,8 +1930,8 @@ sort(table(survheig$SeedID), decreasing=T)</code></pre>
 ##        4        4        3        3        3        2        1        1 
 ## G2_b25_1 G2_b26_1 
 ##        1        1</code></pre>
-<div id="survival-and-plantlets-heights-at-3-and-5-weeks" class="section level3">
-<h3><span class="header-section-number">6.1.1</span> Survival and plantlets heights at 3 and 5 weeks</h3>
+<div id="survival-and-plantlets-heights" class="section level3">
+<h3><span class="header-section-number">6.1.1</span> Survival and plantlets heights</h3>
 <p>Results of the code provided below is summarized in Table <a href="#tab:surv">6.1</a>. After 5 weeks, a survival of 53.48% of the plantlets was observed. A significant increase of plantlets mortality has been recorded between weeks 3 and 5 and on average, plantlets did not growth significant (but see below for more details).</p>
 <pre class="r"><code>###~~~
 # Matrix to store data @ 3 and 5 weeks
@@ -1988,9 +1988,9 @@ knitr::kable(survheigStat, row.names=T, caption = &quot;Survival and plantlets h
 </tbody>
 </table>
 </div>
-<div id="survival-and-plantlets-height-sorted-by-rooting-clusters" class="section level3">
-<h3><span class="header-section-number">6.1.2</span> Survival and plantlets height sorted by rooting clusters</h3>
-<p>Table <a href="#survclust"><strong>??</strong></a> shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided.</p>
+<div id="survival-and-plantlets-heights-by-rooting-clusters" class="section level3">
+<h3><span class="header-section-number">6.1.2</span> Survival and plantlets heights by rooting clusters</h3>
+<p>Table <a href="#tab:survclust">6.2</a> shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided.</p>
 <pre class="r"><code>###
 #Create list of clusters
 ###
@@ -2085,8 +2085,8 @@ knitr::kable(clustSurvHeig, row.names=F, caption = &quot;Survival and plantlets 
 </tbody>
 </table>
 </div>
-<div id="survival-and-plantlets-height-at-5-weeks-sorted-by-rooting-clusters-and-treatments" class="section level3">
-<h3><span class="header-section-number">6.1.3</span> Survival and plantlets height at 5 weeks sorted by rooting clusters and treatments</h3>
+<div id="survival-and-plantlets-heights-by-rooting-clusters-and-treatments" class="section level3">
+<h3><span class="header-section-number">6.1.3</span> Survival and plantlets heights by rooting clusters and treatments</h3>
 <p>Table <a href="#tab:survclusttreat">6.3</a> shows survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.</p>
 <pre class="r"><code>###~~~
 #Split survheig$Treatment to extract growth regulator and concentration
@@ -2316,10 +2316,10 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 </div>
 <div id="statistical-analyses" class="section level2">
 <h2><span class="header-section-number">6.2</span> Statistical analyses</h2>
-<p>Here, we will use ANOVAs followed by Tukey tests to test whether treatment, individual, rooting cluster or number of roots per shoot tip predicted survival and heights of plantlets after 5-weeks of culture.</p>
-<div id="treatment-individual-cluster-effects-on-plantlet-survival" class="section level3">
-<h3><span class="header-section-number">6.2.1</span> Treatment, individual, cluster effects on plantlet survival</h3>
-<p>These analyses are done on data in <code>survheig</code>, more specifically on <code>survheig$X5_w_survival</code> and extracting treatments from <code>survheig$Treatment</code> (which contains block, treatment and replicate information in one object).</p>
+<p>Here, we will use statistical analyses to test whether treatment or individual predict survival and heights of plantlets after 5-weeks of culture.</p>
+<div id="tidy-the-data" class="section level3">
+<h3><span class="header-section-number">6.2.1</span> Tidy the data</h3>
+<p>The analyses are based on <code>survheig</code>, more specifically on <code>survheig$X5_w_survival</code>. We need to start by extracting treatments from <code>survheig$Treatment</code> (which contains block, treatment and replicate information in one object).</p>
 <pre class="r"><code>####~~~~
 #Infer treatment types recieved by plantles
 ###~~~
@@ -2329,56 +2329,134 @@ survheig$Treat[grep(&quot;Control_&quot;, survheig$Treat)] &lt;- &quot;Control&q
 ###~~~
 #Turn survival into a binary data (sickly plantlets have a score of 0.5, but will be changed to 1)
 ###~~~
-survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] &lt;- 1
-
-###~~~~
-#Define ANOVA model and run analysis
-###~~~
-anovaOUTsurv&lt;- aov(X5_w_survival ~ Treat * SeedID * Cluster, data = survheig)
-
-
-# Summary of ANOVA
-summary(anovaOUTsurv)</code></pre>
-<pre><code>##               Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Treat          4  1.124  0.2811   1.563   0.1881    
-## SeedID        40 18.855  0.4714   2.622 2.43e-05 ***
-## Treat:SeedID  94 23.233  0.2472   1.375   0.0475 *  
-## Residuals    127 22.833  0.1798                     
+survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] &lt;- 1</code></pre>
+</div>
+<div id="treatment-and-individual-effects-on-plantlet-survival" class="section level3">
+<h3><span class="header-section-number">6.2.2</span> Treatment and individual effects on plantlet survival</h3>
+<div id="test-for-normality-1" class="section level4">
+<h4><span class="header-section-number">6.2.2.1</span> Test for normality</h4>
+<pre class="r"><code># Test for normality with Shapiro-Wilk Normality Test
+shapiro.test(survheig$X5_w_survival)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  survheig$X5_w_survival
+## W = 0.63471, p-value &lt; 2.2e-16</code></pre>
+<p>The test strongly suggests rejects normality of the survival data. We are therefore going to apply the same approach as with the callus data. Let’s look at the distribution of the data to confirm that we can use the binomial family (Figure <a href="#fig:distrSurv">6.1</a>):</p>
+<pre class="r"><code>barplot(table(survheig$X5_w_survival), xlab=&quot;Binary data on survival&quot;, ylab=&quot;Occurrence&quot;)</code></pre>
+<div class="figure"><span id="fig:distrSurv"></span>
+<img src="Analyses_rooting_files/figure-html/distrSurv-1.png" alt="Barplot of survival of plantlets after 5 weeks of growth." width="672" />
+<p class="caption">
+Figure 6.1: Barplot of survival of plantlets after 5 weeks of growth.
+</p>
+</div>
+</div>
+<div id="compare-models" class="section level4">
+<h4><span class="header-section-number">6.2.2.2</span> Compare models</h4>
+<p>We will be building and comparing three models as follows:</p>
+<pre class="r"><code># GLM to investigate treatment effect on survival
+M1surv &lt;- glm(X5_w_survival ~ Treat, family = binomial(link=&quot;logit&quot;), data = survheig)
+summary(M1surv)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = X5_w_survival ~ Treat, family = binomial(link = &quot;logit&quot;), 
+##     data = survheig)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -1.321  -1.219   1.040   1.052   1.312  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)  0.15415    0.55635   0.277    0.782
+## TreatIBA_05 -0.05571    0.61258  -0.091    0.928
+## TreatIBA_1   0.14813    0.60056   0.247    0.805
+## TreatNAA_05 -0.46431    0.62315  -0.745    0.456
+## TreatNAA_1   0.17721    0.60900   0.291    0.771
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 377.13  on 272  degrees of freedom
+## Residual deviance: 373.38  on 268  degrees of freedom
+## AIC: 383.38
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code># GLM to investigate treatment and cluster effects on survival
+M2surv &lt;- glm(X5_w_survival ~ Treat + SeedID, family = binomial(link=&quot;logit&quot;), data = survheig)
+summary(M2surv)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = X5_w_survival ~ Treat + SeedID, family = binomial(link = &quot;logit&quot;), 
+##     data = survheig)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -2.09208  -0.90971   0.00026   0.89062   2.00587  
+## 
+## Coefficients:
+##                  Estimate Std. Error z value Pr(&gt;|z|)  
+## (Intercept)      -0.34403    1.13677  -0.303   0.7622  
+## TreatIBA_05       0.23679    0.73976   0.320   0.7489  
+## TreatIBA_1        0.56889    0.72053   0.790   0.4298  
+## TreatNAA_05      -0.12701    0.75923  -0.167   0.8671  
+## TreatNAA_1        0.88424    0.73776   1.199   0.2307  
+## SeedIDG1_b1_2     0.94525    1.32619   0.713   0.4760  
+## SeedIDG1_b10_1    2.12443    1.48180   1.434   0.1517  
+## SeedIDG1_b13_1    2.47711    1.46561   1.690   0.0910 .
+## SeedIDG1_b15_1  -18.10627 3956.18048  -0.005   0.9963  
+## SeedIDG1_b16_1    0.38398    1.26158   0.304   0.7609  
+## SeedIDG1_b18_1    0.81678    1.55474   0.525   0.5993  
+## SeedIDG1_b19_1    1.33929    1.52634   0.877   0.3802  
+## SeedIDG1_b2_1     2.01102    1.47942   1.359   0.1740  
+## SeedIDG1_b20_1    0.48548    1.34720   0.360   0.7186  
+## SeedIDG1_b21_1   -1.76094    1.49883  -1.175   0.2400  
+## SeedIDG1_b25_1    0.38914    1.26363   0.308   0.7581  
+## SeedIDG1_b26_1   -0.58885    1.60668  -0.367   0.7140  
+## SeedIDG1_b29_1   -0.19733    1.22246  -0.161   0.8718  
+## SeedIDG1_b3_1     2.54055    1.46154   1.738   0.0822 .
+## SeedIDG1_b4_1    -0.16077    1.32135  -0.122   0.9032  
+## SeedIDG1_b5_1     0.96626    1.33397   0.724   0.4688  
+## SeedIDG1_b6_1   -17.87476 1973.34633  -0.009   0.9928  
+## SeedIDG1_b8_1    -1.01204    1.23511  -0.819   0.4126  
+## SeedIDG1_b9_1     0.59201    1.34656   0.440   0.6602  
+## SeedIDG2_18_1    -1.50371    1.52416  -0.987   0.3238  
+## SeedIDG2_29_1    -0.81696    1.34684  -0.607   0.5441  
+## SeedIDG2_b11_1    0.04873    1.23179   0.040   0.9684  
+## SeedIDG2_b15_1   -1.27153    1.57389  -0.808   0.4192  
+## SeedIDG2_b16_1   -0.51248    1.29172  -0.397   0.6916  
+## SeedIDG2_b17_1    0.01913    1.34294   0.014   0.9886  
+## SeedIDG2_b19_1   17.02586 3956.18048   0.004   0.9966  
+## SeedIDG2_b2_1    -0.38253    1.44194  -0.265   0.7908  
+## SeedIDG2_b20_1    0.17978    1.29360   0.139   0.8895  
+## SeedIDG2_b21_1   -1.44584    1.30990  -1.104   0.2697  
+## SeedIDG2_b21_2   -1.01923    1.33603  -0.763   0.4455  
+## SeedIDG2_b24_1    0.88761    1.22133   0.727   0.4674  
+## SeedIDG2_b25_1  -17.45882 3956.18047  -0.004   0.9965  
+## SeedIDG2_b26_1  -18.10627 3956.18048  -0.005   0.9963  
+## SeedIDG2_b27_1   -0.36656    1.17780  -0.311   0.7556  
+## SeedIDG2_b27_2   17.30378 1604.94234   0.011   0.9914  
+## SeedIDG2_b28_1   -1.02667    1.60312  -0.640   0.5219  
+## SeedIDG2_b4_1     0.04561    1.20860   0.038   0.9699  
+## SeedIDG2_b5_1   -17.09502 2797.44215  -0.006   0.9951  
+## SeedIDG2_b6_1    17.74522 2223.76944   0.008   0.9936  
+## SeedIDG2_b7_1    -0.34730    1.18487  -0.293   0.7694  
+## SeedIDG2_b8_1   -17.76639 1377.73999  -0.013   0.9897  
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 7 observations deleted due to missingness</code></pre>
-<pre class="r"><code># The lack of treatment effect is confirmed by this table showing that there is a 50/50 chance of survival across treatments
-table(survheig$X5_w_survival, survheig$Treat)</code></pre>
-<pre><code>##    
-##     Control IBA_05 IBA_1 NAA_05 NAA_1
-##   0       6     29    34     30    28
-##   1       7     32    46     22    39</code></pre>
-<p>The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (<em>p</em>-value &lt;= 0.001). When Tukey tests are conducted on individual data and with a <em>p</em>-value of 0.01, only one individual (<code>G2_b8_1</code>) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate).</p>
-<pre class="r"><code>###~~~
-#Tukey tests on significant variables
-###~~~
-
-# Vector with significant variables (only one here)
-significant_vars &lt;- c(&quot;SeedID&quot;)
-
-# Run Tukey tests
-anovaOUTsurv_tukey &lt;- TukeyHSD(anovaOUTsurv, significant_vars)
-
-# Save analysis
-saveRDS(anovaOUTsurv_tukey,&quot;02_Processed_data/rds_tables/TukeySurv.rds&quot;)
-
-#Investigate individual effect (***)
-IndTukeySurv &lt;- anovaOUTsurv_tukey$SeedID[which(as.numeric(anovaOUTsurv_tukey$SeedID[,4]) &lt;= 0.01),]
-
-## This analysis shows that ind G2_b8_1 has significantly higher death rate than two other individuals
-print(IndTukeySurv)</code></pre>
-<pre><code>##                        diff       lwr        upr       p adj
-## G2_b8_1-G1_b13_1 -0.9401789 -1.720203 -0.1601543 0.002565271
-## G2_b8_1-G1_b3_1  -0.9438146 -1.723839 -0.1637900 0.002380152</code></pre>
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 377.13  on 272  degrees of freedom
+## Residual deviance: 276.11  on 227  degrees of freedom
+## AIC: 368.11
+## 
+## Number of Fisher Scoring iterations: 16</code></pre>
+<p>We are not pursuing our investigations since both models suggest that there is no significant treatment effect on survival. This means that if the shoot tips were producing roots then they had equal probabilities of survival independently of treatment.</p>
 </div>
-<div id="effect-of-number-of-roots-individual-or-rooting-clusters-on-plantlet-heights" class="section level3">
-<h3><span class="header-section-number">6.2.2</span> Effect of number of roots, individual or rooting clusters on plantlet heights</h3>
-<p>Here, we will only work on alive plantlets (<code>survheig$X5_w_survival</code> == 1) and conduct an ANOVA followed by Tukey tests as follows:</p>
+</div>
+<div id="effect-of-rooting-clusters-on-plantlet-heights" class="section level3">
+<h3><span class="header-section-number">6.2.3</span> Effect of rooting clusters on plantlet heights</h3>
+<p>Here, we will only work on alive plantlets (<code>survheig$X5_w_survival</code> == 1) and conduct statistical analyses to test whether individuals from the different rooting clusters have different growth rates:</p>
 <pre class="r"><code>###~~~
 #Subset surveigh to include only alive plantlets after 5 weeks
 ###~~~
@@ -2387,40 +2465,31 @@ print(IndTukeySurv)</code></pre>
 subSurvHeigh &lt;- subset(survheig, survheig$X5_w_survival != &quot;0&quot;)
 
 ###~~~
-#Fetch number of roots per shoot tip
+#Test for normality
 ###~~~
-
-#Fetch no. roots of shoot tips in subSurvHeigh by querying MERGE
-MERGE$BlockTreatRep &lt;- paste(MERGE$Block, MERGE$Treatment, MERGE$Replicate, sep=&quot;_&quot;)
-
-#Loop to get N roots
-subSurvHeigh$Root &lt;- &quot;NULL&quot;
-for(i in 1:nrow(subSurvHeigh)){
-  tmp &lt;- subset(MERGE, MERGE$IndGeno == subSurvHeigh$SeedID[i] &amp; MERGE$BlockTreatRep == subSurvHeigh$Treatment[i])
-  subSurvHeigh$Root[i] &lt;- tmp$Root
-}
-
-#subSurvHeigh &lt;- subSurvHeigh[-which(subSurvHeigh$Root == 0),]
-###~~~
+# The data have a normal distribution!
+shapiro.test(subSurvHeigh$X5_w_height)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  subSurvHeigh$X5_w_height
+## W = 0.97501, p-value = 0.009041</code></pre>
+<pre class="r"><code>###~~~
 #Define ANOVA model and run analysis
 ###~~~
 #Since it seemed that treatment had an effect
-anovaOUTRoot &lt;- aov(X5_w_height ~ Cluster * SeedID * Root, data = subSurvHeigh)
-
+anovaOUTRoot &lt;- aov(X5_w_height ~ Cluster + SeedID, data = subSurvHeigh)
 
 # Summary of ANOVA
 summary(anovaOUTRoot)</code></pre>
 <pre><code>##              Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Cluster       2  3.195  1.5977   7.122 0.002261 ** 
-## SeedID       32 24.823  0.7757   3.458 0.000128 ***
-## Root         11  4.220  0.3836   1.710 0.106301    
-## Cluster:Root 11  1.213  0.1103   0.492 0.897377    
-## SeedID:Root  47 13.573  0.2888   1.287 0.208006    
-## Residuals    40  8.973  0.2243                     
+## Cluster       2  3.195  1.5977   6.224  0.00276 ** 
+## SeedID       32 24.823  0.7757   3.022 1.02e-05 ***
+## Residuals   109 27.979  0.2567                     
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 2 observations deleted due to missingness</code></pre>
-<p>The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, <code>G2_b27_1</code> is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!</p>
+<p>The ANOVA show significant cluster and individual effects. The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, <code>G2_b27_1</code> is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!</p>
 <pre class="r"><code>###~~~
 #Tukey tests on significant variables
 ###~~~
@@ -2470,7 +2539,7 @@ print(TopIndgrowth)</code></pre>
 </div>
 <div id="boxplot-of-plantlet-heights-for-individuals-in-blue-rooting-cluster" class="section level2">
 <h2><span class="header-section-number">6.3</span> Boxplot of plantlet heights for individuals in blue rooting cluster</h2>
-<p>Figure <a href="#fig:boxplotheightblue">6.1</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> among the top three individuals with the fastest growth in our experiment (with <code>G2_b7_1</code> being the fastest grower). The top three individuals identified by the rooting analysis are also shown on the boxplot.</p>
+<p>Figure <a href="#fig:boxplotheightblue">6.2</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> among the top three individuals with the fastest growth in our experiment (with <code>G2_b7_1</code> being the fastest grower and isolated as P2 in previous analyses). The top two individuals identified by the rooting analysis are also shown on the boxplot.</p>
 <pre class="r"><code>###~~~
 #Subset to only include from blue rooting cluster
 ###~~~
@@ -2485,13 +2554,13 @@ new_order &lt;- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeri
 # Draw boxplot
 boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0(&quot;(n: &quot;, as.vector(seedID), &quot;)&quot;), sep = &quot;\n&quot;), las=2, xlab = &quot;&quot;, ylab = &quot;Plantlet height (cm)&quot;, cex = .8)
 
-#Add P1, P2, P3
-top &lt;- which(names(seedID) %in% c(&quot;G2_b27_1&quot;, &quot;G2_b24_1&quot;, &quot;G2_b4_1&quot;))
-text(x=top, y=1.8, c(&quot;P2&quot;, &quot;P1&quot;, &quot;P3&quot;))</code></pre>
+#Add P1, P2
+top &lt;- which(names(seedID) %in% c(&quot;G2_b27_1&quot;, &quot;G2_b7_1&quot;))
+text(x=top, y=1.8, c(&quot;P1&quot;, &quot;P2&quot;))</code></pre>
 <div class="figure"><span id="fig:boxplotheightblue"></span>
-<img src="Analyses_rooting_files/figure-html/boxplotheightblue-1.png" alt="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3)." width="672" />
+<img src="Analyses_rooting_files/figure-html/boxplotheightblue-1.png" alt="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1, P2)." width="672" />
 <p class="caption">
-Figure 6.1: Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3).
+Figure 6.2: Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1, P2).
 </p>
 </div>
 <div id="refs">
@@ -2569,24 +2638,27 @@ Guide</em>. ISBN 9781138359338. Boca Raton, Florida: Chapman and Hall/CRC,
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] RColorBrewer_1.1-2   gplots_3.0.4         devtools_2.2.1      
-## [4] usethis_1.5.1        formatR_1.7          knitcitations_1.0.10
-## [7] bookdown_0.20        rmarkdown_2.4        knitr_1.30          
+##  [1] DT_0.16              lsmeans_2.30-0       emmeans_1.5.2-1     
+##  [4] lmtest_0.9-38        zoo_1.8-8            pscl_1.5.5          
+##  [7] RColorBrewer_1.1-2   gplots_3.1.0         devtools_2.3.2      
+## [10] usethis_1.6.3        formatR_1.7          knitcitations_1.0.10
+## [13] bookdown_0.21        rmarkdown_2.4        knitr_1.30          
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.5         highr_0.8          compiler_3.6.1     plyr_1.8.5        
-##  [5] bitops_1.0-6       remotes_2.1.0      prettyunits_1.1.1  tools_3.6.1       
-##  [9] testthat_2.3.1     digest_0.6.25      pkgbuild_1.0.6     pkgload_1.0.2     
-## [13] lubridate_1.7.9    jsonlite_1.7.1     evaluate_0.14      memoise_1.1.0     
-## [17] rlang_0.4.7        bibtex_0.4.2.2     cli_2.0.2          yaml_2.2.1        
-## [21] xfun_0.18          RefManageR_1.2.12  withr_2.3.0        httr_1.4.2        
-## [25] stringr_1.4.0      xml2_1.3.2         caTools_1.18.0     gtools_3.8.1      
-## [29] generics_0.0.2     desc_1.2.0         fs_1.5.0           rprojroot_1.3-2   
-## [33] glue_1.4.2         R6_2.4.1           processx_3.4.4     fansi_0.4.1       
-## [37] sessioninfo_1.1.1  gdata_2.18.0       callr_3.4.1        magrittr_1.5      
-## [41] codetools_0.2-16   backports_1.1.10   ps_1.3.4           htmltools_0.5.0   
-## [45] ellipsis_0.3.1     assertthat_0.2.1   KernSmooth_2.23-16 stringi_1.5.3     
-## [49] crayon_1.3.4</code></pre>
+##  [1] Rcpp_1.0.5         lubridate_1.7.9    mvtnorm_1.1-1      lattice_0.20-41   
+##  [5] prettyunits_1.1.1  ps_1.4.0           gtools_3.8.2       assertthat_0.2.1  
+##  [9] rprojroot_1.3-2    digest_0.6.25      R6_2.4.1           plyr_1.8.6        
+## [13] backports_1.1.10   evaluate_0.14      coda_0.19-4        httr_1.4.2        
+## [17] highr_0.8          rlang_0.4.8        callr_3.5.1        desc_1.2.0        
+## [21] RefManageR_1.2.12  stringr_1.4.0      htmlwidgets_1.5.2  compiler_3.6.1    
+## [25] xfun_0.18          pkgbuild_1.1.0     htmltools_0.5.0    codetools_0.2-16  
+## [29] fansi_0.4.1        crayon_1.3.4       withr_2.3.0        MASS_7.3-53       
+## [33] bitops_1.0-6       grid_3.6.1         jsonlite_1.7.1     xtable_1.8-4      
+## [37] magrittr_1.5       bibtex_0.4.2.3     KernSmooth_2.23-17 estimability_1.3  
+## [41] cli_2.1.0          stringi_1.5.3      fs_1.5.0           remotes_2.2.0     
+## [45] testthat_2.3.2     xml2_1.3.2         ellipsis_0.3.1     generics_0.0.2    
+## [49] tools_3.6.1        glue_1.4.2         processx_3.4.4     pkgload_1.1.0     
+## [53] yaml_2.2.1         caTools_1.18.0     sessioninfo_1.1.1  memoise_1.1.0</code></pre>
 </div>
 <div id="appendix-3" class="section level1 appendix">
 <h1><span class="header-section-number">9</span> Appendix 3</h1>

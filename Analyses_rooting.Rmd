@@ -1,5 +1,5 @@
 --- 
-title: 'Development of an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*: 2n=2x=18) to support genome sequencing and GxE research'
+title: 'Development of an *in vitro* method of propagation using growth regulators for Basin Big sagebrush (*Artemisia tridentata* subsp. *tridentata*) to support genome sequencing and GxE research'
 author: "Rachael Barron, Peggy Martinez, Marcelo Serpe, Sven Buerki"
 output:
   bookdown::html_document2: 
@@ -69,7 +69,7 @@ The analyses were conducted in four steps:
 - **Step 1:** Import and tidy raw data.
 - **Step 2:** Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips.
 - **Step 3:** Comparative analyses on tissue culture data. This was done following a two-tier approach:
-  + Statistical analyses (test for normality and conduct ANOVAs and multiple pairwise-comparison tests with *p*-value <= 0.01).
+  + Statistical analyses (test for normality and conduct parametric or non-parametric statistics and multiple pairwise-comparison tests with *p*-value <= 0.01).
   + Clustering analyses.
 - **Step 4:** *In vitro* growth of plantules. 
   + Assessing the effect of growth regulators and rooting clusters on plantule survival and growth rates.
@@ -364,7 +364,7 @@ N  <- nrow(MERGE)
 p  <- length(coef(M2))  
 sum(E2^2) / (N - p)
 
-# Likelihood ratio test
+# Likelihood ratio test (can't apply anova on zeroinfl models)
 lrtest(M1, M2)
 
 # Summary of M2
@@ -494,7 +494,7 @@ knitr::kable(TopInd, caption = "List of individual that are outperforming at lea
 The analyses reported in Table \@ref(tab:kruskalInd) demonstrate that only two individuals (`r rownames(TopInd)`, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.
 
 
-## Clustering analysis of number of roots per shoot tip
+## Clustering analysis on rooting data
 
 A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using `Root` variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:heatmap2)):
 
@@ -606,7 +606,7 @@ for(i in 1:nrow(RootingStatbyTreatC)){
 knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.")
 ```
 
-This will be investigated by looking at top performer individuals identified by i) ANOVA analyses and ii) clustering analysis.
+This will be investigated by looking at top performer individuals identified by i) statistical analyses and ii) clustering analysis.
 
 
 ## Statistical analyses on callus data 
@@ -635,7 +635,7 @@ The bi-modal nature of the data (Figure \@ref(fig:distrCall)) calls for the use 
 
 We start by comparing `glm` models  investigating the effect of treatment and individual on callus production.
 
-```{r}
+```{r callusmodels, echo=T, eval=T}
 # GLM to investigate treatment effect on callus production
 M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
 
@@ -691,7 +691,7 @@ signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,
 knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
 ```
 
-### Clustering analysis of calli data
+## Clustering analysis on callus data
 
 The code to produce the clustering analysis based on `Callus` data and associated heatmap is provided below and Figure \@ref(fig:heatmapplot) shows results of the analysis. Outcomes of this analysis are:
 
@@ -790,7 +790,7 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of grow
 
 # Step 4: *In vitro* growth of plantlets
 
-## Sampling and preliminary analysis on survival and plantlets heights
+## Sampling and preliminary analyses
 
 Data on survival and plantlets heights are stored in `01_Raw_Data/Survival_height_clones.csv`. The code below provides statistics on the number of individual and shoot tips included in this experiment. 
 
@@ -829,7 +829,7 @@ print(stats)
 sort(table(survheig$SeedID), decreasing=T)
 ```
 
-### Survival and plantlets heights at 3 and 5 weeks
+### Survival and plantlets heights
 
 Results of the code provided below is summarized in Table \@ref(tab:surv). After 5 weeks, a survival of 53.48% of the plantlets was observed. A significant increase of plantlets mortality has been recorded between weeks 3 and 5 and on average, plantlets did not growth significant (but see below for more details).   
 
@@ -868,9 +868,9 @@ survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd
 knitr::kable(survheigStat, row.names=T, caption = "Survival and plantlets heights at 3 and 5 weeks (+/- standard deviations).")
 ```
 
-### Survival and plantlets height sorted by rooting clusters
+### Survival and plantlets heights by rooting clusters
 
-Table \@ref(survclust) shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided. 
+Table \@ref(tab:survclust) shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided. 
 
 ```{r survclust, echo=T, eval=T}
 ###
@@ -916,7 +916,7 @@ for(i in 1:length(clust)){
 knitr::kable(clustSurvHeig, row.names=F, caption = "Survival and plantlets heights at 3 and 5 weeks sorted by rooting clusters.")
 ```
 
-### Survival and plantlets height at 5 weeks sorted by rooting clusters and treatments
+### Survival and plantlets heights by rooting clusters and treatments
 
 Table \@ref(tab:survclusttreat) shows survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.
 
@@ -973,13 +973,13 @@ knitr::kable(survheigTreat, row.names=F, caption = "Survival and plantlets heigh
 
 ## Statistical analyses
 
-Here, we will use ANOVAs followed by Tukey tests to test whether treatment, individual, rooting cluster or number of roots per shoot tip predicted survival and heights of plantlets after 5-weeks of culture.
+Here, we will use statistical analyses to test whether treatment or individual predict survival and heights of plantlets after 5-weeks of culture.
 
-### Treatment, individual, cluster effects on plantlet survival
+### Tidy the data
 
-These analyses are done on data in `survheig`, more specifically on `survheig$X5_w_survival` and extracting treatments from `survheig$Treatment` (which contains block, treatment and replicate information in one object).
+The analyses are based on `survheig`, more specifically on `survheig$X5_w_survival`. We need to start by extracting treatments from `survheig$Treatment` (which contains block, treatment and replicate information in one object).
 
-```{r}
+```{r survtidy, echo=T, eval=T}
 ####~~~~
 #Infer treatment types recieved by plantles
 ###~~~
@@ -991,45 +991,42 @@ survheig$Treat[grep("Control_", survheig$Treat)] <- "Control"
 ###~~~
 survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 
-###~~~~
-#Define ANOVA model and run analysis
-###~~~
-anovaOUTsurv<- aov(X5_w_survival ~ Treat * SeedID * Cluster, data = survheig)
-
-
-# Summary of ANOVA
-summary(anovaOUTsurv)
-
-# The lack of treatment effect is confirmed by this table showing that there is a 50/50 chance of survival across treatments
-table(survheig$X5_w_survival, survheig$Treat)
 ```
 
-The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (*p*-value <= 0.001). When Tukey tests are conducted on individual data and with a *p*-value of 0.01, only one individual (`G2_b8_1`) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate). 
+### Treatment and individual effects on plantlet survival
 
-```{r tukeysurv, echo=T, eval=T}
-###~~~
-#Tukey tests on significant variables
-###~~~
+#### Test for normality
 
-# Vector with significant variables (only one here)
-significant_vars <- c("SeedID")
-
-# Run Tukey tests
-anovaOUTsurv_tukey <- TukeyHSD(anovaOUTsurv, significant_vars)
-
-# Save analysis
-saveRDS(anovaOUTsurv_tukey,"02_Processed_data/rds_tables/TukeySurv.rds")
-
-#Investigate individual effect (***)
-IndTukeySurv <- anovaOUTsurv_tukey$SeedID[which(as.numeric(anovaOUTsurv_tukey$SeedID[,4]) <= 0.01),]
-
-## This analysis shows that ind G2_b8_1 has significantly higher death rate than two other individuals
-print(IndTukeySurv)
+```{r normsurv, echo=T, eval=T}
+# Test for normality with Shapiro-Wilk Normality Test
+shapiro.test(survheig$X5_w_survival)
 ```
 
-### Effect of number of roots, individual or rooting clusters on plantlet heights
+The test strongly suggests rejects normality of the survival data. We are therefore going to apply the same approach as with the callus data. Let's look at the distribution of the data to confirm that we can use the binomial family (Figure \@ref(fig:distrSurv)):
 
-Here, we will only work on alive plantlets (`survheig$X5_w_survival` == 1) and conduct an ANOVA followed by Tukey tests as follows:
+```{r distrSurv, echo=T, eval=T, fig.cap="Barplot of survival of plantlets after 5 weeks of growth."}
+barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
+```
+
+#### Compare models
+
+We will be building and comparing three models as follows:
+
+```{r survivalmodels, echo=T, eval=T}
+# GLM to investigate treatment effect on survival
+M1surv <- glm(X5_w_survival ~ Treat, family = binomial(link="logit"), data = survheig)
+summary(M1surv)
+
+# GLM to investigate treatment and cluster effects on survival
+M2surv <- glm(X5_w_survival ~ Treat + SeedID, family = binomial(link="logit"), data = survheig)
+summary(M2surv)
+```
+
+We are not pursuing our investigations since both models suggest that there is no significant treatment effect on survival. This means that if the shoot tips were producing roots then they had equal probabilities of survival independently of treatment. 
+
+### Effect of rooting clusters on plantlet heights
+
+Here, we will only work on alive plantlets (`survheig$X5_w_survival` == 1) and conduct statistical analyses to test whether individuals from the different rooting clusters have different growth rates:
 
 ```{r anovaroot, echo=T, eval=T}
 ###~~~
@@ -1040,33 +1037,22 @@ Here, we will only work on alive plantlets (`survheig$X5_w_survival` == 1) and c
 subSurvHeigh <- subset(survheig, survheig$X5_w_survival != "0")
 
 ###~~~
-#Fetch number of roots per shoot tip
+#Test for normality
 ###~~~
+# The data have a normal distribution!
+shapiro.test(subSurvHeigh$X5_w_height)
 
-#Fetch no. roots of shoot tips in subSurvHeigh by querying MERGE
-MERGE$BlockTreatRep <- paste(MERGE$Block, MERGE$Treatment, MERGE$Replicate, sep="_")
-
-#Loop to get N roots
-subSurvHeigh$Root <- "NULL"
-for(i in 1:nrow(subSurvHeigh)){
-  tmp <- subset(MERGE, MERGE$IndGeno == subSurvHeigh$SeedID[i] & MERGE$BlockTreatRep == subSurvHeigh$Treatment[i])
-  subSurvHeigh$Root[i] <- tmp$Root
-}
-
-#subSurvHeigh <- subSurvHeigh[-which(subSurvHeigh$Root == 0),]
 ###~~~
 #Define ANOVA model and run analysis
 ###~~~
 #Since it seemed that treatment had an effect
-anovaOUTRoot <- aov(X5_w_height ~ Cluster * SeedID * Root, data = subSurvHeigh)
-
+anovaOUTRoot <- aov(X5_w_height ~ Cluster + SeedID, data = subSurvHeigh)
 
 # Summary of ANOVA
 summary(anovaOUTRoot)
-
 ```
 
-The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, `G2_b27_1` is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!  
+The ANOVA show significant cluster and individual effects. The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, `G2_b27_1` is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!  
 
 ```{r tukeyheight, echo=T, eval=T}
 ###~~~
@@ -1113,9 +1099,9 @@ print(TopIndgrowth)
 
 ## Boxplot of plantlet heights for individuals in blue rooting cluster
 
-Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` among the top three individuals with the fastest growth in our experiment (with `G2_b7_1` being the fastest grower). The top three individuals identified by the rooting analysis are also shown on the boxplot.
+Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` among the top three individuals with the fastest growth in our experiment (with `G2_b7_1` being the fastest grower and isolated as P2 in previous analyses). The top two individuals identified by the rooting analysis are also shown on the boxplot.
 
-```{r boxplotheightblue, echo=T, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1 to P3)."}
+```{r boxplotheightblue, echo=T, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1, P2)."}
 ###~~~
 #Subset to only include from blue rooting cluster
 ###~~~
@@ -1130,9 +1116,9 @@ new_order <- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(b
 # Draw boxplot
 boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0("(n: ", as.vector(seedID), ")"), sep = "\n"), las=2, xlab = "", ylab = "Plantlet height (cm)", cex = .8)
 
-#Add P1, P2, P3
-top <- which(names(seedID) %in% c("G2_b27_1", "G2_b24_1", "G2_b4_1"))
-text(x=top, y=1.8, c("P2", "P1", "P3"))
+#Add P1, P2
+top <- which(names(seedID) %in% c("G2_b27_1", "G2_b7_1"))
+text(x=top, y=1.8, c("P1", "P2"))
 
 ```
 
