@@ -672,12 +672,12 @@ knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01)
 
 Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
 
-- (a) Shoot tips in control are significantly producing more calli than in the other treatments (`***`).
+- (a) Control is significantly different than the other treatments (`***`). Here, very limited calli production was observed in shoot tips included in the control treatment.
 - (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.
 
 #### Investigate individual effect
 
-We are using the same approach as with the treatment to perform pairwise comparisons to indetify individuals that are significantly producing calli independently of treatment. The tests concluded that although the `glm` supported some individual effect, none of the individuals are significantly different based on the post hoc tests.
+We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the `glm` supported some individual effect, none of the individuals are significantly different based on the post hoc tests.
 
 ```{r emmeansCalInd, eval=T, echo=T}
 # Estimated marginal means (Least-squares means) for treatments using M2

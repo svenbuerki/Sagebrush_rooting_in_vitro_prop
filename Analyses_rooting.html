@@ -1625,7 +1625,7 @@ knitr::kable(signCalTreat, row.names=F, caption = &quot;Significant (p-value &lt
 <p>Table <a href="#tab:emmeansCal">5.5</a> summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:</p>
 <ul>
 <li><ol style="list-style-type: lower-alpha">
-<li>Shoot tips in control are significantly producing more calli than in the other treatments (<code>***</code>).</li>
+<li>Control is significantly different than the other treatments (<code>***</code>). Here, very limited calli production was observed in shoot tips included in the control treatment.</li>
 </ol></li>
 <li><ol start="2" style="list-style-type: lower-alpha">
 <li>No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.</li>
@@ -1633,7 +1633,7 @@ knitr::kable(signCalTreat, row.names=F, caption = &quot;Significant (p-value &lt
 </ul>
 <div id="investigate-individual-effect-1" class="section level4">
 <h4><span class="header-section-number">5.3.3.1</span> Investigate individual effect</h4>
-<p>We are using the same approach as with the treatment to perform pairwise comparisons to indetify individuals that are significantly producing calli independently of treatment. The tests concluded that although the <code>glm</code> supported some individual effect, none of the individuals are significantly different based on the post hoc tests.</p>
+<p>We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the <code>glm</code> supported some individual effect, none of the individuals are significantly different based on the post hoc tests.</p>
 <pre class="r"><code># Estimated marginal means (Least-squares means) for treatments using M2
 posthocCallusInd &lt;- emmeans(M2cal, list(pairwise ~ IndGeno))
 
