@@ -8,3 +8,9 @@ usethis
 devtools
 gplots
 RColorBrewer
+pscl
+zoo
+lmtest
+emmeans
+lsmeans
+DT

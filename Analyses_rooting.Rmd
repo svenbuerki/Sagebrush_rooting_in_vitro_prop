@@ -21,6 +21,11 @@ library(devtools)
 library(gplots)
 library(RColorBrewer)
 library(grDevices)
+library(pscl)
+library(lmtest)
+library(lsmeans)
+library(emmeans)
+library(DT)
 
 #Generate BibTex citation file for all R packages used to produce report
 knitr::write_bib(.packages(), file = 'packages.bib')
@@ -64,7 +69,7 @@ The analyses were conducted in four steps:
 - **Step 1:** Import and tidy raw data.
 - **Step 2:** Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips.
 - **Step 3:** Comparative analyses on tissue culture data. This was done following a two-tier approach:
-  + Statistical analyses (ANOVAs and Tukey tests with p-value <= 0.01).
+  + Statistical analyses (test for normality and conduct ANOVAs and multiple pairwise-comparison tests with *p*-value <= 0.01).
   + Clustering analyses.
 - **Step 4:** *In vitro* growth of plantules. 
   + Assessing the effect of growth regulators and rooting clusters on plantule survival and growth rates.
@@ -309,95 +314,106 @@ for(i in 1:nrow(RootingStatbyTreat)){
 knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates +/- standard deviation; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
 ```
 
-# Step 3: Comparative analyses on tissue culture data
+# Step 3: Comparative analyses
 
-The input variables for these analyses are stored in `MERGE` and results will be saved in `rds` format in `02_Processed_data/rds_tables`.
+The input variables for these analyses are stored in `MERGE`.
 
-## Statistical analyses for rooting data
+## Statistical analyses on rooting data
 
-Please find below the analyses conducted on quantitative rooting data. The same analyses were performed on the binary data and are found in [Appendix 4].
+Please find below the analyses conducted on quantitative rooting data (= counts of number of roots per shoot tip).
 
-### ANOVA with model based on number of roots per shoot tip
+### Test for normality and best model
 
-Our overall model is `root ~ treatment`, but we are also testing whether there is a `block`, `genotype` and `individual` effect in explaining rooting data. This leads to the following model:
+Before conducting statistical analyses, we have to test for normality of rooting data using the Shapiro-Wilk normality test implemented in the R base function `shapiro.test()`. A *p*-value <= 0.01 is will be used for significance.
 
-```
-aov(Root ~ Treatment * Block * Genotype * Individual)
-```
-
-To be considered significant, a variable as to have a p-value <= 0.01.
-
-#### Code for ANOVA analysis
-
-```{r ANOVAroot, echo=T, eval=T}
-###~~~
-#Define model and run analysis
-###~~~
-anovaOUT<- aov(Root ~ Treatment * Block * Genotype * IndGeno, data = MERGE)
-
-
-# Summary of ANOVA
-summary(anovaOUT)
-
-#as.data.frame.matrix(x[[1]][1:5])
-
-# Save analysis
-saveRDS(anovaOUT,"02_Processed_data/rds_tables/anova.rds")
+```{r normalitytest, eval=T, echo=T}
+#Conducting Shapiro-Wilk normality test on root data
+Rootnorm <- shapiro.test(MERGE$Root)
+print(Rootnorm)
 ```
 
-In our model, significant variables (`**` or `***`) are:
+The test strongly rejects normality of the rooting data. In this context, we aim at analyzing the data using general linear models (`glm`), but what is the best fitted family/model to describe the data distribution? Let's look at the distribution of the data (Figure \@ref(fig:distrRoot)):
 
-- Treatment (`***`)
-- Individual (here represented by `IndGeno`) (`***`)
-- Treatment:Block (`***`)
-- Treatment:Individual (`**`) 
-
-We are hypothesizing that the latter two variables result from to the high individual effect since individuals were randomly assigned to blocks. 
-
-### Tukey tests on significant variables from ANOVA based on number of roots per shoot tip
-
-The code to perform the Tukey tests on significant variables from the ANOVA analysis is presented below.
-
-```{r tukeyroot, echo=T, eval=T}
-###~~~
-#Tukey tests on significant variables from ANOVA
-###~~~
-
-# Object with significant variables
-significant_vars <- c("Treatment", "IndGeno", "Treatment:IndGeno", "Treatment:Block")
-
-# Run Tukey tests
-anovaOUT_tukey <- TukeyHSD(anovaOUT, significant_vars)
-
-# Save analysis
-saveRDS(anovaOUT_tukey,"02_Processed_data/rds_tables/anova_tukey.rds")
+```{r distrRoot, echo=T, eval=T, fig.cap="Distribution of number of roots per shoot tips"}
+hist(MERGE$Root, xlab="Number of roots per shoot tip", main="")
 ```
 
-#### Investigate treatment effect on rooting data
+Figure \@ref(fig:distrRoot) suggests that the Poisson model would best fit the data; however it is skewed towards zeros (with the highest frequency), which is problematic with classic `glm` models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the `pscl` R package [@R-pscl] to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood. It is not recommended that zero-inflated Poisson models be applied to small samples (see [here](https://stats.idre.ucla.edu/r/dae/zip/)), which could prove problematic for our individual dataset.
 
-Inspect Tukey tests output to identify treatment(s) best performing for initiating roots.
 
-```{r tukeyroot2, echo=T, eval=T}
-###~~~
-#What treatment(s) are significantly increasing rooting? (**: 0.01)
-###~~~
-treatcomp <- anovaOUT_tukey$Treatment[which(as.numeric(anovaOUT_tukey$Treatment[,4]) <= 0.01),]
+### Investigate treatment effect
 
-#Plot table
-knitr::kable(treatcomp, caption = "Results of Tukey tests comparing treatments (with pval: <=0.01).")
+As shown in Figure \@ref(fig:distrRoot) we still need to test what model best fit the data. Here, we will be investigating whether treatment affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model. 
+
+```{r zeroinflRoot, echo=T, eval=T}
+# Zero-Inflated Poisson GLM
+M1 <- zeroinfl(Root ~ Treatment, dist = 'poisson', data = MERGE)
+
+# Dispersion statistic for M1
+E2 <- resid(M1, type = "pearson")
+N  <- nrow(MERGE)
+p  <- length(coef(M1))  
+sum(E2^2) / (N - p)
+
+# Zero-Inflated Negative Binomial GLM
+M2 <- zeroinfl(Root ~ Treatment, dist = 'negbin', data = MERGE) 
+
+# Dispersion statistic for M2
+E2 <- resid(M2, type = "pearson")
+N  <- nrow(MERGE)
+p  <- length(coef(M2))  
+sum(E2^2) / (N - p)
+
+# Likelihood ratio test
+lrtest(M1, M2)
+
+# Summary of M2
+summary(M2)
 ```
 
-Table \@ref(tab:tukeyroot2) allows ranking treatments as follows (from worst to best):
+M2 is the best-fit model and it shows that there is a significant treatment effect in explaining rooting data. Before ranking treatments, we would like to rapidly test whether there is a genotype effect in explaining the rooting by amending M2. We will be investigating individual effect below.
 
- - (c) `Control` (is outperformed by all treatments) (`***`)
- - (b) `NAA_1` and `NAA_05`
- - (a) `IBA_1`, `IBA_05` (although `IBA_1` outperforms `IBA_05` with a pval <= 0.05)
+```{r Genotype, eval=T, echo=T}
+# Amending M2 to test for genotype effect
+
+# Zero-Inflated Negative Binomial GLM
+M3 <- zeroinfl(Root ~ Treatment + Genotype, dist = 'negbin', data = MERGE) 
+
+# Summarize M3
+summary(M3)
+```
+
+This model shows that there is no genotype effect in our data. we are then proceeding with pairwise comparison of treatments.
+
+#### Ranking treatments
+
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
+
+```{r emmeansRoot, eval=T, echo=T}
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocRoot <- emmeans(M2, list(pairwise ~ Treatment))
+
+# Identify significant pairwise comparisons
+signRootTreat <- as.data.frame(posthocRoot$`pairwise differences of Treatment`)
+signRootTreat <- signRootTreat[which(signRootTreat$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signRootTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```
+
+Table \@ref(tab:emmeansRoot) allows ranking treatments as follows (from best to worst):
+
+- `IBA_1`: a
+- `IBA_05`: ab
+- `NAA_1`: ab
+- `NAA_05`: b
+- `Control`: c
 
 #### Boxplot of rooting by treatment
 
-To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (`MERGE`). Figure \@ref(fig:boxplot1) supports ranking from the Tukey analysis (Table \@ref(tab:tukeyroot) and would suggest that `IBA_1` is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).
+To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (`MERGE`). Figure \@ref(fig:boxplot1) supports ranking from the statistical analysis (Table \@ref(tab:emmeansRoot) and would suggest that `IBA_1` is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).
 
-```{r boxplot1, echo=T, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details).", out.width="100%"}
+```{r boxplot1, echo=T, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.", out.width="100%"}
 ###~~~
 #Boxplot comparing rooting per treatment
 ###~~~
@@ -406,31 +422,64 @@ To support further visual comparison of rooting by treatment, a boxplot was infe
 boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per shoot tip", ylim=c(0,12.5), names = c("Control", "IBA 0.5 mg/l", "IBA 1 mg/l", "NAA 0.5 mg/l", "NAA 1 mg/l"))
 
 # Add ranking based on Tukey tests
-text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","a","a",'b','b'))
+text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","ab","a",'ab','ab'))
 ```
 
-#### Investigate individual effect on rooting data
+### Investigate individual effect
 
-Here, we are using the results of ANOVA (`anovaOUT`) and Tukey tests on the individual variable to identify individuals which are significantly outperforming the other individuals. To qualify as a top performer, an individual has to outperform >=20% of individuals based on a p-value <= 0.01. 
+Here, we are applying a statistical approach to the rooting data to identify individuals which are significantly outperforming the other individuals. To qualify as a top performer, an individual has to outperform >=20% of individuals based on a *p*-value <= 0.01.
 
-Table \@ref(tab:tukeyind) shows the list of top performers independently of treatment conditions. Notice that the three individuals all belong to the G2 genotype. Those individuals will be referred to as P1 to P3 to reflect their top rooting performance. P1 and P2 are the only individuals recovered by the Tukey tests performed on binary rooting data (see Table \@ref(tab:tukeyindbin)). 
+Treatment analyses have shown that the zero-inflated negative binomial GLM best fit the data, but we hypothesize that the small individual sample size (n= 15 replicates per individual) could not meet the requirement of this method. Below, we are running this model on individual data (`Root ~ Individual`), but the algorithm is unable to fit the model. 
 
-```{r tukeyind, echo=T, eval=T}
-###~~~
-#Tukey test: Individual effect
-###~~~
+```{r zeroinflInd, echo=T, eval=T, message=FALSE, warning=FALSE}
+# Zero-Inflated Negative Binomial GLM
+M1 <- zeroinfl(Root ~ IndGeno, dist = 'negbin', data = MERGE) 
+
+# Summary of M1
+summary(M1)
+```
+
+In this context, we are investigating individual effect on rooting by applying a non-parametric Kruskal-Wallis rank sum test followed by a pairwise Wilcoxon rank sum tests to identify individual top performers.
+
+```{r kruskalInd, echo=T, eval=T, message=FALSE, warning=FALSE}
+# Run Kruskal-Wallis Rank Sum Test
+K1 <- kruskal.test(Root ~ IndGeno, data = MERGE)
+print(K1)
+
+# Run Wilcox test on Root ~ IndGeno
+wilcoxRootInd <- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
+                 p.adjust.method = "BH")
+
+# Only select data.frame (distance matrix)
+wilcoxRootInd <- wilcoxRootInd$p.value
+
+# Convert distance matrix into 3 cols: ind1, ind2, p-val
+OUT <- NULL
+for(i in 1:nrow(wilcoxRootInd)){
+  tmp <- wilcoxRootInd[i,]
+  tmp <- cbind(rep(rownames(wilcoxRootInd)[i], length(tmp)), names(tmp), as.vector(tmp))
+  OUT <- rbind(OUT, tmp)
+}
+wilcoxSimp <- as.data.frame(OUT)
+colnames(wilcoxSimp) <- c("Ind1", "Ind2", "P-val")
+
+# Tidy data
+wilcoxSimp <- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
 
 # Individual effect
-IndTukey <- anovaOUT_tukey$IndGeno[which(as.numeric(anovaOUT_tukey$IndGeno[,4]) <= 0.01),]
+IndRoot <- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) <= 0.01),])
+
+# Infer mean rooting per individual
+meanRoot <- aggregate(Root ~ IndGeno, mean, data = MERGE)
+
+# Diff of means Ind1-Ind2
+IndRoot$Diff_mean <- meanRoot[match(IndRoot[,1], meanRoot[,1]),2]-meanRoot[match(IndRoot[,2], meanRoot[,1]),2]
 
 # What are the top performers (= most efficient at producing roots)?
-IndTukeyOut <- IndTukey[which(IndTukey[,1] > 0),]
-
-# Extract best performing ind (first in rownames of comparison)
-P1 <- sapply(strsplit(rownames(IndTukey), split='-'), "[[",1)
+IndRootOut <- IndRoot[which(IndRoot$Diff_mean > 0),]
 
 # Percentage of individuals that are outperformed by P1
-TopInd <- 100*(sort(table(P1), decreasing=T)/length(unique(MERGE$IndGeno)))
+TopInd <- 100*(sort(table(IndRootOut[,1]), decreasing=T)/length(unique(MERGE$IndGeno)))
 
 # Select only ind that are outperforming at least 20% of individuals 
 TopInd <- TopInd[which(TopInd >= 20)]
@@ -439,16 +488,19 @@ TopInd <- as.matrix(round(TopInd, 1))
 colnames(TopInd) <- c("Percentage of individuals outperformed")
 
 # Plot table
-knitr::kable(TopInd, caption = "List of individual that are outperforming at least 20% of individuals (based on Tukey tests on Individual variable with a pval: 0.01).")
+knitr::kable(TopInd, caption = "List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval <= 0.01).")
 ```
+
+The analyses reported in Table \@ref(tab:kruskalInd) demonstrate that only two individuals (`r rownames(TopInd)`, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.
+
 
 ## Clustering analysis of number of roots per shoot tip
 
-A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using `Root` variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 to P3) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:heatmap2)):
+A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using `Root` variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:heatmap2)):
 
 - Black cluster: No to very little rooting.
 - Pink cluster: Some rooting observed.
-- Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster. It is worth noting that P2 has only two tips (out of 15) that did not produce roots.
+- Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster.
 
 ### Code to produce clustering analysis on rooting data
 
@@ -465,9 +517,9 @@ mat_data <- table(MERGE$IndGeno, MERGE$Root)
 # Load file with color of individuals (which group based on clusters they belong to)
 colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 
-# Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
+# Annotate best perfoming individuals and add P1, P2
 toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P2)", " (P1)", " (P3)"))
+rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)"))
 
 pdf("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf")
 # Perform clustering/heatmap and draw plot
@@ -556,192 +608,87 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth
 
 This will be investigated by looking at top performer individuals identified by i) ANOVA analyses and ii) clustering analysis.
 
-## Statistical analysis focusing on individuals in the blue rooting cluster
 
-Here, we will apply ANOVA followed by Tukey tests to test whether treatments identified with all individuals are still significantly increasing rooting for individuals in the blue rooting cluster. This is done by applying the code provided below:
+## Statistical analyses on callus data 
 
-### ANOVA with model using rooting data applied to individuals in the blue cluster
+Table \@ref(tab:growthbyregulatorcallus) demonstrated that >70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (< 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.
 
-The code provided below starts by sub-setting `MERGE` to only include individuals from the blue cluster. Then, the  ANOVA model is built and applied to the `Root` data.
+### Test for normality
 
-```{r statsClust, echo=T, eval=T}
-###~~~
-#Subset MERGE dataset to only include ind. from blue cluster
-###~~~
-BestClust <- subset(MERGE, MERGE$IndGeno %in% as.vector(colInd$Individual[which(colInd$Group == "blue")]))
+Before conducting statistical analyses, we have to test for normality of callus data using the Shapiro-Wilk normality test implemented in the R base function `shapiro.test()`. A *p*-value <= 0.01 is will be used for significance.
 
-###~~~
-#Perform ANOVA with same model as above, but here only Individual and treatment effects are tested
-###~~~
-#ANOVA
-anovaOUTClust <- aov(Root ~ Treatment * IndGeno, data = BestClust)
-
-#Summary
-summary(anovaOUTClust)
-
-#Save analysis
-saveRDS(anovaOUTClust,"02_Processed_data/rds_tables/anovaBestClust.rds")
+```{r normalitytestcallus, eval=T, echo=T}
+#Conducting Shapiro-Wilk normality test on root data
+Callusnorm <- shapiro.test(MERGE$Callus)
+print(Callusnorm)
 ```
 
-These analyses supported significant effects for `Treatment` (`***`) and `IndGeno` (`***`).
+The test strongly rejects normality of the rooting data. In this context, we aim at analyzing the data using general linear models (`glm`), but what is the best fitted family/model to describe the data distribution? Let's look at the distribution of the data (Figure \@ref(fig:distrCall)):
 
-### Tukey tests on significant variables from ANOVA based on number of roots per shoot tip for blue cluster
-
-Tukey tests on significant variables are conducted with the code below and results are provided in Tables \@ref(tab:tukeytopClust2) and \@ref(tab:tukeytopClustind). `Control` is outperformed by treatments with growth regulators, with the exception of `NAA_05`. `IBA_1` outperforms `NAA_05`, but it is not significantly better than `NAA_1` and `IBA_05`.
-
-```{r tukeytopClust, echo=T, eval=T}
-###~~~
-#Tukey tests
-###~~~
-# Vector with significant variables
-significant_vars <- c("Treatment", "IndGeno")
-
-# Perform Tukey tests
-anovaOUT_tukeyClust <- TukeyHSD(anovaOUTClust, significant_vars)
-
-# Save analysis
-saveRDS(anovaOUT_tukeyClust,"02_Processed_data/rds_tables/TukeyRootClust.rds")
+```{r distrCall, echo=T, eval=T, fig.cap="Barplot of callus production during the rooting experiment."}
+barplot(table(MERGE$Callus), xlab="Binary data on callus", ylab="Occurrence")
 ```
 
-#### Investigate treatment effect
+The bi-modal nature of the data (Figure \@ref(fig:distrCall)) calls for the use of the binomial family in the `glm` analyses.
 
-```{r tukeytopClust2, echo=T, eval=T}
-###~~~
-#Investigate treatment effect (***)
-###~~~
-TreatTukey2Clust <- anovaOUT_tukeyClust$Treatment[which(as.numeric(anovaOUT_tukeyClust$Treatment[,4]) <= 0.01),]
+### Investigate treatment and individual effects 
 
-#Plot table
-knitr::kable(TreatTukey2Clust, caption = "Results of the Tukey tests focusing on treatment effect for individuals in blue cluster.")
+We start by comparing `glm` models  investigating the effect of treatment and individual on callus production.
+
+```{r}
+# GLM to investigate treatment effect on callus production
+M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
+
+# GLM to investigate treatment and individual effects on callus production
+M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
+
+# Which model best fit the data?
+anova(M1cal, M2cal, test = "Chisq")
+
+# M2 better fits the data, but is it not over fitting it?
+pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
+
+# Summary M2
+print(summary(M2cal))
 ```
+
+The analyses demonstrate that there is significant treatment and individual effects.
+
+### Ranking treatments
+
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
+
+```{r emmeansCal, eval=T, echo=T}
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
+
+# Identify significant pairwise comparisons
+signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```
+
+Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
+
+- (a) Shoot tips in control are significantly producing more calli than in the other treatments (`***`).
+- (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.
 
 #### Investigate individual effect
 
-```{r tukeytopClustind, echo=T, eval=T}
-#Investigate individual effect (***)
-TreatTukey2Clustind <- anovaOUT_tukeyClust$IndGeno[which(as.numeric(anovaOUT_tukeyClust$IndGeno[,4]) <= 0.01),]
+We are using the same approach as with the treatment to perform pairwise comparisons to indetify individuals that are significantly producing calli independently of treatment. The tests concluded that although the `glm` supported some individual effect, none of the individuals are significantly different based on the post hoc tests.
 
-# What are the top performers (= most efficient at producing roots)?
-IndTukeyOut <- TreatTukey2Clustind[which(TreatTukey2Clustind[,1] > 0),]
+```{r emmeansCalInd, eval=T, echo=T}
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
 
-# Extract best performing ind (first in rownames of comparison)
-P1 <- sapply(strsplit(rownames(IndTukeyOut), split='-'), "[[",1)
+# Identify significant pairwise comparisons
+signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
+signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
 
-# Percentage of individuals that are outperformed by P1
-TopInd <- 100*(sort(table(P1), decreasing=T)/length(unique(BestClust$IndGeno)))
-
-# Select only ind that are outperforming at least 20% of individuals 
-TopInd <- TopInd[which(TopInd >= 20)]
-
-TopInd <- as.matrix(round(TopInd, 1))
-colnames(TopInd) <- c("Percentage of individuals outperformed")
-
-# Plot table
-knitr::kable(TopInd, caption = "List of individual that are outperforming at least 20% of individuals in the blue rooting cluster (based on Tukey tests on Individual variable with a pval: 0.01).")
-```
-
-## Statistical analyses for calli data 
-
-Table \@ref(tab:growthbyregulatorcallus) demonstrated that >70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (< 3%). This preliminary result strongly suggested that calli was induced by growth regulators (in addition to the age of plants resulting in production of endogenous auxin and cytokinin) and we will be testing this hypothesis using ANOVAs.
-
-### ANOVA with model based on calli data 
-
-The model is the same as with roots and the code is available below.
-
-```{r anovacallus, echo=T, eval=T}
-###~~~
-#ANOVA with model for calli data
-###~~~
-
-# Perform ANOVA using same model as root
-anovaCallus <- aov(Callus ~ Treatment * Block * Genotype * IndGeno, data = MERGE)
-
-# Summary
-summary(anovaCallus)
-
-# Save analysis
-saveRDS(anovaCallus,"02_Processed_data/rds_tables/anovaCallus.rds")
-```
-
-These results are identical to the rooting analyses and support `Treatment` and `Individual` (here reflected by `IndGeno`) effects.
-
-### Tukey tests on significant variables from ANOVA based on calli data
-
-The code to perform the Tukey tests on significant variables is available below.
-
-```{r tukeycallianalysis, echo=T, eval=T}
-###~~~
-#Tukey tests on significant variables
-###~~~
-
-# Vector with significant variables
-significant_vars <- c("Treatment", "IndGeno")
-
-# Run Tukey tests
-anovaCallus_tukey2 <- TukeyHSD(anovaCallus, significant_vars)
-
-# Save analysis
-saveRDS(anovaCallus_tukey2,"02_Processed_data/rds_tables/TukeyCallus.rds")
-```
-
-#### Investigate treatment effect
-
-Table \@ref(tab:tukeycalli) summarizes the Tukey tests focusing on treatment effect. These analyses are not entirely conclusive, but they demonstrate that:
-
-- (c) Control is outperformed by all treatments (`***`).
-- (b) No significant differences between IBA_1, NAA_05.
-- (a) NAA_1 outperforms IBA_05.
-
-
-```{r tukeycalli, echo=T, eval=T}
-###~~~
-#Focus on treatment effect
-###~~~
-TreatTukeyCallus <- anovaCallus_tukey2$Treatment[which(as.numeric(anovaCallus_tukey2$Treatment[,4]) <= 0.01),]
-
-#Plot table
-knitr::kable(TreatTukeyCallus, caption = "Results of the Tukey tests focusing on treatment effect on calli production.")
-```
-
-#### Investigate individual effect
-
-```{r tukeycalliind, echo=T, eval=T}
-###~~~
-#Focus on individual effect
-###~~~
-TreatTukeyCallusInd <- anovaCallus_tukey2$IndGeno[which(as.numeric(anovaCallus_tukey2$IndGeno[,4]) <= 0.01),]
-
-###~~~
-# What are the individuals that are significantly producing calli?
-###~~~
-TreatTukeyCallusIndPlus <- TreatTukeyCallusInd[which(TreatTukeyCallusInd[,1] > 0),]
-
-# Extract best performing ind (first in rownames of comparison)
-CallusIndPlus <- sapply(strsplit(rownames(TreatTukeyCallusIndPlus), split='-'), "[[",1)
-
-tabIndPlus <- table(CallusIndPlus)
-
-###~~~
-#What are the individuals that are significantly NOT producing calli?
-###~~~
-TreatTukeyCallusIndNeg <- TreatTukeyCallusInd[which(TreatTukeyCallusInd[,1] < 0),]
-
-#Extract best performing ind (first in rownames of comparison)
-CallusIndNeg <- sapply(strsplit(rownames(TreatTukeyCallusIndNeg), split='-'), "[[",1)
-
-tabIndNeg <- table(CallusIndNeg)
-
-#Percentage of individuals that are outperformed by tabIndNeg
-TopIndNeg <- 100*(sort(tabIndNeg, decreasing=T)/length(unique(MERGE$IndGeno)))
-
-#Select only ind that are outperforming at least 20% of individuals 
-TopInd <- TopIndNeg[which(TopIndNeg >= 20)]
-
-TopInd <- as.matrix(round(TopInd, 1))
-colnames(TopInd) <- c("Percentage of individuals outperformed")
-
-#Plot table
-knitr::kable(TopInd, caption = "Individuals that are significantly NOT producing calli independently of treatment.")
+#Print table
+knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
 ```
 
 ### Clustering analysis of calli data
@@ -769,9 +716,9 @@ mat_data <- table(MERGE$IndGeno, MERGE$Callus)
 #Load file with color of individuals (which group based on clusters they belong to)
 colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 
-#Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
+#Annotate best perfoming individuals (based on Tukey test) and add P1, P2
 toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P2)", " (P1)", " (P3)"))
+rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)"))
 
 pdf("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.pdf")
 #Draw plot
@@ -1057,7 +1004,7 @@ summary(anovaOUTsurv)
 table(survheig$X5_w_survival, survheig$Treat)
 ```
 
-The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (p-value <= 0.001). When Tukey tests are conducted on individual data and with a p-value of 0.01, only one individual (`G2_b8_1`) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate). 
+The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (*p*-value <= 0.001). When Tukey tests are conducted on individual data and with a *p*-value of 0.01, only one individual (`G2_b8_1`) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate). 
 
 ```{r tukeysurv, echo=T, eval=T}
 ###~~~
@@ -1217,99 +1164,3 @@ Sampling at the basis of analyses presented in this study.
 ```{r tidy, echo=F}
 knitr::kable(MERGE, caption = "Sampling at the basis of the sagebrush rooting experiment.")
 ```
-
-# Appendix 4 {.appendix}
-
-## ANOVAs with model on binary rooting data
-
-Our overall model is `root ~ treatment` But we are also testing if there is a `Block`, `Genotype` and `IndGeno` (= individual) effect in rooting. This leads to this model:
-
-```
-aov(Root ~ Treatment * Block * Genotype * Individual)
-```
-
-```{r ANOVArootbin, echo=T, eval=T}
-###~~~
-#ANOVA model and run
-###~~~
-
-# Define model and run analysis
-anovaOUTbin <- aov(RootBin ~ Treatment * Block * Genotype * IndGeno, data = MERGE)
-
-# Summary
-summary(anovaOUTbin)
-
-# Save analysis
-saveRDS(anovaOUT,"02_Processed_data/rds_tables/anovabin.rds")
-```
-
-In our model, significant variables (`**` or `***`) are:
-
-- Treatment (`***`)
-- Individual (here represented by `IndGeno`) (`***`)
-- Block (`***`)
-- Treatment:Block (`**`)
-
-The latter two variables are most likely due to the high individual effect (indeed, individuals in blocks were randomly assigned; see Q2 for more details). 
-
-## Tukey tests on significant variables
-
-### Treatment effects on rooting performance
-
-Perform the Tukey test to identify treatment(s) best performing for initiating roots.
-
-```{r tukeyrootbin, echo=T, eval=T}
-###~~~
-#Tukey tests on significant variables
-###~~~
-# Vector with significant variables
-significant_vars <- c("Treatment", "IndGeno", "Block", "Treatment:Block")
-
-# Run analysis
-anovaOUT_tukeybin <- TukeyHSD(anovaOUTbin, significant_vars)
-
-# Save analysis
-saveRDS(anovaOUT_tukey,"02_Processed_data/rds_tables/anova_tukeybin.rds")
-
-# What treatment(s) are significantly increasing rooting? (**: 0.01)
-treatcompbin <- anovaOUT_tukeybin$Treatment[which(as.numeric(anovaOUT_tukeybin$Treatment[,4]) <= 0.01),]
-
-# Plot table
-knitr::kable(treatcompbin, caption = "Results of Tukey tests comparing treatments based on binary rooting data (with pval: <=0.01).")
-```
-
-Table \@ref(tab:tukeyrootbin) allows ranking treatments as follows (from worst to best):
-
- - (c) Control (outperformed by all treatments) (`***`)
- - (b) NAA_1 and NAA_05
- - (a) IBA_1, IBA_05 (although IBA_1 outperforms IBA_05 with a pval <= 0.05)
-
-### Individual effect on rooting performance
-
-Table \@ref(tab:tukeyindbin) shows the list of top performers individuals independently of treatment conditions. Notice that the two individuals all belong to genotype G2. Those two individuals were also identified by the previous analysis based on number of roots per tip.
-
-```{r tukeyindbin, echo=T, eval=T}
-#Tukey test: Individual effect
-
-#Individual effect
-IndTukeybin <- anovaOUT_tukeybin$IndGeno[which(as.numeric(anovaOUT_tukeybin$IndGeno[,4]) <= 0.01),]
-
-#What are the individuals that are the most prolific at producing roots?
-#Those should be prioritized for establishing lines
-IndTukeyOutbin <- IndTukeybin[which(IndTukeybin[,1] > 0),]
-#Extract best performing ind (first in rownames of comparison)
-P1bin <- sapply(strsplit(rownames(IndTukeybin), split='-'), "[[",1)
-
-#Percentage of individuals that are outperformed by P1
-TopIndbin <- 100*(sort(table(P1bin), decreasing=T)/length(unique(MERGE$IndGeno)))
-
-#Select only ind that are outperforming at least 20% of individuals 
-TopIndbin <- TopIndbin[which(TopIndbin >= 20)]
-
-TopIndbin <- as.matrix(round(TopIndbin, 1))
-colnames(TopIndbin) <- c("Percentage of individuals outperformed")
-
-#Plot table
-knitr::kable(TopInd, caption = "List of individual that are outperforming at least 20% of individuals (based on Tukey tests on Individual variable with a pval: 0.01).")
-```
-

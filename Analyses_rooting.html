@@ -407,7 +407,7 @@ div.tocify {
 <li><strong>Step 2:</strong> Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips.</li>
 <li><strong>Step 3:</strong> Comparative analyses on tissue culture data. This was done following a two-tier approach:
 <ul>
-<li>Statistical analyses (ANOVAs and Tukey tests with p-value &lt;= 0.01).</li>
+<li>Statistical analyses (test for normality and conduct ANOVAs and multiple pairwise-comparison tests with <em>p</em>-value &lt;= 0.01).</li>
 <li>Clustering analyses.</li>
 </ul></li>
 <li><strong>Step 4:</strong> <em>In vitro</em> growth of plantules.
@@ -776,155 +776,211 @@ knitr::kable(RootingStatbyTreat, row.names=F, caption = &quot;Effect of growth r
 </div>
 </div>
 </div>
-<div id="step-3-comparative-analyses-on-tissue-culture-data" class="section level1">
-<h1><span class="header-section-number">5</span> Step 3: Comparative analyses on tissue culture data</h1>
-<p>The input variables for these analyses are stored in <code>MERGE</code> and results will be saved in <code>rds</code> format in <code>02_Processed_data/rds_tables</code>.</p>
-<div id="statistical-analyses-for-rooting-data" class="section level2">
-<h2><span class="header-section-number">5.1</span> Statistical analyses for rooting data</h2>
-<p>Please find below the analyses conducted on quantitative rooting data. The same analyses were performed on the binary data and are found in <a href="#appendix-4">Appendix 4</a>.</p>
-<div id="anova-with-model-based-on-number-of-roots-per-shoot-tip" class="section level3">
-<h3><span class="header-section-number">5.1.1</span> ANOVA with model based on number of roots per shoot tip</h3>
-<p>Our overall model is <code>root ~ treatment</code>, but we are also testing whether there is a <code>block</code>, <code>genotype</code> and <code>individual</code> effect in explaining rooting data. This leads to the following model:</p>
-<pre><code>aov(Root ~ Treatment * Block * Genotype * Individual)</code></pre>
-<p>To be considered significant, a variable as to have a p-value &lt;= 0.01.</p>
-<div id="code-for-anova-analysis" class="section level4">
-<h4><span class="header-section-number">5.1.1.1</span> Code for ANOVA analysis</h4>
-<pre class="r"><code>### ~~~ Define model and run analysis ~~~
-anovaOUT &lt;- aov(Root ~ Treatment * Block * Genotype * IndGeno, 
-    data = MERGE)
+<div id="step-3-comparative-analyses" class="section level1">
+<h1><span class="header-section-number">5</span> Step 3: Comparative analyses</h1>
+<p>The input variables for these analyses are stored in <code>MERGE</code>.</p>
+<div id="statistical-analyses-on-rooting-data" class="section level2">
+<h2><span class="header-section-number">5.1</span> Statistical analyses on rooting data</h2>
+<p>Please find below the analyses conducted on quantitative rooting data (= counts of number of roots per shoot tip).</p>
+<div id="test-for-normality-and-best-model" class="section level3">
+<h3><span class="header-section-number">5.1.1</span> Test for normality and best model</h3>
+<p>Before conducting statistical analyses, we have to test for normality of rooting data using the Shapiro-Wilk normality test implemented in the R base function <code>shapiro.test()</code>. A <em>p</em>-value &lt;= 0.01 is will be used for significance.</p>
+<pre class="r"><code>#Conducting Shapiro-Wilk normality test on root data
+Rootnorm &lt;- shapiro.test(MERGE$Root)
+print(Rootnorm)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  MERGE$Root
+## W = 0.62681, p-value &lt; 2.2e-16</code></pre>
+<p>The test strongly rejects normality of the rooting data. In this context, we aim at analyzing the data using general linear models (<code>glm</code>), but what is the best fitted family/model to describe the data distribution? Let’s look at the distribution of the data (Figure <a href="#fig:distrRoot">5.1</a>):</p>
+<pre class="r"><code>hist(MERGE$Root, xlab=&quot;Number of roots per shoot tip&quot;, main=&quot;&quot;)</code></pre>
+<div class="figure"><span id="fig:distrRoot"></span>
+<img src="Analyses_rooting_files/figure-html/distrRoot-1.png" alt="Distribution of number of roots per shoot tips" width="672" />
+<p class="caption">
+Figure 5.1: Distribution of number of roots per shoot tips
+</p>
+</div>
+<p>Figure <a href="#fig:distrRoot">5.1</a> suggests that the Poisson model would best fit the data; however it is skewed towards zeros (with the highest frequency), which is problematic with classic <code>glm</code> models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the <code>pscl</code> R package <span class="citation">(Jackman et al. <a href="#ref-R-pscl">2020</a>)</span> to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood. It is not recommended that zero-inflated Poisson models be applied to small samples (see <a href="https://stats.idre.ucla.edu/r/dae/zip/">here</a>), which could prove problematic for our individual dataset.</p>
+</div>
+<div id="investigate-treatment-effect" class="section level3">
+<h3><span class="header-section-number">5.1.2</span> Investigate treatment effect</h3>
+<p>As shown in Figure <a href="#fig:distrRoot">5.1</a> we still need to test what model best fit the data. Here, we will be investigating whether treatment affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model.</p>
+<pre class="r"><code># Zero-Inflated Poisson GLM
+M1 &lt;- zeroinfl(Root ~ Treatment, dist = &#39;poisson&#39;, data = MERGE)
 
+# Dispersion statistic for M1
+E2 &lt;- resid(M1, type = &quot;pearson&quot;)
+N  &lt;- nrow(MERGE)
+p  &lt;- length(coef(M1))  
+sum(E2^2) / (N - p)</code></pre>
+<pre><code>## [1] 1.354779</code></pre>
+<pre class="r"><code># Zero-Inflated Negative Binomial GLM
+M2 &lt;- zeroinfl(Root ~ Treatment, dist = &#39;negbin&#39;, data = MERGE) 
 
-# Summary of ANOVA
-summary(anovaOUT)</code></pre>
-<pre><code>##                     Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Treatment            4  217.2   54.29  26.066  &lt; 2e-16 ***
-## Block                4   23.4    5.84   2.805  0.02538 *  
-## Genotype             1    0.0    0.01   0.004  0.94814    
-## IndGeno             39  642.4   16.47   7.908  &lt; 2e-16 ***
-## Treatment:Block     16  106.3    6.65   3.191 3.18e-05 ***
-## Treatment:Genotype   4    6.3    1.57   0.753  0.55665    
-## Treatment:IndGeno  156  454.1    2.91   1.397  0.00426 ** 
-## Residuals          450  937.3    2.08                     
+# Dispersion statistic for M2
+E2 &lt;- resid(M2, type = &quot;pearson&quot;)
+N  &lt;- nrow(MERGE)
+p  &lt;- length(coef(M2))  
+sum(E2^2) / (N - p)</code></pre>
+<pre><code>## [1] 0.9629885</code></pre>
+<pre class="r"><code># Likelihood ratio test
+lrtest(M1, M2)</code></pre>
+<pre><code>## Likelihood ratio test
+## 
+## Model 1: Root ~ Treatment
+## Model 2: Root ~ Treatment
+##   #Df  LogLik Df  Chisq Pr(&gt;Chisq)    
+## 1  10 -916.31                         
+## 2  11 -870.19  1 92.236  &lt; 2.2e-16 ***
 ## ---
-## Signif. codes:  
-## 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code># as.data.frame.matrix(x[[1]][1:5])
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code># Summary of M2
+summary(M2)</code></pre>
+<pre><code>## 
+## Call:
+## zeroinfl(formula = Root ~ Treatment, data = MERGE, dist = &quot;negbin&quot;)
+## 
+## Pearson residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.7288 -0.6087 -0.2490  0.1593  6.7539 
+## 
+## Count model coefficients (negbin with log link):
+##                 Estimate Std. Error z value Pr(&gt;|z|)  
+## (Intercept)     -0.08135    0.45515  -0.179    0.858  
+## TreatmentIBA_05  0.64812    0.45465   1.426    0.154  
+## TreatmentIBA_1   0.76653    0.44795   1.711    0.087 .
+## TreatmentNAA_05 -0.05698    0.46902  -0.121    0.903  
+## TreatmentNAA_1   0.50826    0.46133   1.102    0.271  
+## Log(theta)      -0.19782    0.37932  -0.521    0.602  
+## 
+## Zero-inflation model coefficients (binomial with logit link):
+##                 Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       1.4317     0.4793   2.987 0.002819 ** 
+## TreatmentIBA_05  -2.6827     0.7864  -3.411 0.000646 ***
+## TreatmentIBA_1   -4.2667     2.8093  -1.519 0.128815    
+## TreatmentNAA_05  -3.7474     2.3718  -1.580 0.114105    
+## TreatmentNAA_1   -2.2373     0.6584  -3.398 0.000678 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
+## 
+## Theta = 0.8205 
+## Number of iterations in BFGS optimization: 23 
+## Log-likelihood: -870.2 on 11 Df</code></pre>
+<p>M2 is the best-fit model and it shows that there is a significant treatment effect in explaining rooting data. Before ranking treatments, we would like to rapidly test whether there is a genotype effect in explaining the rooting by amending M2. We will be investigating individual effect below.</p>
+<pre class="r"><code># Amending M2 to test for genotype effect
 
-# Save analysis
-saveRDS(anovaOUT, &quot;02_Processed_data/rds_tables/anova.rds&quot;)</code></pre>
-<p>In our model, significant variables (<code>**</code> or <code>***</code>) are:</p>
-<ul>
-<li>Treatment (<code>***</code>)</li>
-<li>Individual (here represented by <code>IndGeno</code>) (<code>***</code>)</li>
-<li>Treatment:Block (<code>***</code>)</li>
-<li>Treatment:Individual (<code>**</code>)</li>
-</ul>
-<p>We are hypothesizing that the latter two variables result from to the high individual effect since individuals were randomly assigned to blocks.</p>
-</div>
-</div>
-<div id="tukey-tests-on-significant-variables-from-anova-based-on-number-of-roots-per-shoot-tip" class="section level3">
-<h3><span class="header-section-number">5.1.2</span> Tukey tests on significant variables from ANOVA based on number of roots per shoot tip</h3>
-<p>The code to perform the Tukey tests on significant variables from the ANOVA analysis is presented below.</p>
-<pre class="r"><code>### ~~~ Tukey tests on significant variables from ANOVA ~~~
+# Zero-Inflated Negative Binomial GLM
+M3 &lt;- zeroinfl(Root ~ Treatment + Genotype, dist = &#39;negbin&#39;, data = MERGE) 
 
-# Object with significant variables
-significant_vars &lt;- c(&quot;Treatment&quot;, &quot;IndGeno&quot;, &quot;Treatment:IndGeno&quot;, 
-    &quot;Treatment:Block&quot;)
+# Summarize M3
+summary(M3)</code></pre>
+<pre><code>## 
+## Call:
+## zeroinfl(formula = Root ~ Treatment + Genotype, data = MERGE, dist = &quot;negbin&quot;)
+## 
+## Pearson residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.7366 -0.5978 -0.2718  0.1030  7.0345 
+## 
+## Count model coefficients (negbin with log link):
+##                 Estimate Std. Error z value Pr(&gt;|z|)  
+## (Intercept)     -0.17399    0.44727  -0.389   0.6973  
+## TreatmentIBA_05  0.74556    0.45193   1.650   0.0990 .
+## TreatmentIBA_1   0.81289    0.44189   1.840   0.0658 .
+## TreatmentNAA_05 -0.05987    0.45857  -0.131   0.8961  
+## TreatmentNAA_1   0.50488    0.45100   1.119   0.2629  
+## GenotypeG2       0.21486    0.15747   1.364   0.1724  
+## Log(theta)      -0.05909    0.31703  -0.186   0.8521  
+## 
+## Zero-inflation model coefficients (binomial with logit link):
+##                 Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)       1.2447     0.5341   2.331 0.019779 *  
+## TreatmentIBA_05  -2.3734     0.5942  -3.994  6.5e-05 ***
+## TreatmentIBA_1   -3.5645     1.0966  -3.251 0.001151 ** 
+## TreatmentNAA_05  -3.6544     1.8374  -1.989 0.046711 *  
+## TreatmentNAA_1   -2.2182     0.6279  -3.533 0.000411 ***
+## GenotypeG2        0.4541     0.4440   1.023 0.306513    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
+## 
+## Theta = 0.9426 
+## Number of iterations in BFGS optimization: 47 
+## Log-likelihood: -869.3 on 13 Df</code></pre>
+<p>This model shows that there is no genotype effect in our data. we are then proceeding with pairwise comparison of treatments.</p>
+<div id="ranking-treatments" class="section level4">
+<h4><span class="header-section-number">5.1.2.1</span> Ranking treatments</h4>
+<p>The <em>emmeans</em> function implemented in the <code>emmeans</code> R package <span class="citation">(Lenth <a href="#ref-R-emmeans">2020</a>)</span> was used to compare treatments (with a <em>p</em>-value &lt;= 0.01):</p>
+<pre class="r"><code># Estimated marginal means (Least-squares means) for treatments using M2
+posthocRoot &lt;- emmeans(M2, list(pairwise ~ Treatment))
 
-# Run Tukey tests
-anovaOUT_tukey &lt;- TukeyHSD(anovaOUT, significant_vars)
+# Identify significant pairwise comparisons
+signRootTreat &lt;- as.data.frame(posthocRoot$`pairwise differences of Treatment`)
+signRootTreat &lt;- signRootTreat[which(signRootTreat$p.value &lt;= 0.01),c(1:3,5,6)]
 
-# Save analysis
-saveRDS(anovaOUT_tukey, &quot;02_Processed_data/rds_tables/anova_tukey.rds&quot;)</code></pre>
-<div id="investigate-treatment-effect-on-rooting-data" class="section level4">
-<h4><span class="header-section-number">5.1.2.1</span> Investigate treatment effect on rooting data</h4>
-<p>Inspect Tukey tests output to identify treatment(s) best performing for initiating roots.</p>
-<pre class="r"><code>### ~~~ What treatment(s) are significantly increasing rooting?
-### (**: 0.01) ~~~
-treatcomp &lt;- anovaOUT_tukey$Treatment[which(as.numeric(anovaOUT_tukey$Treatment[, 
-    4]) &lt;= 0.01), ]
-
-# Plot table
-knitr::kable(treatcomp, caption = &quot;Results of Tukey tests comparing treatments (with pval: &lt;=0.01).&quot;)</code></pre>
+#Print table
+knitr::kable(signRootTreat, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)</code></pre>
 <table>
-<caption><span id="tab:tukeyroot2">Table 5.1: </span>Results of Tukey tests comparing treatments (with pval: &lt;=0.01).</caption>
+<caption><span id="tab:emmeansRoot">Table 5.1: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
 <thead>
 <tr class="header">
-<th align="left"></th>
-<th align="right">diff</th>
-<th align="right">lwr</th>
-<th align="right">upr</th>
-<th align="right">p adj</th>
+<th align="left">contrast</th>
+<th align="right">estimate</th>
+<th align="right">SE</th>
+<th align="right">z.ratio</th>
+<th align="right">p.value</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">IBA_05-Control</td>
-<td align="right">1.1925926</td>
-<td align="right">0.7114648</td>
-<td align="right">1.6737204</td>
-<td align="right">0.0000000</td>
+<td align="left">Control - IBA_05</td>
+<td align="right">-1.1925960</td>
+<td align="right">0.1992822</td>
+<td align="right">-5.984457</td>
+<td align="right">0.00e+00</td>
 </tr>
 <tr class="even">
-<td align="left">IBA_1-Control</td>
-<td align="right">1.6962963</td>
-<td align="right">1.2151685</td>
-<td align="right">2.1774241</td>
-<td align="right">0.0000000</td>
+<td align="left">Control - IBA_1</td>
+<td align="right">-1.6963090</td>
+<td align="right">0.2296840</td>
+<td align="right">-7.385403</td>
+<td align="right">0.00e+00</td>
 </tr>
 <tr class="odd">
-<td align="left">NAA_05-Control</td>
-<td align="right">0.6148148</td>
-<td align="right">0.1336870</td>
-<td align="right">1.0959426</td>
-<td align="right">0.0046357</td>
+<td align="left">Control - NAA_05</td>
+<td align="right">-0.6148182</td>
+<td align="right">0.1278178</td>
+<td align="right">-4.810115</td>
+<td align="right">1.49e-05</td>
 </tr>
 <tr class="even">
-<td align="left">NAA_1-Control</td>
-<td align="right">0.8814815</td>
-<td align="right">0.4003537</td>
-<td align="right">1.3626093</td>
-<td align="right">0.0000075</td>
+<td align="left">Control - NAA_1</td>
+<td align="right">-0.8814843</td>
+<td align="right">0.1731786</td>
+<td align="right">-5.090031</td>
+<td align="right">3.60e-06</td>
 </tr>
 <tr class="odd">
-<td align="left">NAA_05-IBA_05</td>
-<td align="right">-0.5777778</td>
-<td align="right">-1.0589056</td>
-<td align="right">-0.0966500</td>
-<td align="right">0.0095266</td>
-</tr>
-<tr class="even">
-<td align="left">NAA_05-IBA_1</td>
-<td align="right">-1.0814815</td>
-<td align="right">-1.5626093</td>
-<td align="right">-0.6003537</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="odd">
-<td align="left">NAA_1-IBA_1</td>
-<td align="right">-0.8148148</td>
-<td align="right">-1.2959426</td>
-<td align="right">-0.3336870</td>
-<td align="right">0.0000452</td>
+<td align="left">IBA_1 - NAA_05</td>
+<td align="right">1.0814908</td>
+<td align="right">0.2480721</td>
+<td align="right">4.359582</td>
+<td align="right">1.27e-04</td>
 </tr>
 </tbody>
 </table>
-<p>Table <a href="#tab:tukeyroot2">5.1</a> allows ranking treatments as follows (from worst to best):</p>
+<p>Table <a href="#tab:emmeansRoot">5.1</a> allows ranking treatments as follows (from best to worst):</p>
 <ul>
-<li><ol start="3" style="list-style-type: lower-alpha">
-<li><code>Control</code> (is outperformed by all treatments) (<code>***</code>)</li>
-</ol></li>
-<li><ol start="2" style="list-style-type: lower-alpha">
-<li><code>NAA_1</code> and <code>NAA_05</code></li>
-</ol></li>
-<li><ol style="list-style-type: lower-alpha">
-<li><code>IBA_1</code>, <code>IBA_05</code> (although <code>IBA_1</code> outperforms <code>IBA_05</code> with a pval &lt;= 0.05)</li>
-</ol></li>
+<li><code>IBA_1</code>: a</li>
+<li><code>IBA_05</code>: ab</li>
+<li><code>NAA_1</code>: ab</li>
+<li><code>NAA_05</code>: b</li>
+<li><code>Control</code>: c</li>
 </ul>
 </div>
 <div id="boxplot-of-rooting-by-treatment" class="section level4">
 <h4><span class="header-section-number">5.1.2.2</span> Boxplot of rooting by treatment</h4>
-<p>To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (<code>MERGE</code>). Figure <a href="#fig:boxplot1">5.1</a> supports ranking from the Tukey analysis (Table <a href="#tab:tukeyroot"><strong>??</strong></a> and would suggest that <code>IBA_1</code> is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).</p>
+<p>To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (<code>MERGE</code>). Figure <a href="#fig:boxplot1">5.2</a> supports ranking from the statistical analysis (Table <a href="#tab:emmeansRoot">5.1</a> and would suggest that <code>IBA_1</code> is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).</p>
 <pre class="r"><code>###~~~
 #Boxplot comparing rooting per treatment
 ###~~~
@@ -933,47 +989,186 @@ knitr::kable(treatcomp, caption = &quot;Results of Tukey tests comparing treatme
 boxplot(MERGE$Root ~ MERGE$Treatment, xlab = &quot;Treatment&quot;, ylab = &quot;Number of roots per shoot tip&quot;, ylim=c(0,12.5), names = c(&quot;Control&quot;, &quot;IBA 0.5 mg/l&quot;, &quot;IBA 1 mg/l&quot;, &quot;NAA 0.5 mg/l&quot;, &quot;NAA 1 mg/l&quot;))
 
 # Add ranking based on Tukey tests
-text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;a&quot;,&quot;a&quot;,&#39;b&#39;,&#39;b&#39;))</code></pre>
+text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;ab&quot;,&quot;a&quot;,&#39;ab&#39;,&#39;ab&#39;))</code></pre>
 <div class="figure"><span id="fig:boxplot1"></span>
-<img src="Analyses_rooting_files/figure-html/boxplot1-1.png" alt="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details)." width="100%" />
+<img src="Analyses_rooting_files/figure-html/boxplot1-1.png" alt="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis." width="100%" />
 <p class="caption">
-Figure 5.1: Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on Tukey tests using letters (see text for more details).
+Figure 5.2: Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.
 </p>
 </div>
 </div>
-<div id="investigate-individual-effect-on-rooting-data" class="section level4">
-<h4><span class="header-section-number">5.1.2.3</span> Investigate individual effect on rooting data</h4>
-<p>Here, we are using the results of ANOVA (<code>anovaOUT</code>) and Tukey tests on the individual variable to identify individuals which are significantly outperforming the other individuals. To qualify as a top performer, an individual has to outperform &gt;=20% of individuals based on a p-value &lt;= 0.01.</p>
-<p>Table <a href="#tab:tukeyind">5.2</a> shows the list of top performers independently of treatment conditions. Notice that the three individuals all belong to the G2 genotype. Those individuals will be referred to as P1 to P3 to reflect their top rooting performance. P1 and P2 are the only individuals recovered by the Tukey tests performed on binary rooting data (see Table <a href="#tab:tukeyindbin">10.2</a>).</p>
-<pre class="r"><code>### ~~~ Tukey test: Individual effect ~~~
+</div>
+<div id="investigate-individual-effect" class="section level3">
+<h3><span class="header-section-number">5.1.3</span> Investigate individual effect</h3>
+<p>Here, we are applying a statistical approach to the rooting data to identify individuals which are significantly outperforming the other individuals. To qualify as a top performer, an individual has to outperform &gt;=20% of individuals based on a <em>p</em>-value &lt;= 0.01.</p>
+<p>Treatment analyses have shown that the zero-inflated negative binomial GLM best fit the data, but we hypothesize that the small individual sample size (n= 15 replicates per individual) could not meet the requirement of this method. Below, we are running this model on individual data (<code>Root ~ Individual</code>), but the algorithm is unable to fit the model.</p>
+<pre class="r"><code># Zero-Inflated Negative Binomial GLM
+M1 &lt;- zeroinfl(Root ~ IndGeno, dist = &#39;negbin&#39;, data = MERGE) 
+
+# Summary of M1
+summary(M1)</code></pre>
+<pre><code>## 
+## Call:
+## zeroinfl(formula = Root ~ IndGeno, data = MERGE, dist = &quot;negbin&quot;)
+## 
+## Pearson residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1.2090 -0.6122 -0.3393  0.1819  4.1690 
+## 
+## Count model coefficients (negbin with log link):
+##                  Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)     -0.040923         NA      NA       NA
+## IndGenoG1_b1_1   0.959657         NA      NA       NA
+## IndGenoG1_b1_2   0.013791         NA      NA       NA
+## IndGenoG1_b10_1  1.008636         NA      NA       NA
+## IndGenoG1_b12_1 -0.003295         NA      NA       NA
+## IndGenoG1_b13_1  1.274746         NA      NA       NA
+## IndGenoG1_b15_1 -2.667020         NA      NA       NA
+## IndGenoG1_b16_1  0.812161         NA      NA       NA
+## IndGenoG1_b18_1  0.326342         NA      NA       NA
+## IndGenoG1_b19_1  1.080557         NA      NA       NA
+## IndGenoG1_b2_1   0.907828         NA      NA       NA
+## IndGenoG1_b20_1  0.326342         NA      NA       NA
+## IndGenoG1_b21_1 -0.196129         NA      NA       NA
+## IndGenoG1_b25_1  0.892452         NA      NA       NA
+## IndGenoG1_b26_1 -1.973964         NA      NA       NA
+## IndGenoG1_b29_1  0.326337         NA      NA       NA
+## IndGenoG1_b3_1   1.219947         NA      NA       NA
+## IndGenoG1_b4_1  -0.533953         NA      NA       NA
+## IndGenoG1_b5_1   0.119509         NA      NA       NA
+## IndGenoG1_b6_1  -0.050753         NA      NA       NA
+## IndGenoG1_b7_1  -0.003295         NA      NA       NA
+## IndGenoG1_b8_1   0.377396         NA      NA       NA
+## IndGenoG1_b9_1   0.698224         NA      NA       NA
+## IndGenoG2_18_1  -0.533951         NA      NA       NA
+## IndGenoG2_29_1   0.590673         NA      NA       NA
+## IndGenoG2_b11_1  0.901136         NA      NA       NA
+## IndGenoG2_b15_1 -0.708340         NA      NA       NA
+## IndGenoG2_b16_1  0.119505         NA      NA       NA
+## IndGenoG2_b17_1 -0.533870         NA      NA       NA
+## IndGenoG2_b19_1 -2.667020         NA      NA       NA
+## IndGenoG2_b2_1  -0.050757         NA      NA       NA
+## IndGenoG2_b20_1  0.698224         NA      NA       NA
+## IndGenoG2_b21_1  0.913150         NA      NA       NA
+## IndGenoG2_b21_2  0.698225         NA      NA       NA
+## IndGenoG2_b24_1  1.326406         NA      NA       NA
+## IndGenoG2_b25_1  0.326422         NA      NA       NA
+## IndGenoG2_b26_1 -1.973964         NA      NA       NA
+## IndGenoG2_b27_1  1.701333         NA      NA       NA
+## IndGenoG2_b27_2  1.274741         NA      NA       NA
+## IndGenoG2_b28_1  1.326407         NA      NA       NA
+## IndGenoG2_b4_1   1.326407         NA      NA       NA
+## IndGenoG2_b5_1  -1.973964         NA      NA       NA
+## IndGenoG2_b6_1  -0.321697         NA      NA       NA
+## IndGenoG2_b7_1   0.277313         NA      NA       NA
+## IndGenoG2_b8_1   0.059341         NA      NA       NA
+## Log(theta)       1.060132         NA      NA       NA
+## 
+## Zero-inflation model coefficients (binomial with logit link):
+##                   Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)      13.388465         NA      NA       NA
+## IndGenoG1_b1_1  -12.232572         NA      NA       NA
+## IndGenoG1_b1_2  -14.918464         NA      NA       NA
+## IndGenoG1_b10_1 -14.280158         NA      NA       NA
+## IndGenoG1_b12_1   0.005901         NA      NA       NA
+## IndGenoG1_b13_1 -15.509619         NA      NA       NA
+## IndGenoG1_b15_1 -22.526857         NA      NA       NA
+## IndGenoG1_b16_1 -14.991135         NA      NA       NA
+## IndGenoG1_b18_1 -12.986769         NA      NA       NA
+## IndGenoG1_b19_1 -13.557501         NA      NA       NA
+## IndGenoG1_b2_1  -14.375150         NA      NA       NA
+## IndGenoG1_b20_1 -13.799590         NA      NA       NA
+## IndGenoG1_b21_1 -15.967812         NA      NA       NA
+## IndGenoG1_b25_1 -13.666291         NA      NA       NA
+## IndGenoG1_b26_1 -24.146795         NA      NA       NA
+## IndGenoG1_b29_1 -15.608613         NA      NA       NA
+## IndGenoG1_b3_1  -15.610724         NA      NA       NA
+## IndGenoG1_b4_1  -14.968626         NA      NA       NA
+## IndGenoG1_b5_1  -13.607961         NA      NA       NA
+## IndGenoG1_b6_1  -14.386502         NA      NA       NA
+## IndGenoG1_b7_1    0.005901         NA      NA       NA
+## IndGenoG1_b8_1  -56.804832         NA      NA       NA
+## IndGenoG1_b9_1  -13.461481         NA      NA       NA
+## IndGenoG2_18_1  -14.968629         NA      NA       NA
+## IndGenoG2_29_1  -13.543254         NA      NA       NA
+## IndGenoG2_b11_1 -14.001833         NA      NA       NA
+## IndGenoG2_b15_1 -13.646351         NA      NA       NA
+## IndGenoG2_b16_1 -13.607959         NA      NA       NA
+## IndGenoG2_b17_1 -14.968122         NA      NA       NA
+## IndGenoG2_b19_1 -22.526857         NA      NA       NA
+## IndGenoG2_b2_1  -12.836193         NA      NA       NA
+## IndGenoG2_b20_1 -14.193250         NA      NA       NA
+## IndGenoG2_b21_1 -14.826627         NA      NA       NA
+## IndGenoG2_b21_2 -13.461482         NA      NA       NA
+## IndGenoG2_b24_1 -14.845746         NA      NA       NA
+## IndGenoG2_b25_1 -11.193666         NA      NA       NA
+## IndGenoG2_b26_1 -24.146795         NA      NA       NA
+## IndGenoG2_b27_1 -15.730422         NA      NA       NA
+## IndGenoG2_b27_2 -13.173532         NA      NA       NA
+## IndGenoG2_b28_1 -11.633922         NA      NA       NA
+## IndGenoG2_b4_1  -14.420842         NA      NA       NA
+## IndGenoG2_b5_1  -24.146795         NA      NA       NA
+## IndGenoG2_b6_1  -12.480517         NA      NA       NA
+## IndGenoG2_b7_1  -56.924636         NA      NA       NA
+## IndGenoG2_b8_1  -15.781612         NA      NA       NA
+## 
+## Theta = 2.8868 
+## Number of iterations in BFGS optimization: 85 
+## Log-likelihood: -788.4 on 91 Df</code></pre>
+<p>In this context, we are investigating individual effect on rooting by applying a non-parametric Kruskal-Wallis rank sum test followed by a pairwise Wilcoxon rank sum tests to identify individual top performers.</p>
+<pre class="r"><code># Run Kruskal-Wallis Rank Sum Test
+K1 &lt;- kruskal.test(Root ~ IndGeno, data = MERGE)
+print(K1)</code></pre>
+<pre><code>## 
+##  Kruskal-Wallis rank sum test
+## 
+## data:  Root by IndGeno
+## Kruskal-Wallis chi-squared = 184.14, df = 44, p-value &lt; 2.2e-16</code></pre>
+<pre class="r"><code># Run Wilcox test on Root ~ IndGeno
+wilcoxRootInd &lt;- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
+                 p.adjust.method = &quot;BH&quot;)
+
+# Only select data.frame (distance matrix)
+wilcoxRootInd &lt;- wilcoxRootInd$p.value
+
+# Convert distance matrix into 3 cols: ind1, ind2, p-val
+OUT &lt;- NULL
+for(i in 1:nrow(wilcoxRootInd)){
+  tmp &lt;- wilcoxRootInd[i,]
+  tmp &lt;- cbind(rep(rownames(wilcoxRootInd)[i], length(tmp)), names(tmp), as.vector(tmp))
+  OUT &lt;- rbind(OUT, tmp)
+}
+wilcoxSimp &lt;- as.data.frame(OUT)
+colnames(wilcoxSimp) &lt;- c(&quot;Ind1&quot;, &quot;Ind2&quot;, &quot;P-val&quot;)
+
+# Tidy data
+wilcoxSimp &lt;- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
 
 # Individual effect
-IndTukey &lt;- anovaOUT_tukey$IndGeno[which(as.numeric(anovaOUT_tukey$IndGeno[, 
-    4]) &lt;= 0.01), ]
+IndRoot &lt;- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) &lt;= 0.01),])
 
-# What are the top performers (= most efficient at producing
-# roots)?
-IndTukeyOut &lt;- IndTukey[which(IndTukey[, 1] &gt; 0), ]
+# Infer mean rooting per individual
+meanRoot &lt;- aggregate(Root ~ IndGeno, mean, data = MERGE)
 
-# Extract best performing ind (first in rownames of
-# comparison)
-P1 &lt;- sapply(strsplit(rownames(IndTukey), split = &quot;-&quot;), &quot;[[&quot;, 
-    1)
+# Diff of means Ind1-Ind2
+IndRoot$Diff_mean &lt;- meanRoot[match(IndRoot[,1], meanRoot[,1]),2]-meanRoot[match(IndRoot[,2], meanRoot[,1]),2]
+
+# What are the top performers (= most efficient at producing roots)?
+IndRootOut &lt;- IndRoot[which(IndRoot$Diff_mean &gt; 0),]
 
 # Percentage of individuals that are outperformed by P1
-TopInd &lt;- 100 * (sort(table(P1), decreasing = T)/length(unique(MERGE$IndGeno)))
+TopInd &lt;- 100*(sort(table(IndRootOut[,1]), decreasing=T)/length(unique(MERGE$IndGeno)))
 
-# Select only ind that are outperforming at least 20% of
-# individuals
+# Select only ind that are outperforming at least 20% of individuals 
 TopInd &lt;- TopInd[which(TopInd &gt;= 20)]
 
 TopInd &lt;- as.matrix(round(TopInd, 1))
 colnames(TopInd) &lt;- c(&quot;Percentage of individuals outperformed&quot;)
 
 # Plot table
-knitr::kable(TopInd, caption = &quot;List of individual that are outperforming at least 20% of individuals (based on Tukey tests on Individual variable with a pval: 0.01).&quot;)</code></pre>
+knitr::kable(TopInd, caption = &quot;List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval &lt;= 0.01).&quot;)</code></pre>
 <table>
-<caption><span id="tab:tukeyind">Table 5.2: </span>List of individual that are outperforming at least 20% of individuals (based on Tukey tests on Individual variable with a pval: 0.01).</caption>
+<caption><span id="tab:kruskalInd">Table 5.2: </span>List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval &lt;= 0.01).</caption>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -983,28 +1178,24 @@ knitr::kable(TopInd, caption = &quot;List of individual that are outperforming a
 <tbody>
 <tr class="odd">
 <td align="left">G2_b27_1</td>
-<td align="right">75.6</td>
+<td align="right">48.9</td>
 </tr>
 <tr class="even">
-<td align="left">G2_b24_1</td>
-<td align="right">33.3</td>
-</tr>
-<tr class="odd">
-<td align="left">G2_b4_1</td>
+<td align="left">G2_b7_1</td>
 <td align="right">20.0</td>
 </tr>
 </tbody>
 </table>
-</div>
+<p>The analyses reported in Table <a href="#tab:kruskalInd">5.2</a> demonstrate that only two individuals (G2_b27_1, G2_b7_1, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.</p>
 </div>
 </div>
 <div id="clustering-analysis-of-number-of-roots-per-shoot-tip" class="section level2">
 <h2><span class="header-section-number">5.2</span> Clustering analysis of number of roots per shoot tip</h2>
-<p>A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using <code>Root</code> variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 to P3) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table <a href="#tab:tablegroups">5.3</a>) based on individual rooting performances (Figure <a href="#fig:heatmap2">5.2</a>):</p>
+<p>A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using <code>Root</code> variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table <a href="#tab:tablegroups">5.3</a>) based on individual rooting performances (Figure <a href="#fig:heatmap2">5.3</a>):</p>
 <ul>
 <li>Black cluster: No to very little rooting.</li>
 <li>Pink cluster: Some rooting observed.</li>
-<li>Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster. It is worth noting that P2 has only two tips (out of 15) that did not produce roots.</li>
+<li>Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster.</li>
 </ul>
 <div id="code-to-produce-clustering-analysis-on-rooting-data" class="section level3">
 <h3><span class="header-section-number">5.2.1</span> Code to produce clustering analysis on rooting data</h3>
@@ -1020,9 +1211,9 @@ mat_data &lt;- table(MERGE$IndGeno, MERGE$Root)
 # Load file with color of individuals (which group based on clusters they belong to)
 colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
 
-# Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
+# Annotate best perfoming individuals and add P1, P2
 toAdd &lt;- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P2)&quot;, &quot; (P1)&quot;, &quot; (P3)&quot;))
+rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P1)&quot;, &quot; (P2)&quot;))
 
 pdf(&quot;03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf&quot;)
 # Perform clustering/heatmap and draw plot
@@ -1047,7 +1238,7 @@ dev.off()</code></pre>
 <div class="figure"><span id="fig:heatmap2"></span>
 <img src="03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.png" alt="Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed." width="100%" />
 <p class="caption">
-Figure 5.2: Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed.
+Figure 5.3: Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed.
 </p>
 </div>
 </div>
@@ -1103,7 +1294,7 @@ knitr::kable(tabGroup, row.names = T, caption = &quot;Table summarizing composit
 </div>
 <div id="effect-of-growth-regulators-on-in-vitro-rooting-sorted-by-clusters" class="section level3">
 <h3><span class="header-section-number">5.2.3</span> Effect of growth regulators on <em>in vitro</em> rooting sorted by clusters</h3>
-<p>Table <a href="#tab:growthbyregulatorcluster">5.4</a> shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.2</a>). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table <a href="#tab:growthbyregulatorcluster">5.4</a>).</p>
+<p>Table <a href="#tab:growthbyregulatorcluster">5.4</a> shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.3</a>). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table <a href="#tab:growthbyregulatorcluster">5.4</a>).</p>
 <pre class="r"><code>#Load file with color of individuals (which group based on clusters they belong to)
 colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
 treat &lt;- sort(unique(MERGE$Treatment))
@@ -1256,316 +1447,221 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = &quot;Effect of g
 <p>This will be investigated by looking at top performer individuals identified by i) ANOVA analyses and ii) clustering analysis.</p>
 </div>
 </div>
-<div id="statistical-analysis-focusing-on-individuals-in-the-blue-rooting-cluster" class="section level2">
-<h2><span class="header-section-number">5.3</span> Statistical analysis focusing on individuals in the blue rooting cluster</h2>
-<p>Here, we will apply ANOVA followed by Tukey tests to test whether treatments identified with all individuals are still significantly increasing rooting for individuals in the blue rooting cluster. This is done by applying the code provided below:</p>
-<div id="anova-with-model-using-rooting-data-applied-to-individuals-in-the-blue-cluster" class="section level3">
-<h3><span class="header-section-number">5.3.1</span> ANOVA with model using rooting data applied to individuals in the blue cluster</h3>
-<p>The code provided below starts by sub-setting <code>MERGE</code> to only include individuals from the blue cluster. Then, the ANOVA model is built and applied to the <code>Root</code> data.</p>
-<pre class="r"><code>###~~~
-#Subset MERGE dataset to only include ind. from blue cluster
-###~~~
-BestClust &lt;- subset(MERGE, MERGE$IndGeno %in% as.vector(colInd$Individual[which(colInd$Group == &quot;blue&quot;)]))
+<div id="statistical-analyses-on-callus-data" class="section level2">
+<h2><span class="header-section-number">5.3</span> Statistical analyses on callus data</h2>
+<p>Table <a href="#tab:growthbyregulatorcallus">4.1</a> demonstrated that &gt;70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (&lt; 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.</p>
+<div id="test-for-normality" class="section level3">
+<h3><span class="header-section-number">5.3.1</span> Test for normality</h3>
+<p>Before conducting statistical analyses, we have to test for normality of callus data using the Shapiro-Wilk normality test implemented in the R base function <code>shapiro.test()</code>. A <em>p</em>-value &lt;= 0.01 is will be used for significance.</p>
+<pre class="r"><code>#Conducting Shapiro-Wilk normality test on root data
+Callusnorm &lt;- shapiro.test(MERGE$Callus)
+print(Callusnorm)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  MERGE$Callus
+## W = 0.59636, p-value &lt; 2.2e-16</code></pre>
+<p>The test strongly rejects normality of the rooting data. In this context, we aim at analyzing the data using general linear models (<code>glm</code>), but what is the best fitted family/model to describe the data distribution? Let’s look at the distribution of the data (Figure <a href="#fig:distrCall">5.4</a>):</p>
+<pre class="r"><code>barplot(table(MERGE$Callus), xlab=&quot;Binary data on callus&quot;, ylab=&quot;Occurrence&quot;)</code></pre>
+<div class="figure"><span id="fig:distrCall"></span>
+<img src="Analyses_rooting_files/figure-html/distrCall-1.png" alt="Barplot of callus production during the rooting experiment." width="672" />
+<p class="caption">
+Figure 5.4: Barplot of callus production during the rooting experiment.
+</p>
+</div>
+<p>The bi-modal nature of the data (Figure <a href="#fig:distrCall">5.4</a>) calls for the use of the binomial family in the <code>glm</code> analyses.</p>
+</div>
+<div id="investigate-treatment-and-individual-effects" class="section level3">
+<h3><span class="header-section-number">5.3.2</span> Investigate treatment and individual effects</h3>
+<p>We start by comparing <code>glm</code> models investigating the effect of treatment and individual on callus production.</p>
+<pre class="r"><code># GLM to investigate treatment effect on callus production
+M1cal &lt;- glm(Callus ~ Treatment, family = binomial(link=&quot;logit&quot;), data = MERGE)
 
-###~~~
-#Perform ANOVA with same model as above, but here only Individual and treatment effects are tested
-###~~~
-#ANOVA
-anovaOUTClust &lt;- aov(Root ~ Treatment * IndGeno, data = BestClust)
+# GLM to investigate treatment and individual effects on callus production
+M2cal &lt;- glm(Callus ~ Treatment + IndGeno, family = binomial(link=&quot;logit&quot;), data = MERGE)
 
-#Summary
-summary(anovaOUTClust)</code></pre>
-<pre><code>##                    Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Treatment           4  204.7   51.17  11.754 3.53e-08 ***
-## IndGeno            12  184.5   15.37   3.531 0.000151 ***
-## Treatment:IndGeno  48  312.5    6.51   1.495 0.038827 *  
-## Residuals         130  566.0    4.35                     
+# Which model best fit the data?
+anova(M1cal, M2cal, test = &quot;Chisq&quot;)</code></pre>
+<pre><code>## Analysis of Deviance Table
+## 
+## Model 1: Callus ~ Treatment
+## Model 2: Callus ~ Treatment + IndGeno
+##   Resid. Df Resid. Dev Df Deviance  Pr(&gt;Chi)    
+## 1       670     534.48                          
+## 2       626     359.31 44   175.18 &lt; 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>#Save analysis
-saveRDS(anovaOUTClust,&quot;02_Processed_data/rds_tables/anovaBestClust.rds&quot;)</code></pre>
-<p>These analyses supported significant effects for <code>Treatment</code> (<code>***</code>) and <code>IndGeno</code> (<code>***</code>).</p>
+<pre class="r"><code># M2 better fits the data, but is it not over fitting it?
+pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code># Summary M2
+print(summary(M2cal))</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Callus ~ Treatment + IndGeno, family = binomial(link = &quot;logit&quot;), 
+##     data = MERGE)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.6414  -0.1133   0.1898   0.4458   3.1787  
+## 
+## Coefficients:
+##                   Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)     -4.272e+00  1.200e+00  -3.559 0.000373 ***
+## TreatmentIBA_05  6.042e+00  6.959e-01   8.681  &lt; 2e-16 ***
+## TreatmentIBA_1   6.920e+00  7.268e-01   9.521  &lt; 2e-16 ***
+## TreatmentNAA_05  6.591e+00  7.144e-01   9.227  &lt; 2e-16 ***
+## TreatmentNAA_1   7.305e+00  7.436e-01   9.823  &lt; 2e-16 ***
+## IndGenoG1_b1_1  -1.297e+00  1.219e+00  -1.064 0.287425    
+## IndGenoG1_b1_2  -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b10_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b12_1 -3.595e+00  1.223e+00  -2.940 0.003279 ** 
+## IndGenoG1_b13_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b15_1 -3.173e+00  1.193e+00  -2.659 0.007841 ** 
+## IndGenoG1_b16_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b18_1  9.606e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b19_1  8.941e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b2_1  -1.718e+00  1.191e+00  -1.442 0.149190    
+## IndGenoG1_b20_1  9.503e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b21_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b25_1  9.676e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b26_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b29_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b3_1   9.347e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b4_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b5_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b6_1  -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b7_1  -1.945e+01  8.196e+02  -0.024 0.981071    
+## IndGenoG1_b8_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b9_1  -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG2_18_1  -2.800e+00  1.179e+00  -2.374 0.017607 *  
+## IndGenoG2_29_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b11_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG2_b15_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b16_1 -1.718e+00  1.191e+00  -1.442 0.149190    
+## IndGenoG2_b17_1 -2.092e+00  1.178e+00  -1.775 0.075824 .  
+## IndGenoG2_b19_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b2_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b20_1  1.531e-13  1.432e+00   0.000 1.000000    
+## IndGenoG2_b21_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b21_2  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b24_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b25_1  9.411e-14  1.432e+00   0.000 1.000000    
+## IndGenoG2_b26_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b27_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b27_2 -1.718e+00  1.191e+00  -1.442 0.149190    
+## IndGenoG2_b28_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG2_b4_1   9.771e-14  1.432e+00   0.000 1.000000    
+## IndGenoG2_b5_1  -3.173e+00  1.193e+00  -2.659 0.007841 ** 
+## IndGenoG2_b6_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b7_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b8_1   9.690e-14  1.432e+00   0.000 1.000000    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 862.04  on 674  degrees of freedom
+## Residual deviance: 359.31  on 626  degrees of freedom
+## AIC: 457.31
+## 
+## Number of Fisher Scoring iterations: 16</code></pre>
+<p>The analyses demonstrate that there is significant treatment and individual effects.</p>
 </div>
-<div id="tukey-tests-on-significant-variables-from-anova-based-on-number-of-roots-per-shoot-tip-for-blue-cluster" class="section level3">
-<h3><span class="header-section-number">5.3.2</span> Tukey tests on significant variables from ANOVA based on number of roots per shoot tip for blue cluster</h3>
-<p>Tukey tests on significant variables are conducted with the code below and results are provided in Tables <a href="#tab:tukeytopClust2">5.5</a> and <a href="#tab:tukeytopClustind">5.6</a>. <code>Control</code> is outperformed by treatments with growth regulators, with the exception of <code>NAA_05</code>. <code>IBA_1</code> outperforms <code>NAA_05</code>, but it is not significantly better than <code>NAA_1</code> and <code>IBA_05</code>.</p>
-<pre class="r"><code>###~~~
-#Tukey tests
-###~~~
-# Vector with significant variables
-significant_vars &lt;- c(&quot;Treatment&quot;, &quot;IndGeno&quot;)
+<div id="ranking-treatments-1" class="section level3">
+<h3><span class="header-section-number">5.3.3</span> Ranking treatments</h3>
+<p>The <em>emmeans</em> function implemented in the <code>emmeans</code> R package <span class="citation">(Lenth <a href="#ref-R-emmeans">2020</a>)</span> was used to compare treatments (with a <em>p</em>-value &lt;= 0.01):</p>
+<pre class="r"><code># Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallus &lt;- emmeans(M2cal, list(pairwise ~ Treatment))
 
-# Perform Tukey tests
-anovaOUT_tukeyClust &lt;- TukeyHSD(anovaOUTClust, significant_vars)
+# Identify significant pairwise comparisons
+signCalTreat &lt;- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat &lt;- signCalTreat[which(signCalTreat$p.value &lt;= 0.01),c(1:3,5,6)]
 
-# Save analysis
-saveRDS(anovaOUT_tukeyClust,&quot;02_Processed_data/rds_tables/TukeyRootClust.rds&quot;)</code></pre>
-<div id="investigate-treatment-effect" class="section level4">
-<h4><span class="header-section-number">5.3.2.1</span> Investigate treatment effect</h4>
-<pre class="r"><code>###~~~
-#Investigate treatment effect (***)
-###~~~
-TreatTukey2Clust &lt;- anovaOUT_tukeyClust$Treatment[which(as.numeric(anovaOUT_tukeyClust$Treatment[,4]) &lt;= 0.01),]
-
-#Plot table
-knitr::kable(TreatTukey2Clust, caption = &quot;Results of the Tukey tests focusing on treatment effect for individuals in blue cluster.&quot;)</code></pre>
+#Print table
+knitr::kable(signCalTreat, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)</code></pre>
 <table>
-<caption><span id="tab:tukeytopClust2">Table 5.5: </span>Results of the Tukey tests focusing on treatment effect for individuals in blue cluster.</caption>
+<caption><span id="tab:emmeansCal">Table 5.5: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
 <thead>
 <tr class="header">
-<th align="left"></th>
-<th align="right">diff</th>
-<th align="right">lwr</th>
-<th align="right">upr</th>
-<th align="right">p adj</th>
+<th align="left">contrast</th>
+<th align="right">estimate</th>
+<th align="right">SE</th>
+<th align="right">z.ratio</th>
+<th align="right">p.value</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">IBA_05-Control</td>
-<td align="right">2.358974</td>
-<td align="right">1.0517796</td>
-<td align="right">3.6661691</td>
-<td align="right">0.0000184</td>
+<td align="left">Control - IBA_05</td>
+<td align="right">-6.041565</td>
+<td align="right">0.6959323</td>
+<td align="right">-8.681255</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
-<td align="left">IBA_1-Control</td>
-<td align="right">2.974359</td>
-<td align="right">1.6671642</td>
-<td align="right">4.2815538</td>
-<td align="right">0.0000000</td>
+<td align="left">Control - IBA_1</td>
+<td align="right">-6.919518</td>
+<td align="right">0.7267807</td>
+<td align="right">-9.520779</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
-<td align="left">NAA_1-Control</td>
-<td align="right">1.666667</td>
-<td align="right">0.3594719</td>
-<td align="right">2.9738614</td>
-<td align="right">0.0051800</td>
+<td align="left">Control - NAA_05</td>
+<td align="right">-6.591417</td>
+<td align="right">0.7143659</td>
+<td align="right">-9.226947</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
-<td align="left">NAA_05-IBA_1</td>
-<td align="right">-1.846154</td>
-<td align="right">-3.1533486</td>
-<td align="right">-0.5389591</td>
-<td align="right">0.0013878</td>
+<td align="left">Control - NAA_1</td>
+<td align="right">-7.304505</td>
+<td align="right">0.7436334</td>
+<td align="right">-9.822723</td>
+<td align="right">0</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div id="investigate-individual-effect" class="section level4">
-<h4><span class="header-section-number">5.3.2.2</span> Investigate individual effect</h4>
-<pre class="r"><code>#Investigate individual effect (***)
-TreatTukey2Clustind &lt;- anovaOUT_tukeyClust$IndGeno[which(as.numeric(anovaOUT_tukeyClust$IndGeno[,4]) &lt;= 0.01),]
-
-# What are the top performers (= most efficient at producing roots)?
-IndTukeyOut &lt;- TreatTukey2Clustind[which(TreatTukey2Clustind[,1] &gt; 0),]
-
-# Extract best performing ind (first in rownames of comparison)
-P1 &lt;- sapply(strsplit(rownames(IndTukeyOut), split=&#39;-&#39;), &quot;[[&quot;,1)
-
-# Percentage of individuals that are outperformed by P1
-TopInd &lt;- 100*(sort(table(P1), decreasing=T)/length(unique(BestClust$IndGeno)))
-
-# Select only ind that are outperforming at least 20% of individuals 
-TopInd &lt;- TopInd[which(TopInd &gt;= 20)]
-
-TopInd &lt;- as.matrix(round(TopInd, 1))
-colnames(TopInd) &lt;- c(&quot;Percentage of individuals outperformed&quot;)
-
-# Plot table
-knitr::kable(TopInd, caption = &quot;List of individual that are outperforming at least 20% of individuals in the blue rooting cluster (based on Tukey tests on Individual variable with a pval: 0.01).&quot;)</code></pre>
-<table>
-<caption><span id="tab:tukeytopClustind">Table 5.6: </span>List of individual that are outperforming at least 20% of individuals in the blue rooting cluster (based on Tukey tests on Individual variable with a pval: 0.01).</caption>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">Percentage of individuals outperformed</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">G2_b27_1</td>
-<td align="right">38.5</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<div id="statistical-analyses-for-calli-data" class="section level2">
-<h2><span class="header-section-number">5.4</span> Statistical analyses for calli data</h2>
-<p>Table <a href="#tab:growthbyregulatorcallus">4.1</a> demonstrated that &gt;70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (&lt; 3%). This preliminary result strongly suggested that calli was induced by growth regulators (in addition to the age of plants resulting in production of endogenous auxin and cytokinin) and we will be testing this hypothesis using ANOVAs.</p>
-<div id="anova-with-model-based-on-calli-data" class="section level3">
-<h3><span class="header-section-number">5.4.1</span> ANOVA with model based on calli data</h3>
-<p>The model is the same as with roots and the code is available below.</p>
-<pre class="r"><code>###~~~
-#ANOVA with model for calli data
-###~~~
-
-# Perform ANOVA using same model as root
-anovaCallus &lt;- aov(Callus ~ Treatment * Block * Genotype * IndGeno, data = MERGE)
-
-# Summary
-summary(anovaCallus)</code></pre>
-<pre><code>##                     Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Treatment            4  68.88  17.221 200.414  &lt; 2e-16 ***
-## Block                4   6.66   1.665  19.379    1e-14 ***
-## Genotype             1   0.14   0.141   1.643 0.200574    
-## IndGeno             39  15.99   0.410   4.772  &lt; 2e-16 ***
-## Treatment:Block     16   3.49   0.218   2.537 0.000934 ***
-## Treatment:Genotype   4   1.09   0.273   3.177 0.013641 *  
-## Treatment:IndGeno  156  15.74   0.101   1.174 0.104393    
-## Residuals          450  38.67   0.086                     
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code># Save analysis
-saveRDS(anovaCallus,&quot;02_Processed_data/rds_tables/anovaCallus.rds&quot;)</code></pre>
-<p>These results are identical to the rooting analyses and support <code>Treatment</code> and <code>Individual</code> (here reflected by <code>IndGeno</code>) effects.</p>
-</div>
-<div id="tukey-tests-on-significant-variables-from-anova-based-on-calli-data" class="section level3">
-<h3><span class="header-section-number">5.4.2</span> Tukey tests on significant variables from ANOVA based on calli data</h3>
-<p>The code to perform the Tukey tests on significant variables is available below.</p>
-<pre class="r"><code>###~~~
-#Tukey tests on significant variables
-###~~~
-
-# Vector with significant variables
-significant_vars &lt;- c(&quot;Treatment&quot;, &quot;IndGeno&quot;)
-
-# Run Tukey tests
-anovaCallus_tukey2 &lt;- TukeyHSD(anovaCallus, significant_vars)
-
-# Save analysis
-saveRDS(anovaCallus_tukey2,&quot;02_Processed_data/rds_tables/TukeyCallus.rds&quot;)</code></pre>
-<div id="investigate-treatment-effect-1" class="section level4">
-<h4><span class="header-section-number">5.4.2.1</span> Investigate treatment effect</h4>
-<p>Table <a href="#tab:tukeycalli">5.7</a> summarizes the Tukey tests focusing on treatment effect. These analyses are not entirely conclusive, but they demonstrate that:</p>
+<p>Table <a href="#tab:emmeansCal">5.5</a> summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:</p>
 <ul>
-<li><ol start="3" style="list-style-type: lower-alpha">
-<li>Control is outperformed by all treatments (<code>***</code>).</li>
+<li><ol style="list-style-type: lower-alpha">
+<li>Shoot tips in control are significantly producing more calli than in the other treatments (<code>***</code>).</li>
 </ol></li>
 <li><ol start="2" style="list-style-type: lower-alpha">
-<li>No significant differences between IBA_1, NAA_05.</li>
-</ol></li>
-<li><ol style="list-style-type: lower-alpha">
-<li>NAA_1 outperforms IBA_05.</li>
+<li>No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.</li>
 </ol></li>
 </ul>
-<pre class="r"><code>###~~~
-#Focus on treatment effect
-###~~~
-TreatTukeyCallus &lt;- anovaCallus_tukey2$Treatment[which(as.numeric(anovaCallus_tukey2$Treatment[,4]) &lt;= 0.01),]
-
-#Plot table
-knitr::kable(TreatTukeyCallus, caption = &quot;Results of the Tukey tests focusing on treatment effect on calli production.&quot;)</code></pre>
-<table>
-<caption><span id="tab:tukeycalli">Table 5.7: </span>Results of the Tukey tests focusing on treatment effect on calli production.</caption>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">diff</th>
-<th align="right">lwr</th>
-<th align="right">upr</th>
-<th align="right">p adj</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">IBA_05-Control</td>
-<td align="right">0.7259259</td>
-<td align="right">0.6282063</td>
-<td align="right">0.8236455</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="even">
-<td align="left">IBA_1-Control</td>
-<td align="right">0.8148148</td>
-<td align="right">0.7170952</td>
-<td align="right">0.9125344</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="odd">
-<td align="left">NAA_05-Control</td>
-<td align="right">0.7851852</td>
-<td align="right">0.6874656</td>
-<td align="right">0.8829048</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="even">
-<td align="left">NAA_1-Control</td>
-<td align="right">0.8444444</td>
-<td align="right">0.7467248</td>
-<td align="right">0.9421641</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="odd">
-<td align="left">NAA_1-IBA_05</td>
-<td align="right">0.1185185</td>
-<td align="right">0.0207989</td>
-<td align="right">0.2162381</td>
-<td align="right">0.0085435</td>
-</tr>
-</tbody>
-</table>
-</div>
 <div id="investigate-individual-effect-1" class="section level4">
-<h4><span class="header-section-number">5.4.2.2</span> Investigate individual effect</h4>
-<pre class="r"><code>###~~~
-#Focus on individual effect
-###~~~
-TreatTukeyCallusInd &lt;- anovaCallus_tukey2$IndGeno[which(as.numeric(anovaCallus_tukey2$IndGeno[,4]) &lt;= 0.01),]
+<h4><span class="header-section-number">5.3.3.1</span> Investigate individual effect</h4>
+<p>We are using the same approach as with the treatment to perform pairwise comparisons to indetify individuals that are significantly producing calli independently of treatment. The tests concluded that although the <code>glm</code> supported some individual effect, none of the individuals are significantly different based on the post hoc tests.</p>
+<pre class="r"><code># Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallusInd &lt;- emmeans(M2cal, list(pairwise ~ IndGeno))
 
-###~~~
-# What are the individuals that are significantly producing calli?
-###~~~
-TreatTukeyCallusIndPlus &lt;- TreatTukeyCallusInd[which(TreatTukeyCallusInd[,1] &gt; 0),]
+# Identify significant pairwise comparisons
+signCalTreatInd &lt;- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
+signCalTreatInd &lt;- signCalTreatInd[which(signCalTreatInd$p.value &lt;= 0.01),c(1:3,5,6)]
 
-# Extract best performing ind (first in rownames of comparison)
-CallusIndPlus &lt;- sapply(strsplit(rownames(TreatTukeyCallusIndPlus), split=&#39;-&#39;), &quot;[[&quot;,1)
-
-tabIndPlus &lt;- table(CallusIndPlus)
-
-###~~~
-#What are the individuals that are significantly NOT producing calli?
-###~~~
-TreatTukeyCallusIndNeg &lt;- TreatTukeyCallusInd[which(TreatTukeyCallusInd[,1] &lt; 0),]
-
-#Extract best performing ind (first in rownames of comparison)
-CallusIndNeg &lt;- sapply(strsplit(rownames(TreatTukeyCallusIndNeg), split=&#39;-&#39;), &quot;[[&quot;,1)
-
-tabIndNeg &lt;- table(CallusIndNeg)
-
-#Percentage of individuals that are outperformed by tabIndNeg
-TopIndNeg &lt;- 100*(sort(tabIndNeg, decreasing=T)/length(unique(MERGE$IndGeno)))
-
-#Select only ind that are outperforming at least 20% of individuals 
-TopInd &lt;- TopIndNeg[which(TopIndNeg &gt;= 20)]
-
-TopInd &lt;- as.matrix(round(TopInd, 1))
-colnames(TopInd) &lt;- c(&quot;Percentage of individuals outperformed&quot;)
-
-#Plot table
-knitr::kable(TopInd, caption = &quot;Individuals that are significantly NOT producing calli independently of treatment.&quot;)</code></pre>
+#Print table
+knitr::kable(signCalTreatInd, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)</code></pre>
 <table>
-<caption><span id="tab:tukeycalliind">Table 5.8: </span>Individuals that are significantly NOT producing calli independently of treatment.</caption>
+<caption><span id="tab:emmeansCalInd">Table 5.6: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
 <thead>
 <tr class="header">
-<th align="left"></th>
-<th align="right">Percentage of individuals outperformed</th>
+<th align="left">contrast</th>
+<th align="right">estimate</th>
+<th align="right">SE</th>
+<th align="right">z.ratio</th>
+<th align="right">p.value</th>
 </tr>
 </thead>
 <tbody>
-<tr class="odd">
-<td align="left">G1_b7_1</td>
-<td align="right">26.7</td>
-</tr>
 </tbody>
 </table>
 </div>
 </div>
 <div id="clustering-analysis-of-calli-data" class="section level3">
-<h3><span class="header-section-number">5.4.3</span> Clustering analysis of calli data</h3>
-<p>The code to produce the clustering analysis based on <code>Callus</code> data and associated heatmap is provided below and Figure <a href="#fig:heatmapplot">5.3</a> shows results of the analysis. Outcomes of this analysis are:</p>
+<h3><span class="header-section-number">5.3.4</span> Clustering analysis of calli data</h3>
+<p>The code to produce the clustering analysis based on <code>Callus</code> data and associated heatmap is provided below and Figure <a href="#fig:heatmapplot">5.5</a> shows results of the analysis. Outcomes of this analysis are:</p>
 <ul>
 <li>Three clusters based on calli production:
 <ul>
@@ -1589,9 +1685,9 @@ mat_data &lt;- table(MERGE$IndGeno, MERGE$Callus)
 #Load file with color of individuals (which group based on clusters they belong to)
 colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
 
-#Annotate best perfoming individuals (based on Tukey test) and add P1, P2, P3
+#Annotate best perfoming individuals (based on Tukey test) and add P1, P2
 toAdd &lt;- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P2)&quot;, &quot; (P1)&quot;, &quot; (P3)&quot;))
+rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P1)&quot;, &quot; (P2)&quot;))
 
 pdf(&quot;03_Figures_report/Fig_3_Heatmap_compare_ind_callus.pdf&quot;)
 #Draw plot
@@ -1617,13 +1713,13 @@ dev.off()</code></pre>
 <div class="figure"><span id="fig:heatmapplot"></span>
 <img src="03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png" alt="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed." width="100%" />
 <p class="caption">
-Figure 5.3: Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.
+Figure 5.5: Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.
 </p>
 </div>
 </div>
 <div id="effect-of-growth-regulators-on-in-vitro-calli-production-in-artemisia-tridentata-sorted-by-rooting-clusters" class="section level3">
-<h3><span class="header-section-number">5.4.4</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h3>
-<p>Table <a href="#tab:growthbyregulatorclustercallus">5.9</a> shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.2</a>).</p>
+<h3><span class="header-section-number">5.3.5</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h3>
+<p>Table <a href="#tab:growthbyregulatorclustercallus">5.7</a> shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.3</a>).</p>
 <pre class="r"><code>###~~~
 #Effect of growth regulators on calli production sorted by rooting cluster
 ###~~~
@@ -1659,7 +1755,7 @@ for(i in 1:nrow(RootingStatbyTreatCal)){
 #Plot table
 knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = &quot;Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.&quot;)</code></pre>
 <table>
-<caption><span id="tab:growthbyregulatorclustercallus">Table 5.9: </span>Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.</caption>
+<caption><span id="tab:growthbyregulatorclustercallus">Table 5.7: </span>Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.</caption>
 <thead>
 <tr class="header">
 <th align="left">Cluster</th>
@@ -2257,7 +2353,7 @@ table(survheig$X5_w_survival, survheig$Treat)</code></pre>
 ##     Control IBA_05 IBA_1 NAA_05 NAA_1
 ##   0       6     29    34     30    28
 ##   1       7     32    46     22    39</code></pre>
-<p>The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (p-value &lt;= 0.001). When Tukey tests are conducted on individual data and with a p-value of 0.01, only one individual (<code>G2_b8_1</code>) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate).</p>
+<p>The ANOVA shows that there is no treatment effect on survival, but rather that survival is again predicted by individual effect (<em>p</em>-value &lt;= 0.001). When Tukey tests are conducted on individual data and with a <em>p</em>-value of 0.01, only one individual (<code>G2_b8_1</code>) is exhibiting significantly higher death rates than 2 other individuals. Overall, this results means that at this stage, individuals are all performing equally (with the exception of one which has a very high death rate).</p>
 <pre class="r"><code>###~~~
 #Tukey tests on significant variables
 ###~~~
@@ -2399,7 +2495,12 @@ Figure 6.1: Boxplot showing plantlets heights after five weeks of culture for in
 </p>
 </div>
 <div id="refs">
-
+<div id="ref-R-pscl">
+<p>Jackman, Simon, Alex Tahk, Achim Zeileis, Christina Maimone, and Jim Fearon. 2020. <em>Pscl: Political Science Computational Laboratory</em>. <a href="http://github.com/atahk/pscl">http://github.com/atahk/pscl</a>.</p>
+</div>
+<div id="ref-R-emmeans">
+<p>Lenth, Russell. 2020. <em>Emmeans: Estimated Marginal Means, Aka Least-Squares Means</em>. <a href="https://github.com/rvlenth/emmeans">https://github.com/rvlenth/emmeans</a>.</p>
+</div>
 </div>
 </div>
 </div>
@@ -2468,23 +2569,24 @@ Guide</em>. ISBN 9781138359338. Boca Raton, Florida: Chapman and Hall/CRC,
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] RColorBrewer_1.1-2   gplots_3.1.0         devtools_2.3.2      
-## [4] usethis_1.6.3        formatR_1.7          knitcitations_1.0.10
-## [7] bookdown_0.21        rmarkdown_2.4        knitr_1.30          
+## [1] RColorBrewer_1.1-2   gplots_3.0.4         devtools_2.2.1      
+## [4] usethis_1.5.1        formatR_1.7          knitcitations_1.0.10
+## [7] bookdown_0.20        rmarkdown_2.4        knitr_1.30          
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.5         highr_0.8          compiler_3.6.1     plyr_1.8.6        
-##  [5] bitops_1.0-6       remotes_2.2.0      prettyunits_1.1.1  tools_3.6.1       
-##  [9] testthat_2.3.2     digest_0.6.25      pkgbuild_1.1.0     pkgload_1.1.0     
+##  [1] Rcpp_1.0.5         highr_0.8          compiler_3.6.1     plyr_1.8.5        
+##  [5] bitops_1.0-6       remotes_2.1.0      prettyunits_1.1.1  tools_3.6.1       
+##  [9] testthat_2.3.1     digest_0.6.25      pkgbuild_1.0.6     pkgload_1.0.2     
 ## [13] lubridate_1.7.9    jsonlite_1.7.1     evaluate_0.14      memoise_1.1.0     
-## [17] rlang_0.4.8        bibtex_0.4.2.3     cli_2.1.0          yaml_2.2.1        
+## [17] rlang_0.4.7        bibtex_0.4.2.2     cli_2.0.2          yaml_2.2.1        
 ## [21] xfun_0.18          RefManageR_1.2.12  withr_2.3.0        httr_1.4.2        
-## [25] stringr_1.4.0      xml2_1.3.2         caTools_1.18.0     gtools_3.8.2      
+## [25] stringr_1.4.0      xml2_1.3.2         caTools_1.18.0     gtools_3.8.1      
 ## [29] generics_0.0.2     desc_1.2.0         fs_1.5.0           rprojroot_1.3-2   
 ## [33] glue_1.4.2         R6_2.4.1           processx_3.4.4     fansi_0.4.1       
-## [37] sessioninfo_1.1.1  callr_3.5.1        magrittr_1.5       codetools_0.2-16  
-## [41] backports_1.1.10   ps_1.4.0           htmltools_0.5.0    ellipsis_0.3.1    
-## [45] assertthat_0.2.1   KernSmooth_2.23-17 stringi_1.5.3      crayon_1.3.4</code></pre>
+## [37] sessioninfo_1.1.1  gdata_2.18.0       callr_3.4.1        magrittr_1.5      
+## [41] codetools_0.2-16   backports_1.1.10   ps_1.3.4           htmltools_0.5.0   
+## [45] ellipsis_0.3.1     assertthat_0.2.1   KernSmooth_2.23-16 stringi_1.5.3     
+## [49] crayon_1.3.4</code></pre>
 </div>
 <div id="appendix-3" class="section level1 appendix">
 <h1><span class="header-section-number">9</span> Appendix 3</h1>
@@ -10620,177 +10722,6 @@ Guide</em>. ISBN 9781138359338. Boca Raton, Florida: Chapman and Hall/CRC,
 </tr>
 </tbody>
 </table>
-</div>
-<div id="appendix-4" class="section level1 appendix">
-<h1><span class="header-section-number">10</span> Appendix 4</h1>
-<div id="anovas-with-model-on-binary-rooting-data" class="section level2">
-<h2><span class="header-section-number">10.1</span> ANOVAs with model on binary rooting data</h2>
-<p>Our overall model is <code>root ~ treatment</code> But we are also testing if there is a <code>Block</code>, <code>Genotype</code> and <code>IndGeno</code> (= individual) effect in rooting. This leads to this model:</p>
-<pre><code>aov(Root ~ Treatment * Block * Genotype * Individual)</code></pre>
-<pre class="r"><code>###~~~
-#ANOVA model and run
-###~~~
-
-# Define model and run analysis
-anovaOUTbin &lt;- aov(RootBin ~ Treatment * Block * Genotype * IndGeno, data = MERGE)
-
-# Summary
-summary(anovaOUTbin)</code></pre>
-<pre><code>##                     Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-## Treatment            4  19.19   4.798  32.064  &lt; 2e-16 ***
-## Block                4   4.20   1.050   7.015 1.75e-05 ***
-## Genotype             1   0.28   0.283   1.894  0.16948    
-## IndGeno             39  34.56   0.886   5.923  &lt; 2e-16 ***
-## Treatment:Block     16   5.93   0.371   2.479  0.00124 ** 
-## Treatment:Genotype   4   1.21   0.302   2.016  0.09127 .  
-## Treatment:IndGeno  156  28.47   0.182   1.220  0.06007 .  
-## Residuals          450  67.33   0.150                     
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code># Save analysis
-saveRDS(anovaOUT,&quot;02_Processed_data/rds_tables/anovabin.rds&quot;)</code></pre>
-<p>In our model, significant variables (<code>**</code> or <code>***</code>) are:</p>
-<ul>
-<li>Treatment (<code>***</code>)</li>
-<li>Individual (here represented by <code>IndGeno</code>) (<code>***</code>)</li>
-<li>Block (<code>***</code>)</li>
-<li>Treatment:Block (<code>**</code>)</li>
-</ul>
-<p>The latter two variables are most likely due to the high individual effect (indeed, individuals in blocks were randomly assigned; see Q2 for more details).</p>
-</div>
-<div id="tukey-tests-on-significant-variables" class="section level2">
-<h2><span class="header-section-number">10.2</span> Tukey tests on significant variables</h2>
-<div id="treatment-effects-on-rooting-performance" class="section level3">
-<h3><span class="header-section-number">10.2.1</span> Treatment effects on rooting performance</h3>
-<p>Perform the Tukey test to identify treatment(s) best performing for initiating roots.</p>
-<pre class="r"><code>###~~~
-#Tukey tests on significant variables
-###~~~
-# Vector with significant variables
-significant_vars &lt;- c(&quot;Treatment&quot;, &quot;IndGeno&quot;, &quot;Block&quot;, &quot;Treatment:Block&quot;)
-
-# Run analysis
-anovaOUT_tukeybin &lt;- TukeyHSD(anovaOUTbin, significant_vars)
-
-# Save analysis
-saveRDS(anovaOUT_tukey,&quot;02_Processed_data/rds_tables/anova_tukeybin.rds&quot;)
-
-# What treatment(s) are significantly increasing rooting? (**: 0.01)
-treatcompbin &lt;- anovaOUT_tukeybin$Treatment[which(as.numeric(anovaOUT_tukeybin$Treatment[,4]) &lt;= 0.01),]
-
-# Plot table
-knitr::kable(treatcompbin, caption = &quot;Results of Tukey tests comparing treatments based on binary rooting data (with pval: &lt;=0.01).&quot;)</code></pre>
-<table>
-<caption><span id="tab:tukeyrootbin">Table 10.1: </span>Results of Tukey tests comparing treatments based on binary rooting data (with pval: &lt;=0.01).</caption>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">diff</th>
-<th align="right">lwr</th>
-<th align="right">upr</th>
-<th align="right">p adj</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">IBA_05-Control</td>
-<td align="right">0.3851852</td>
-<td align="right">0.2562331</td>
-<td align="right">0.5141373</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="even">
-<td align="left">IBA_1-Control</td>
-<td align="right">0.5111111</td>
-<td align="right">0.3821590</td>
-<td align="right">0.6400632</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="odd">
-<td align="left">NAA_05-Control</td>
-<td align="right">0.3185185</td>
-<td align="right">0.1895664</td>
-<td align="right">0.4474706</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="even">
-<td align="left">NAA_1-Control</td>
-<td align="right">0.3111111</td>
-<td align="right">0.1821590</td>
-<td align="right">0.4400632</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="odd">
-<td align="left">NAA_05-IBA_1</td>
-<td align="right">-0.1925926</td>
-<td align="right">-0.3215447</td>
-<td align="right">-0.0636405</td>
-<td align="right">0.0004877</td>
-</tr>
-<tr class="even">
-<td align="left">NAA_1-IBA_1</td>
-<td align="right">-0.2000000</td>
-<td align="right">-0.3289521</td>
-<td align="right">-0.0710479</td>
-<td align="right">0.0002532</td>
-</tr>
-</tbody>
-</table>
-<p>Table <a href="#tab:tukeyrootbin">10.1</a> allows ranking treatments as follows (from worst to best):</p>
-<ul>
-<li><ol start="3" style="list-style-type: lower-alpha">
-<li>Control (outperformed by all treatments) (<code>***</code>)</li>
-</ol></li>
-<li><ol start="2" style="list-style-type: lower-alpha">
-<li>NAA_1 and NAA_05</li>
-</ol></li>
-<li><ol style="list-style-type: lower-alpha">
-<li>IBA_1, IBA_05 (although IBA_1 outperforms IBA_05 with a pval &lt;= 0.05)</li>
-</ol></li>
-</ul>
-</div>
-<div id="individual-effect-on-rooting-performance" class="section level3">
-<h3><span class="header-section-number">10.2.2</span> Individual effect on rooting performance</h3>
-<p>Table <a href="#tab:tukeyindbin">10.2</a> shows the list of top performers individuals independently of treatment conditions. Notice that the two individuals all belong to genotype G2. Those two individuals were also identified by the previous analysis based on number of roots per tip.</p>
-<pre class="r"><code>#Tukey test: Individual effect
-
-#Individual effect
-IndTukeybin &lt;- anovaOUT_tukeybin$IndGeno[which(as.numeric(anovaOUT_tukeybin$IndGeno[,4]) &lt;= 0.01),]
-
-#What are the individuals that are the most prolific at producing roots?
-#Those should be prioritized for establishing lines
-IndTukeyOutbin &lt;- IndTukeybin[which(IndTukeybin[,1] &gt; 0),]
-#Extract best performing ind (first in rownames of comparison)
-P1bin &lt;- sapply(strsplit(rownames(IndTukeybin), split=&#39;-&#39;), &quot;[[&quot;,1)
-
-#Percentage of individuals that are outperformed by P1
-TopIndbin &lt;- 100*(sort(table(P1bin), decreasing=T)/length(unique(MERGE$IndGeno)))
-
-#Select only ind that are outperforming at least 20% of individuals 
-TopIndbin &lt;- TopIndbin[which(TopIndbin &gt;= 20)]
-
-TopIndbin &lt;- as.matrix(round(TopIndbin, 1))
-colnames(TopIndbin) &lt;- c(&quot;Percentage of individuals outperformed&quot;)
-
-#Plot table
-knitr::kable(TopInd, caption = &quot;List of individual that are outperforming at least 20% of individuals (based on Tukey tests on Individual variable with a pval: 0.01).&quot;)</code></pre>
-<table>
-<caption><span id="tab:tukeyindbin">Table 10.2: </span>List of individual that are outperforming at least 20% of individuals (based on Tukey tests on Individual variable with a pval: 0.01).</caption>
-<thead>
-<tr class="header">
-<th align="left"></th>
-<th align="right">Percentage of individuals outperformed</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">G1_b7_1</td>
-<td align="right">26.7</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
 </div>
 
 
