@@ -14,3 +14,7 @@ lmtest
 emmeans
 lsmeans
 DT
+chisq.posthoc.test
+moments
+ggplot2
+ggpubr

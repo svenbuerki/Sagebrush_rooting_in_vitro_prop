@@ -26,6 +26,8 @@ library(lmtest)
 library(lsmeans)
 library(emmeans)
 library(DT)
+library(chisq.posthoc.test)
+library(ggpubr)
 
 #Generate BibTex citation file for all R packages used to produce report
 knitr::write_bib(.packages(), file = 'packages.bib')
@@ -318,34 +320,75 @@ knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regula
 
 The input variables for these analyses are stored in `MERGE`.
 
-## Statistical analyses on rooting data
+## Statistical analyses on root data
 
-Please find below the analyses conducted on quantitative rooting data (= counts of number of roots per shoot tip).
+Please find below the analyses conducted on callus and rooting data.
 
-### Test for normality and best model
+### Testing normality {.tabset .tabset-pills}
 
-Before conducting statistical analyses, we have to test for normality of rooting data using the Shapiro-Wilk normality test implemented in the R base function `shapiro.test()`. A *p*-value <= 0.01 is will be used for significance.
+#### Analyses
 
-```{r normalitytest, eval=T, echo=T}
+Before conducting statistical analyses, we have to test for normality of the rooting data (count) by using the Shapiro-Wilk normality test implemented in the R base function `shapiro.test()`. A *p*-value <= 0.01 is will be used for significance.
+
+```{r normalitytest, eval=T, echo=F}
+###~~~
 #Conducting Shapiro-Wilk normality test on root data
-Rootnorm <- shapiro.test(MERGE$Root)
-print(Rootnorm)
+###~~~
+
+#Rooting data
+shapiro.test(MERGE$Root)
 ```
 
-The test strongly rejects normality of the rooting data. In this context, we aim at analyzing the data using general linear models (`glm`), but what is the best fitted family/model to describe the data distribution? Let's look at the distribution of the data (Figure \@ref(fig:distrRoot)):
+This test strongly rejects normality. The visualization of the data (Figure \@ref(fig:distrRoot)) together with the low mean (`r round(mean(MERGE$Root),2)`) confirm that the root count data does not approximate a normal distribution. This is often because these type of data are truncated at zero, that is, negative values are impossible and the distribution is therefore skewed to the right. This is confirmed by the skewness coefficient of `r round(skewness(MERGE$Root, na.rm = TRUE),2)`, which demonstrates that the data has a positively skewed distribution (see Figure \@ref(fig:distrRoot)). Square-root or log transformation methods could be applied to normalize the data, but those are not applicable with zero values. In this context, we are opting to conduct non-parametric analyses.
 
-```{r distrRoot, echo=T, eval=T, fig.cap="Distribution of number of roots per shoot tips"}
+```{r distrRoot, echo=F, eval=T, fig.cap="Distribution of number of roots per shoot tips"}
 hist(MERGE$Root, xlab="Number of roots per shoot tip", main="")
 ```
 
-Figure \@ref(fig:distrRoot) suggests that the Poisson model would best fit the data; however it is skewed towards zeros (with the highest frequency), which is problematic with classic `glm` models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the `pscl` R package [@R-pscl] to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood. It is not recommended that zero-inflated Poisson models be applied to small samples (see [here](https://stats.idre.ucla.edu/r/dae/zip/)), which could prove problematic for our individual dataset.
+#### R code
 
+```{r normalitytestcode, eval=F, echo=T}
+###~~~
+#Conducting Shapiro-Wilk normality test on root data
+###~~~
 
-### Investigate treatment effect
+#Rooting data
+shapiro.test(MERGE$Root)
 
-As shown in Figure \@ref(fig:distrRoot) we still need to test what model best fit the data. Here, we will be investigating whether treatment affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model. 
+###~~~
+#Visualize root (count) data
+###~~~
+hist(MERGE$Root, xlab="Number of roots per shoot tip", main="")
+
+###~~~
+#Mean of root (count) data
+###~~~
+
+###~~~
+#Skewness coefficient of root (count) data
+###~~~
+skewness(MERGE$Root, na.rm = TRUE)
+```
+
+### Selecting the best method {.tabset .tabset-pills}
+
+#### Rationale
+
+A shown above, non-parametric analyses have to be conducted on the root (count) data. In this context, we can analyze our data using either general linear models (GLMs) or the Kruskal-Wallis rank sum test. In this study, we aim at:
+
+1. Testing whether a treatment is better suited to promote rooting of shoot tips.
+2. Testing whether some individuals have higher rooting rates independently to treatment (those would be used as candidate for genome sequencing and/or GxE research).
+
+Both of these aims require ranking variables. Figure \@ref(fig:distrRoot) suggests that the Poisson model would best fit the data for the GLM analyses; however it is skewed towards zero (with the highest frequency), which is problematic with classic GLM models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the `pscl` R package [@R-pscl] to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood (using either Poisson or Negative binomial distributions). It is not recommended that zero-inflated models be applied to small samples (see [here](https://stats.idre.ucla.edu/r/dae/zip/)). Analyses presented in section \@ref(glm) demonstrated that zero-inflated models (even with Negative binomial distribution) failed to assess individual effect on rooting most likely due to the small sample size at individual level (n=15 samples per individual). In this context, **we are opting for analyzing our data using the Kruskal-Wallis tests to test for treatment and individual effects**.
+
+#### Zero-inflated GLM models {#glm}
+
+As shown in Figure \@ref(fig:distrRoot) we still need to test what model best fit the data. Here, we will be investigating whether treatment and individual affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model. Due to the inability of zero-inflated GLM models to analyze individual effects, we are opting for analyzing our data using the approach implemented in the Kruskal-Wallis test. 
 
 ```{r zeroinflRoot, echo=T, eval=T}
+###~~~
+#Treatment effect
+###~~~
 # Zero-Inflated Poisson GLM
 M1 <- zeroinfl(Root ~ Treatment, dist = 'poisson', data = MERGE)
 
@@ -369,27 +412,11 @@ lrtest(M1, M2)
 
 # Summary of M2
 summary(M2)
-```
 
-M2 is the best-fit model and it shows that there is a significant treatment effect in explaining rooting data. Before ranking treatments, we would like to rapidly test whether there is a genotype effect in explaining the rooting by amending M2. We will be investigating individual effect below.
 
-```{r Genotype, eval=T, echo=T}
-# Amending M2 to test for genotype effect
-
-# Zero-Inflated Negative Binomial GLM
-M3 <- zeroinfl(Root ~ Treatment + Genotype, dist = 'negbin', data = MERGE) 
-
-# Summarize M3
-summary(M3)
-```
-
-This model shows that there is no genotype effect in our data. we are then proceeding with pairwise comparison of treatments.
-
-#### Ranking treatments
-
-The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
-
-```{r emmeansRoot, eval=T, echo=T}
+###~~~
+#Ranking treatments
+###~~~
 # Estimated marginal means (Least-squares means) for treatments using M2
 posthocRoot <- emmeans(M2, list(pairwise ~ Treatment))
 
@@ -399,21 +426,77 @@ signRootTreat <- signRootTreat[which(signRootTreat$p.value <= 0.01),c(1:3,5,6)]
 
 #Print table
 knitr::kable(signRootTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+
+###~~~
+#Individual effect
+###~~~
+
+# Zero-Inflated Negative Binomial GLM
+M1 <- zeroinfl(Root ~ IndGeno, dist = 'negbin', data = MERGE) 
+
+# Summary of M1
+summary(M1)
 ```
 
-Table \@ref(tab:emmeansRoot) allows ranking treatments as follows (from best to worst):
+### Investigating treatment effect {.tabset .tabset-pills}
+
+#### Analyses
+
+Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess treatment effects and rank those (with a *p*-value of <= 0.01). Results of these analyses are presented below and the R code is available in section \@ref(RTreat). 
+
+```{r kruskalTreat, echo=F, eval=T, message=FALSE, warning=FALSE}
+# Run Kruskal-Wallis Rank Sum Test
+print("Perform Kruskal-Wallis Rank Sum Test: Root ~ Treatment")
+K1Treat <- kruskal.test(Root ~ Treatment, data = MERGE)
+print(K1Treat)
+
+# Run Wilcox test on Root ~ Treatment
+print("Perform Wilcox test on Root ~ Treatment")
+wilcoxRootTreat <- pairwise.wilcox.test(MERGE$Root, MERGE$Treatment,
+                 p.adjust.method = "BH")
+
+# Only select data.frame (distance matrix)
+wilcoxRootTreat <- wilcoxRootTreat$p.value
+
+# Convert distance matrix into 3 cols: Treat1, Treat2, p-val
+OUT <- NULL
+for(i in 1:nrow(wilcoxRootTreat)){
+  tmp <- wilcoxRootTreat[i,]
+  tmp <- cbind(rep(rownames(wilcoxRootTreat)[i], length(tmp)), names(tmp), as.vector(tmp))
+  OUT <- rbind(OUT, tmp)
+}
+wilcoxSimp <- as.data.frame(OUT)
+colnames(wilcoxSimp) <- c("Treat1", "Treat2", "P-val")
+
+# Tidy data
+wilcoxSimp <- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
+
+# Treatment effect
+Treat <- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) <= 0.01),])
+
+# Infer mean rooting per treatment
+meanRoot <- aggregate(Root ~ Treatment, mean, data = MERGE)
+
+# Diff of means Treat1-Treat2
+Treat$Diff_mean <- round(meanRoot[match(Treat[,1], meanRoot[,1]),2]-meanRoot[match(Treat[,2], meanRoot[,1]),2],2)
+
+# Plot table
+knitr::kable(Treat, caption = "Results of Wilcox test on Root ~ Treatment (p-value <= 0.01).")
+```
+
+Table \@ref(tab:kruskalTreat) allows ranking treatments as follows (from best to worst):
 
 - `IBA_1`: a
 - `IBA_05`: ab
-- `NAA_1`: ab
+- `NAA_1`: b
 - `NAA_05`: b
 - `Control`: c
 
-#### Boxplot of rooting by treatment
+##### Boxplot of rooting by treatment
 
-To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (`MERGE`). Figure \@ref(fig:boxplot1) supports ranking from the statistical analysis (Table \@ref(tab:emmeansRoot) and would suggest that `IBA_1` is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).
+To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (`MERGE`). Figure \@ref(fig:boxplot1) supports ranking from the statistical analysis (Table \@ref(tab:kruskalTreat) and would suggest that `IBA_1` is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).
 
-```{r boxplot1, echo=T, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.", out.width="100%"}
+```{r boxplot1, echo=F, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.", out.width="100%"}
 ###~~~
 #Boxplot comparing rooting per treatment
 ###~~~
@@ -422,31 +505,87 @@ To support further visual comparison of rooting by treatment, a boxplot was infe
 boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per shoot tip", ylim=c(0,12.5), names = c("Control", "IBA 0.5 mg/l", "IBA 1 mg/l", "NAA 0.5 mg/l", "NAA 1 mg/l"))
 
 # Add ranking based on Tukey tests
-text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","ab","a",'ab','ab'))
+text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","ab","a",'b','b'))
 ```
 
-### Investigate individual effect
+#### R code {#RTreat}
 
-Here, we are applying a statistical approach to the rooting data to identify individuals which are significantly outperforming the other individuals. To qualify as a top performer, an individual has to outperform >=20% of individuals based on a *p*-value <= 0.01.
-
-Treatment analyses have shown that the zero-inflated negative binomial GLM best fit the data, but we hypothesize that the small individual sample size (n= 15 replicates per individual) could not meet the requirement of this method. Below, we are running this model on individual data (`Root ~ Individual`), but the algorithm is unable to fit the model. 
-
-```{r zeroinflInd, echo=T, eval=T, message=FALSE, warning=FALSE}
-# Zero-Inflated Negative Binomial GLM
-M1 <- zeroinfl(Root ~ IndGeno, dist = 'negbin', data = MERGE) 
-
-# Summary of M1
-summary(M1)
-```
-
-In this context, we are investigating individual effect on rooting by applying a non-parametric Kruskal-Wallis rank sum test followed by a pairwise Wilcoxon rank sum tests to identify individual top performers.
-
-```{r kruskalInd, echo=T, eval=T, message=FALSE, warning=FALSE}
+```{r kruskalTreatcode, echo=T, eval=F, message=FALSE, warning=FALSE}
+###~~~
 # Run Kruskal-Wallis Rank Sum Test
+###~~~
+
+print("Perform Kruskal-Wallis Rank Sum Test: Root ~ Treatment")
+K1Treat <- kruskal.test(Root ~ Treatment, data = MERGE)
+print(K1Treat)
+
+###~~~
+# Run Wilcox test on Root ~ Treatment
+###~~~
+
+print("Perform Wilcox test on Root ~ Treatment")
+wilcoxRootTreat <- pairwise.wilcox.test(MERGE$Root, MERGE$Treatment,
+                 p.adjust.method = "BH")
+
+# Only select data.frame (distance matrix)
+wilcoxRootTreat <- wilcoxRootTreat$p.value
+
+# Convert distance matrix into 3 cols: Treat1, Treat2, p-val
+OUT <- NULL
+for(i in 1:nrow(wilcoxRootTreat)){
+  tmp <- wilcoxRootTreat[i,]
+  tmp <- cbind(rep(rownames(wilcoxRootTreat)[i], length(tmp)), names(tmp), as.vector(tmp))
+  OUT <- rbind(OUT, tmp)
+}
+wilcoxSimp <- as.data.frame(OUT)
+colnames(wilcoxSimp) <- c("Treat1", "Treat2", "P-val")
+
+# Tidy data
+wilcoxSimp <- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
+
+# Treatment effect
+Treat <- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) <= 0.01),])
+
+# Infer mean rooting per treatment
+meanRoot <- aggregate(Root ~ Treatment, mean, data = MERGE)
+
+# Diff of means Treat1-Treat2
+Treat$Diff_mean <- round(meanRoot[match(Treat[,1], meanRoot[,1]),2]-meanRoot[match(Treat[,2], meanRoot[,1]),2],2)
+
+# Plot table
+knitr::kable(Treat, caption = "Results of Wilcox test on Root ~ Treatment (p-value <= 0.01).")
+
+###~~~
+#Boxplot comparing rooting per treatment
+###~~~
+
+# Draw boxplot
+boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per shoot tip", ylim=c(0,12.5), names = c("Control", "IBA 0.5 mg/l", "IBA 1 mg/l", "NAA 0.5 mg/l", "NAA 1 mg/l"))
+
+# Add ranking based on Tukey tests
+text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","ab","a",'b','b'))
+```
+
+### Investigate individual effect {.tabset .tabset-pills}
+
+#### Analyses
+
+Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a *p*-value of <= 0.01). Results of these analyses are presented below and the R code is available in section \@ref(RInd). To qualify as a top performer, an individual has to outperform >= 20% of individuals (based on pairwise Wilcox tests with a *p*-value <= 0.01).
+
+```{r kruskalInd, echo=F, eval=T, message=FALSE, warning=FALSE}
+###~~~
+# Run Kruskal-Wallis Rank Sum Test
+###~~~
+
+print("Perform Kruskal-Wallis Rank Sum Test: Root ~ Individual")
 K1 <- kruskal.test(Root ~ IndGeno, data = MERGE)
 print(K1)
 
+###~~~
 # Run Wilcox test on Root ~ IndGeno
+###~~~
+
+print("Perform Wilcox test on Root ~ Individual")
 wilcoxRootInd <- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
                  p.adjust.method = "BH")
 
@@ -493,65 +632,83 @@ knitr::kable(TopInd, caption = "List of individual that are outperforming at lea
 
 The analyses reported in Table \@ref(tab:kruskalInd) demonstrate that only two individuals (`r rownames(TopInd)`, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.
 
+#### R code {#RInd}
 
-## Clustering analysis on rooting data
+```{r kruskalIndcode, echo=T, eval=F, message=FALSE, warning=FALSE}
+###~~~
+# Run Kruskal-Wallis Rank Sum Test
+###~~~
 
-A clustering analysis was used to compare rooting performance between individuals of Basin Big sagebrush based on an euclidean distance (using `Root` variable). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:heatmap2)):
+print("Perform Kruskal-Wallis Rank Sum Test: Root ~ Individual")
+K1 <- kruskal.test(Root ~ IndGeno, data = MERGE)
+print(K1)
+
+###~~~
+# Run Wilcox test on Root ~ IndGeno
+###~~~
+
+print("Perform Wilcox test on Root ~ Individual")
+wilcoxRootInd <- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
+                 p.adjust.method = "BH")
+
+# Only select data.frame (distance matrix)
+wilcoxRootInd <- wilcoxRootInd$p.value
+
+# Convert distance matrix into 3 cols: ind1, ind2, p-val
+OUT <- NULL
+for(i in 1:nrow(wilcoxRootInd)){
+  tmp <- wilcoxRootInd[i,]
+  tmp <- cbind(rep(rownames(wilcoxRootInd)[i], length(tmp)), names(tmp), as.vector(tmp))
+  OUT <- rbind(OUT, tmp)
+}
+wilcoxSimp <- as.data.frame(OUT)
+colnames(wilcoxSimp) <- c("Ind1", "Ind2", "P-val")
+
+# Tidy data
+wilcoxSimp <- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
+
+# Individual effect
+IndRoot <- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) <= 0.01),])
+
+# Infer mean rooting per individual
+meanRoot <- aggregate(Root ~ IndGeno, mean, data = MERGE)
+
+# Diff of means Ind1-Ind2
+IndRoot$Diff_mean <- meanRoot[match(IndRoot[,1], meanRoot[,1]),2]-meanRoot[match(IndRoot[,2], meanRoot[,1]),2]
+
+# What are the top performers (= most efficient at producing roots)?
+IndRootOut <- IndRoot[which(IndRoot$Diff_mean > 0),]
+
+# Percentage of individuals that are outperformed by P1
+TopInd <- 100*(sort(table(IndRootOut[,1]), decreasing=T)/length(unique(MERGE$IndGeno)))
+
+# Select only ind that are outperforming at least 20% of individuals 
+TopInd <- TopInd[which(TopInd >= 20)]
+
+TopInd <- as.matrix(round(TopInd, 1))
+colnames(TopInd) <- c("Percentage of individuals outperformed")
+
+# Plot table
+knitr::kable(TopInd, caption = "List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval <= 0.01).")
+```
+
+## Clustering analysis on rooting data {.tabset .tabset-pills}
+
+### Analyses
+
+A clustering analysis was used to compare rooting performance between individuals based on an euclidean distance (using the `Root` count data; see section \@ref(Rclustroot) for R code). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:heatmap2)):
 
 - Black cluster: No to very little rooting.
 - Pink cluster: Some rooting observed.
 - Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster.
 
-### Code to produce clustering analysis on rooting data
-
-```{r heatmap1, echo=T, eval=F}
-###~~
-#Clustering analysis on rooting data
-###~~~
-# Create our own color palette from green to red for heatmap
-my_palette <- colorRampPalette(c("green", "yellow", "red"))(n = 299)
-
-# Input data for clustering and heatmap
-mat_data <- table(MERGE$IndGeno, MERGE$Root)
-
-# Load file with color of individuals (which group based on clusters they belong to)
-colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
-
-# Annotate best perfoming individuals and add P1, P2
-toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)"))
-
-pdf("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf")
-# Perform clustering/heatmap and draw plot
-heatmap.2(mat_data,
-          cellnote = mat_data, # same data set for cell labels
-          main = "", # heat map title
-          notecol="black",      # change font color of cell labels to black
-          notecex = .8, # cex of numbers in cells
-          density.info="none",  # turns off density plot inside color legend
-          trace="none",         # turns off trace lines inside the heat map
-          xlab = 'N. roots per tip (1 ind. has 15 tips)', #Label of x axis
-          cexRow = .8, # cex of rows (= samples ID)
-          margins =c(4,9),     # widens margins around plot
-          col=my_palette,       # use on color palette defined earlier
-          #breaks=col_breaks,    # enable color transition at specified limits
-          dendrogram="row", # only draw a row dendrogram
-          key=F,
-          keysize = 0.4,
-          RowSideColors = as.vector(colInd$Group),
-          Colv="NA") # turn off column clustering
-dev.off()
-```
-
 ```{r heatmap2, echo=F, eval=T, fig.cap="Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed.", out.width="100%"}
 knitr::include_graphics("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.png")
 ```
 
-### Code to produce Table \@ref(tab:tablegroups)
+The number of individual per rooting clusters inferred from the clustering analysis is displayed in Table \@ref(tab:tablegroups). The R code to generate this table is in section \@ref(Rclustroot).
 
-The number of individual per rooting clusters inferred from the clustering analysis is displayed in Table \@ref(tab:tablegroups). The code to generate this table is found below.
-
-```{r tablegroups, echo=T, eval=T}
+```{r tablegroups, echo=F, eval=T}
 ###~~~
 #Produce pivot table with number of individual per group and genotype composition
 ###~~~
@@ -569,11 +726,11 @@ tabGroup$TOT <- rowSums(tabGroup)
 knitr::kable(tabGroup, row.names=T, caption = "Table summarizing composition of clusters based on rooting data.")
 ```
 
-### Effect of growth regulators on *in vitro* rooting sorted by clusters
+#### Effect of growth regulators on *in vitro* rooting sorted by clusters
 
-Table \@ref(tab:growthbyregulatorcluster) shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table \@ref(tab:growthbyregulatorcluster)).
+Table \@ref(tab:growthbyregulatorcluster) shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table \@ref(tab:growthbyregulatorcluster)). The R code to generate this table is in section \@ref(Rclustroot).
 
-```{r growthbyregulatorcluster, echo=T, eval=T}
+```{r growthbyregulatorcluster, echo=F, eval=T}
 #Load file with color of individuals (which group based on clusters they belong to)
 colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 treat <- sort(unique(MERGE$Treatment))
@@ -608,34 +765,119 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth
 
 This will be investigated by looking at top performer individuals identified by i) statistical analyses and ii) clustering analysis.
 
+### R code {#Rclustroot}
+
+```{r codeclustRoot, echo=T, eval=F}
+###~~
+#Clustering analysis on rooting data
+###~~~
+
+# Create our own color palette from green to red for heatmap
+my_palette <- colorRampPalette(c("green", "yellow", "red"))(n = 299)
+
+# Input data for clustering and heatmap
+mat_data <- table(MERGE$IndGeno, MERGE$Root)
+
+# Load file with color of individuals (which group based on clusters they belong to)
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+
+# Annotate best perfoming individuals and add P1, P2
+toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
+rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)"))
+
+pdf("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf")
+# Perform clustering/heatmap and draw plot
+heatmap.2(mat_data,
+          cellnote = mat_data, # same data set for cell labels
+          main = "", # heat map title
+          notecol="black",      # change font color of cell labels to black
+          notecex = .8, # cex of numbers in cells
+          density.info="none",  # turns off density plot inside color legend
+          trace="none",         # turns off trace lines inside the heat map
+          xlab = 'N. roots per tip (1 ind. has 15 tips)', #Label of x axis
+          cexRow = .8, # cex of rows (= samples ID)
+          margins =c(4,9),     # widens margins around plot
+          col=my_palette,       # use on color palette defined earlier
+          #breaks=col_breaks,    # enable color transition at specified limits
+          dendrogram="row", # only draw a row dendrogram
+          key=F,
+          keysize = 0.4,
+          RowSideColors = as.vector(colInd$Group),
+          Colv="NA") # turn off column clustering
+dev.off()
+
+###~~~
+#Produce pivot table with number of individual per group and genotype composition
+###~~~
+# Load file with color of individuals (which group based on clusters they belong to)
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+
+###~~~
+#Effect of growth regulators on *in vitro* rooting sorted by clusters
+###~~~
+# colInd add Genotypes
+colInd$Genotype <- sapply(strsplit(as.vector(colInd$Individual), split="_"), "[[", 1)
+tabGroup <- table(colInd$Group, colInd$Genotype)
+tabGroup <- tabGroup[c(1,3,2),]
+tabGroup <- as.data.frame.matrix(tabGroup)
+tabGroup$TOT <- rowSums(tabGroup)
+
+# Plot table
+knitr::kable(tabGroup, row.names=T, caption = "Table summarizing composition of clusters based on rooting data.")
+
+#Load file with color of individuals (which group based on clusters they belong to)
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+treat <- sort(unique(MERGE$Treatment))
+
+#Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreatC <- matrix(ncol=6, nrow=15)
+colnames(RootingStatbyTreatC) <- c("Cluster","Growth regulator", "Concentration (mg/l)", "Response (%)", "Av. No. of roots", "Treatment")
+
+#Add col in MERGE with cluster
+MERGE$ClusterRoot <- colInd$Group[match(MERGE$IndGeno, colInd$Individual)]
+
+#Convert to dataframe
+RootingStatbyTreatC <- as.data.frame(RootingStatbyTreatC)
+
+#Populate matrix
+RootingStatbyTreatC$Cluster <- sort(rep(sort(unique(MERGE$ClusterRoot)),5))
+RootingStatbyTreatC$`Growth regulator` <- rep(sapply(strsplit(treat, split="_"),"[[",1),3)
+RootingStatbyTreatC$`Concentration (mg/l)` <- rep(c("-", sapply(strsplit(treat[2:length(treat)], split="_"),"[[",2)),3)
+RootingStatbyTreatC$Treatment <- rep(treat, 3)
+
+#Infer Response and mean no roots
+for(i in 1:nrow(RootingStatbyTreatC)){
+  foo <- subset(MERGE, MERGE$Treatment == RootingStatbyTreatC$Treatment[i] & MERGE$ClusterRoot == RootingStatbyTreatC$Cluster[i])
+  RootingStatbyTreatC$`Response (%)`[i] <- paste(round(100*(mean(foo$RootBin)),2), "+/-", round(sd(foo$RootBin),2), sep= " ")
+  RootingStatbyTreatC$`Av. No. of roots`[i] <- paste(round(mean(foo$Root),2), "+/-", round(sd(foo$Root),2), sep=" ")
+}
+
+#Plot table
+knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.")
+
+```
 
 ## Statistical analyses on callus data 
 
+### Selecting the best method
+
 Table \@ref(tab:growthbyregulatorcallus) demonstrated that >70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (< 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.
 
-### Test for normality
-
-Before conducting statistical analyses, we have to test for normality of callus data using the Shapiro-Wilk normality test implemented in the R base function `shapiro.test()`. A *p*-value <= 0.01 is will be used for significance.
-
-```{r normalitytestcallus, eval=T, echo=T}
-#Conducting Shapiro-Wilk normality test on root data
-Callusnorm <- shapiro.test(MERGE$Callus)
-print(Callusnorm)
-```
-
-The test strongly rejects normality of the rooting data. In this context, we aim at analyzing the data using general linear models (`glm`), but what is the best fitted family/model to describe the data distribution? Let's look at the distribution of the data (Figure \@ref(fig:distrCall)):
+The callus data were scored as binary (0 = absent; 1 = present) and the distribution of that data is in Figure \@ref(fig:distrCall).
 
 ```{r distrCall, echo=T, eval=T, fig.cap="Barplot of callus production during the rooting experiment."}
 barplot(table(MERGE$Callus), xlab="Binary data on callus", ylab="Occurrence")
 ```
 
-The bi-modal nature of the data (Figure \@ref(fig:distrCall)) calls for the use of the binomial family in the `glm` analyses.
+This type of data calls for the use of non-parametric analyses as done for the root (count) data. In this context, we will use GLM models to assess treatment and individual effects on callus production.
 
-### Investigate treatment and individual effects 
+### Investigate treatment and individual effects {.tabset .tabset-pills}
 
-We start by comparing `glm` models  investigating the effect of treatment and individual on callus production.
+#### Analyses
 
-```{r callusmodels, echo=T, eval=T}
+We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section \@ref(RcodeCallus).
+
+```{r callusmodels, echo=F, eval=T}
 # GLM to investigate treatment effect on callus production
 M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
 
@@ -654,11 +896,11 @@ print(summary(M2cal))
 
 The analyses demonstrate that there is significant treatment and individual effects.
 
-### Ranking treatments
+##### Ranking treatments
 
-The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01; the R code is available in section \@ref(RcodeCallus)):
 
-```{r emmeansCal, eval=T, echo=T}
+```{r emmeansCal, eval=T, echo=F}
 # Estimated marginal means (Least-squares means) for treatments using M2
 posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
 
@@ -675,11 +917,11 @@ Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focu
 - (a) Control is significantly different than the other treatments (`***`). Here, very limited calli production was observed in shoot tips included in the control treatment.
 - (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.
 
-#### Investigate individual effect
+##### Ranking individuals
 
-We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the `glm` supported some individual effect, none of the individuals are significantly different based on the post hoc tests.
+We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section \@ref(RcodeCallus).
 
-```{r emmeansCalInd, eval=T, echo=T}
+```{r emmeansCalInd, eval=T, echo=F}
 # Estimated marginal means (Least-squares means) for treatments using M2
 posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
 
@@ -691,7 +933,60 @@ signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,
 knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
 ```
 
-## Clustering analysis on callus data
+#### R code {#RcodeCallus}
+
+```{r callusGLMR, echo=T, eval=F}
+###~~~
+#GLMs
+###~~~
+
+# GLM to investigate treatment effect on callus production
+M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
+
+# GLM to investigate treatment and individual effects on callus production
+M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
+
+# Which model best fit the data?
+anova(M1cal, M2cal, test = "Chisq")
+
+# M2 better fits the data, but is it not over fitting it?
+pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
+
+# Summary M2
+print(summary(M2cal))
+
+###~~~
+#Ranking treatments
+###~~~
+
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
+
+# Identify significant pairwise comparisons
+signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+
+###~~~
+#Ranking individuals
+###~~~
+
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
+
+# Identify significant pairwise comparisons
+signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
+signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```
+
+## Clustering analysis on callus data {.tabset .tabset-pills}
+
+### Analyses
 
 The code to produce the clustering analysis based on `Callus` data and associated heatmap is provided below and Figure \@ref(fig:heatmapplot) shows results of the analysis. Outcomes of this analysis are:
 
@@ -702,7 +997,56 @@ The code to produce the clustering analysis based on `Callus` data and associate
 - Clusters from the rooting analysis are not recovered here (each calli cluster are composed by a mixture of clusters from the rooting analysis). This suggests that calli production do not inhibit rooting.
 - To performer individuals are shared between the intermediate and top clusters (supporting previous statement).
 
-```{r heatmapcode, echo=T, eval=F}
+Please see section \@ref(Rcodecallusclust) for more details on R code.
+
+```{r heatmapplot, echo=F, eval=T, fig.cap="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.", out.width="100%"}
+knitr::include_graphics("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png")
+```
+
+#### Effect of growth regulators on *in vitro* calli production in *Artemisia tridentata* sorted by rooting clusters
+
+Table \@ref(tab:growthbyregulatorclustercallus) shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). The R code is available in section \@ref(Rcodecallusclust).
+
+```{r growthbyregulatorclustercallus, echo=F, eval=T}
+###~~~
+#Effect of growth regulators on calli production sorted by rooting cluster
+###~~~
+
+# Load file with color of individuals (which group based on clusters they belong to)
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+
+# Create vector of treatments
+treat <- sort(unique(MERGE$Treatment))
+
+# Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreatCal <- matrix(ncol=5, nrow=15)
+colnames(RootingStatbyTreatCal) <- c("Cluster","Growth regulator", "Concentration (mg/l)", "Response (%)", "Treatment")
+
+# Add col in MERGE with cluster
+MERGE$ClusterRoot <- colInd$Group[match(MERGE$IndGeno, colInd$Individual)]
+
+# Convert to dataframe
+RootingStatbyTreatCal <- as.data.frame(RootingStatbyTreatCal)
+
+# Populate matrix
+RootingStatbyTreatCal$Cluster <- sort(rep(sort(unique(MERGE$ClusterRoot)),5))
+RootingStatbyTreatCal$`Growth regulator` <- rep(sapply(strsplit(treat, split="_"),"[[",1),3)
+RootingStatbyTreatCal$`Concentration (mg/l)` <- rep(c("-", sapply(strsplit(treat[2:length(treat)], split="_"),"[[",2)),3)
+RootingStatbyTreatCal$Treatment <- rep(treat, 3)
+
+# Infer Response
+for(i in 1:nrow(RootingStatbyTreatCal)){
+  foo <- subset(MERGE, MERGE$Treatment == RootingStatbyTreatCal$Treatment[i] & MERGE$ClusterRoot == RootingStatbyTreatCal$Cluster[i])
+  RootingStatbyTreatCal$`Response (%)`[i] <- round(100*(mean(foo$Callus)),2)
+}
+
+#Plot table
+knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.")
+```
+
+### R code {#Rcodecallusclust}
+
+```{r Rcodecallusclust, echo=T, eval=F}
 ###~~~
 #Clustering analysis on calli data
 ###~~~
@@ -741,16 +1085,7 @@ heatmap.2(mat_data,
                  RowSideColors = as.vector(colInd$Group),
                  Colv="NA")
 dev.off()
-```
-```{r heatmapplot, echo=F, eval=T, fig.cap="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.", out.width="100%"}
-knitr::include_graphics("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png")
-```
 
-### Effect of growth regulators on *in vitro* calli production in *Artemisia tridentata* sorted by rooting clusters
-
-Table \@ref(tab:growthbyregulatorclustercallus) shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)).
-
-```{r growthbyregulatorclustercallus, echo=T, eval=T}
 ###~~~
 #Effect of growth regulators on calli production sorted by rooting cluster
 ###~~~
@@ -787,14 +1122,15 @@ for(i in 1:nrow(RootingStatbyTreatCal)){
 knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.")
 ```
 
-
 # Step 4: *In vitro* growth of plantlets
 
-## Sampling and preliminary analyses
+## Sampling and preliminary analyses {.tabset .tabset-pills}
 
-Data on survival and plantlets heights are stored in `01_Raw_Data/Survival_height_clones.csv`. The code below provides statistics on the number of individual and shoot tips included in this experiment. 
+### Analyses
 
-```{r statgrowth, echo=T, eval=T}
+Data on survival and plantlets heights are stored in `01_Raw_Data/Survival_height_clones.csv`. The code below provides statistics on the number of individual and shoot tips included in this experiment. The R code for these analyses is available in section \@ref(codesurv).
+
+```{r statgrowth, echo=F, eval=T}
 ###~~~
 #Load data on survival and height
 ###~~~
@@ -829,11 +1165,11 @@ print(stats)
 sort(table(survheig$SeedID), decreasing=T)
 ```
 
-### Survival and plantlets heights
+#### Survival and plantlets heights
 
 Results of the code provided below is summarized in Table \@ref(tab:surv). After 5 weeks, a survival of 53.48% of the plantlets was observed. A significant increase of plantlets mortality has been recorded between weeks 3 and 5 and on average, plantlets did not growth significant (but see below for more details).   
 
-```{r surv, echo=T, eval=T}
+```{r surv, echo=F, eval=T}
 ###~~~
 # Matrix to store data @ 3 and 5 weeks
 ###~~~
@@ -868,11 +1204,11 @@ survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd
 knitr::kable(survheigStat, row.names=T, caption = "Survival and plantlets heights at 3 and 5 weeks (+/- standard deviations).")
 ```
 
-### Survival and plantlets heights by rooting clusters
+#### Survival and plantlets heights by rooting clusters
 
 Table \@ref(tab:survclust) shows data on survival, plantlets heights at 3 and 5 weeks sorted by rooting clusters. Data on the number of individuals and shoot tips included in this experiment for each rooting cluster is also provided. 
 
-```{r survclust, echo=T, eval=T}
+```{r survclust, echo=F, eval=T}
 ###
 #Create list of clusters
 ###
@@ -916,11 +1252,11 @@ for(i in 1:length(clust)){
 knitr::kable(clustSurvHeig, row.names=F, caption = "Survival and plantlets heights at 3 and 5 weeks sorted by rooting clusters.")
 ```
 
-### Survival and plantlets heights by rooting clusters and treatments
+#### Survival and plantlets heights by rooting clusters and treatments
 
 Table \@ref(tab:survclusttreat) shows survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.
 
-```{r survclusttreat, echo=T, eval=T}
+```{r survclusttreat, echo=F, eval=T}
 ###~~~
 #Split survheig$Treatment to extract growth regulator and concentration
 ###~~~
@@ -968,18 +1304,210 @@ for(i in 1:nrow(survheigTreat)){
 
 #Plot table
 knitr::kable(survheigTreat, row.names=F, caption = "Survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.")
-
 ```
 
-## Statistical analyses
+### R code {#codesurv}
 
-Here, we will use statistical analyses to test whether treatment or individual predict survival and heights of plantlets after 5-weeks of culture.
+```{r codesurv, echo=T, eval=F}
+###~~~
+#Load data on survival and height
+###~~~
+survheig <- read.csv("01_Raw_Data/Survival_height_clones.csv")
 
-### Tidy the data
+###~~~
+#How many individuals where transfered corresponding how many shoot tips
+###~~~
+stats <- matrix(ncol=1, nrow=4)
+colnames(stats) <- "Sampling"
+rownames(stats) <- c("Total N. ind.", "N. ind. per gen,","Total N. shoot tips", "N. shoot tips per gen.")
 
-The analyses are based on `survheig`, more specifically on `survheig$X5_w_survival`. We need to start by extracting treatments from `survheig$Treatment` (which contains block, treatment and replicate information in one object).
+#Add N ind and N shoot tips
+stats[c(1,3),] <- c(length(unique(survheig$SeedID)), sum(table(survheig$SeedID)))
 
-```{r survtidy, echo=T, eval=T}
+#Tot ind per genotypes
+totindgen <- table(sapply(strsplit(as.vector(unique(survheig$SeedID)), "_"), '[[', 1))
+stats[2,1] <- paste0(paste0(names(totindgen), ":"), totindgen, collapse = '/')
+
+#N shoot per genotypes
+totgenshoot <- table(sapply(strsplit(as.vector(survheig$SeedID), "_"), '[[', 1))
+stats[4,1] <- paste0(paste0(names(totgenshoot), ":"), totgenshoot, collapse = '/')
+
+
+print(stats)
+
+###~~~
+#Breakdown of number of shoot tips per individual
+###~~~
+
+#Sort based on number of shoot tips
+sort(table(survheig$SeedID), decreasing=T)
+
+###~~~
+# Matrix to store data @ 3 and 5 weeks
+###~~~
+survheigStat <- matrix(ncol=2, nrow = 2)
+colnames(survheigStat) <- c("Survival (%)", "Plant height (cm)")
+rownames(survheigStat) <- c("Week 3", "Week 5")
+
+###
+#3 weeks
+###
+
+# Survivial
+ThreeWsurvAll <- table(survheig$X3_w_survival)
+survheigStat[1,1] <- round(100*((sum(ThreeWsurvAll)-ThreeWsurvAll[which(names(ThreeWsurvAll) == 0)])/sum(ThreeWsurvAll)),2)
+
+# Mean plant height +/- sd
+survheigStat[1,2] <- paste0(round(mean(survheig$X3_w_height),2), "+/-", round(sd(survheig$X3_w_height),2))
+
+###
+#5 weeks
+###
+
+# Survivial
+FiveWsurvAll <- table(survheig$X5_w_survival)
+survheigStat[2,1] <- round(100*((sum(FiveWsurvAll)-FiveWsurvAll[which(names(FiveWsurvAll) == 0)])/sum(FiveWsurvAll)),2)
+
+# Mean plant height +/- sd
+survheigStat[2,2] <- paste0(round(mean(survheig$X5_w_height),2), "+/-", round(sd(survheig$X5_w_height),2))
+
+
+# Plot table
+knitr::kable(survheigStat, row.names=T, caption = "Survival and plantlets heights at 3 and 5 weeks (+/- standard deviations).")
+
+###
+#Create list of clusters
+###
+clust <- sort(unique(survheig$Cluster))[c(1,3,2)]
+
+###~~~
+#Matrix with data on cluster, N. ind, N. shoot tips, survival and height
+###~~~
+clustSurvHeig <- matrix(ncol=7, nrow = length(clust))
+colnames(clustSurvHeig) <- c("Rooting cluster", "N. ind.","N. shoot tips", "3 w. surv. (%)", "3 w. plant height (cm)", "5 w. surv. (%)", "5 w. plant height (cm)")
+clustSurvHeig[,1] <- as.character(clust)
+
+for(i in 1:length(clust)){
+  #Subset mat to clust
+  tmp <- subset(survheig, survheig$Cluster == clust[i])
+  
+  ###
+  #3 weeks
+  ###
+  #N. ind.
+  clustSurvHeig[i,2] <- length(unique(tmp$SeedID))
+  #N. shoot tips
+  clustSurvHeig[i,3] <- nrow(tmp)
+  #Survivial
+  ThreeWsurv <- table(tmp$X3_w_survival)
+  clustSurvHeig[i,4] <- round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
+  #Mean plant height +/- sd
+  clustSurvHeig[i,5] <- paste0(round(mean(tmp$X3_w_height),2), "+/-", round(sd(tmp$X3_w_height),2))
+  
+  ###
+  #5 weeks
+  ###
+  #Survivial
+  FiveWsurv <- table(tmp$X5_w_survival)
+  clustSurvHeig[i,6] <- round(100*((sum(FiveWsurv)-FiveWsurv[which(names(FiveWsurv) == 0)])/sum(FiveWsurv)),2)
+  #Mean plant height +/- sd
+  clustSurvHeig[i,7] <- paste0(round(mean(tmp$X5_w_height),2), "+/-", round(sd(tmp$X5_w_height),2))
+}
+
+#Plot table
+knitr::kable(clustSurvHeig, row.names=F, caption = "Survival and plantlets heights at 3 and 5 weeks sorted by rooting clusters.")
+
+###~~~
+#Split survheig$Treatment to extract growth regulator and concentration
+###~~~
+survheig$TreatConc <- paste(sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", 2), sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", 3), sep="_")
+survheig$TreatConc[grep("Control_", survheig$TreatConc)] <- "Control"
+
+#Vector of treatments
+treat <- sort(unique(survheig$TreatConc))
+
+###~~~
+#Matrix summarizing effect of growth regulators on rooting
+###~~~
+survheigTreat <- matrix(ncol=8, nrow=15)
+colnames(survheigTreat) <- c("Cluster", "N. ind.","N. shoot tips","Growth regulator", "Concentration (mg/l)", "Survival (%)", "Height (cm)", "Treatment")
+
+#Convert to dataframe
+survheigTreat <- as.data.frame(survheigTreat)
+
+#Populate matrix
+survheigTreat$Cluster <- sort(rep(clust,5))
+survheigTreat$`Growth regulator` <- rep(sapply(strsplit(treat, split="_"),"[[",1),3)
+survheigTreat$`Concentration (mg/l)` <- rep(c("-", sapply(strsplit(treat[2:length(treat)], split="_"),"[[",2)),3)
+survheigTreat$Treatment <- rep(treat, 3)
+
+#Infer N, surv and plant height
+for(i in 1:nrow(survheigTreat)){
+  foo <- subset(survheig, survheig$TreatConc == survheigTreat$Treatment[i] & survheig$Cluster == survheigTreat$Cluster[i])
+  
+  if(nrow(foo) > 0){
+    #N. ind.
+    survheigTreat$`N. ind.`[i] <- length(unique(foo$SeedID))
+    #N. shoot tips
+    survheigTreat$`N. shoot tips`[i] <- nrow(foo)
+    #Survivial
+    ThreeWsurv <- table(foo$X5_w_survival)
+    survheigTreat$`Survival (%)`[i] <-   round(100*((sum(ThreeWsurv)-ThreeWsurv[which(names(ThreeWsurv) == 0)])/sum(ThreeWsurv)),2)
+    #Mean plant height +/- sd
+    survheigTreat$`Height (cm)`[i] <- paste0(round(mean(foo$X5_w_height),2), "+/-", round(sd(foo$X5_w_height),2))  
+  }
+  
+}
+
+#Save to be included in manuscript
+#write.csv(survheigTreat, file='Survival_cluster_treatment_5w.csv')
+
+#Plot table
+knitr::kable(survheigTreat, row.names=F, caption = "Survival and plantlets heights at 5 weeks sorted by rooting clusters and treatments.")
+```
+
+## Statistical analyses on survival data {.tabset .tabset-pills}
+
+### Analyses
+
+Here, we will use statistical analyses to test whether treatment or individual predict survival and heights of plantlets after 5-weeks of culture. The distribution of the survival data is in Figure \@ref(fig:distrSurv) and it supports using GLM models with a binomial family distribution (same approach than with the callus data). The R code is available in section \@ref(survcodeR).
+
+```{r survtidy, echo=F, eval=T}
+####~~~~
+#Infer treatment types recieved by plantles
+###~~~
+survheig$Treat <- paste(sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", c(2)), sapply(strsplit(as.vector(survheig$Treatment), split="_"), "[[", c(3)), sep="_")
+survheig$Treat[grep("Control_", survheig$Treat)] <- "Control"
+
+###~~~
+#Turn survival into a binary data (sickly plantlets have a score of 0.5, but will be changed to 1)
+###~~~
+survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
+```
+
+```{r distrSurv, echo=F, eval=T, fig.cap="Barplot of survival of plantlets after 5 weeks of growth."}
+barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
+```
+
+#### Comparing GLM models
+
+We will be building and comparing three models as follows:
+
+```{r survivalmodels, echo=F, eval=T}
+# GLM to investigate treatment effect on survival
+M1surv <- glm(X5_w_survival ~ Treat, family = binomial(link="logit"), data = survheig)
+summary(M1surv)
+
+# GLM to investigate treatment and cluster effects on survival
+M2surv <- glm(X5_w_survival ~ Treat + SeedID, family = binomial(link="logit"), data = survheig)
+summary(M2surv)
+```
+
+We are not pursuing our investigations any further since both models suggest that there is no significant treatment effects on survival. This means that if the shoot tips were producing roots then they had equal probabilities of survival independently of treatment. 
+
+### R code {#survcodeR}
+
+```{r survcode, echo=T, eval=F}
 ####~~~~
 #Infer treatment types recieved by plantles
 ###~~~
@@ -991,28 +1519,14 @@ survheig$Treat[grep("Control_", survheig$Treat)] <- "Control"
 ###~~~
 survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 
-```
-
-### Treatment and individual effects on plantlet survival
-
-#### Test for normality
-
-```{r normsurv, echo=T, eval=T}
-# Test for normality with Shapiro-Wilk Normality Test
-shapiro.test(survheig$X5_w_survival)
-```
-
-The test strongly suggests rejects normality of the survival data. We are therefore going to apply the same approach as with the callus data. Let's look at the distribution of the data to confirm that we can use the binomial family (Figure \@ref(fig:distrSurv)):
-
-```{r distrSurv, echo=T, eval=T, fig.cap="Barplot of survival of plantlets after 5 weeks of growth."}
+###~~~
+#Produce barplot of survival data
+###~~~
 barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
-```
 
-#### Compare models
-
-We will be building and comparing three models as follows:
-
-```{r survivalmodels, echo=T, eval=T}
+###~~~
+#GLM models
+###~~~
 # GLM to investigate treatment effect on survival
 M1surv <- glm(X5_w_survival ~ Treat, family = binomial(link="logit"), data = survheig)
 summary(M1surv)
@@ -1022,13 +1536,16 @@ M2surv <- glm(X5_w_survival ~ Treat + SeedID, family = binomial(link="logit"), d
 summary(M2surv)
 ```
 
-We are not pursuing our investigations since both models suggest that there is no significant treatment effect on survival. This means that if the shoot tips were producing roots then they had equal probabilities of survival independently of treatment. 
 
-### Effect of rooting clusters on plantlet heights
+## Statistical analyses on growth data {.tabset .tabset-pills}
 
-Here, we will only work on alive plantlets (`survheig$X5_w_survival` == 1) and conduct statistical analyses to test whether individuals from the different rooting clusters have different growth rates:
+Here, we will only work on alive plantlets (`survheig$X5_w_survival` == 1) and conduct statistical analyses to test whether individuals from the different rooting clusters have different growth rates. First, we have to test whether the continuous growth data follow a normal distribution using the Shapiro-Wilk normality test. The R code for all these analyses is available in section \@ref(codegrowthstat).
 
-```{r anovaroot, echo=T, eval=T}
+### Analyses
+
+#### Test for normality
+
+```{r normgrowth, echo=F, eval=T}
 ###~~~
 #Subset surveigh to include only alive plantlets after 5 weeks
 ###~~~
@@ -1041,12 +1558,17 @@ subSurvHeigh <- subset(survheig, survheig$X5_w_survival != "0")
 ###~~~
 # The data have a normal distribution!
 shapiro.test(subSurvHeigh$X5_w_height)
+```
 
+#### ANOVA analyses
+
+```{r anovaroot, echo=F, eval=T}
 ###~~~
 #Define ANOVA model and run analysis
 ###~~~
 #Since it seemed that treatment had an effect
 anovaOUTRoot <- aov(X5_w_height ~ Cluster + SeedID, data = subSurvHeigh)
+
 
 # Summary of ANOVA
 summary(anovaOUTRoot)
@@ -1054,7 +1576,9 @@ summary(anovaOUTRoot)
 
 The ANOVA show significant cluster and individual effects. The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, `G2_b27_1` is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!  
 
-```{r tukeyheight, echo=T, eval=T}
+#### Tukey tests
+
+```{r tukeyheight, echo=F, eval=T}
 ###~~~
 #Tukey tests on significant variables
 ###~~~
@@ -1096,12 +1620,80 @@ TopIndgrowth <- 100*(sort(table(P1growth), decreasing=T)/length(unique(subSurvHe
 print(TopIndgrowth)
 ```
 
+### R code {#codegrowthstat}
 
-## Boxplot of plantlet heights for individuals in blue rooting cluster
+```{r codegrowthstatR, echo=T, eval=F}
+###~~~
+#Subset surveigh to include only alive plantlets after 5 weeks
+###~~~
 
-Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` among the top three individuals with the fastest growth in our experiment (with `G2_b7_1` being the fastest grower and isolated as P2 in previous analyses). The top two individuals identified by the rooting analysis are also shown on the boxplot.
+#All plantlets surviving after 5 weeks of culture 
+subSurvHeigh <- subset(survheig, survheig$X5_w_survival != "0")
 
-```{r boxplotheightblue, echo=T, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1, P2)."}
+###~~~
+#Test for normality
+###~~~
+# The data have a normal distribution!
+shapiro.test(subSurvHeigh$X5_w_height)
+
+###~~~
+#Define ANOVA model and run analysis
+###~~~
+#Since it seemed that treatment had an effect
+anovaOUTRoot <- aov(X5_w_height ~ Cluster + SeedID, data = subSurvHeigh)
+
+
+# Summary of ANOVA
+summary(anovaOUTRoot)
+
+###~~~
+#Tukey tests on significant variables
+###~~~
+# Vector with significant variables (only one here)
+significant_vars <- c("SeedID", "Cluster")
+
+# Run Tukey tests
+anovaOUTheight_tukey <- TukeyHSD(anovaOUTRoot, significant_vars)
+
+# Save analysis
+saveRDS(anovaOUTheight_tukey,"02_Processed_data/rds_tables/TukeyHeight.rds")
+
+###~~~
+#Investigate cluster effect (**)
+###~~~
+ClustTukeyHeight <- anovaOUTheight_tukey$Cluster[which(as.numeric(anovaOUTheight_tukey$Cluster[,4]) <= 0.01),]
+
+# What are the top cluster(s) (= most efficient at growing fast)?
+#ClusterTukeyHeightTop <- ClustTukeyHeight[which(ClustTukeyHeight[,1] > 0),]
+
+print(anovaOUTheight_tukey$Cluster)
+print("Blue is significantly outperforming pink!")
+
+###~~~
+#Investigate individual effect (***)
+###~~~
+IndTukeyHeight <- anovaOUTheight_tukey$SeedID[which(as.numeric(anovaOUTheight_tukey$SeedID[,4]) <= 0.01),]
+
+# What are the top performers (= most efficient at growing fast)?
+IndTukeyHeightTop <- IndTukeyHeight[which(IndTukeyHeight[,1] > 0),]
+
+# Extract best performing ind (first in rownames of comparison)
+P1growth <- sapply(strsplit(rownames(IndTukeyHeightTop), split='-'), "[[",1)
+
+# Percentage of individuals that are outperformed by P1
+TopIndgrowth <- 100*(sort(table(P1growth), decreasing=T)/length(unique(subSurvHeigh$SeedID)))
+
+## This analysis shows that G2_b27_1 grows significantly faster than 14.28% of the individuals in this experiment
+print(TopIndgrowth)
+```
+
+## Boxplot of plantlet heights for individuals in blue rooting cluster {.tabset .tabset-pills}
+
+### Analyses
+
+Figure \@ref(fig:boxplotheightblue) shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid *Artemisia tridentata* subsp. *tridentata*. As predicted by the statistical analyses on plantlet heights, `G2_b7_1` among the top three individuals with the fastest growth in our experiment (with `G2_b7_1` being the fastest grower and isolated as P2 in previous analyses). The top two individuals identified by the rooting analysis are also shown on the boxplot. The R code is available in section \@ref(boxgrowthcode).
+
+```{r boxplotheightblue, echo=F, eval=T, fig.cap="Boxplot showing plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid Artemisia tridentata subsp. tridentata. The n indicates the number of plantlets cultured for each individual. The top three performers as identified by the rooting experiment are also displayed (P1, P2)."}
 ###~~~
 #Subset to only include from blue rooting cluster
 ###~~~
@@ -1119,8 +1711,33 @@ boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seed
 #Add P1, P2
 top <- which(names(seedID) %in% c("G2_b27_1", "G2_b7_1"))
 text(x=top, y=1.8, c("P1", "P2"))
-
 ```
+
+### R code {#boxgrowthcode}
+
+```{r boxplotheightbluecode, echo=T, eval=F}
+###~~~
+#Subset to only include from blue rooting cluster
+###~~~
+blueHeight <- subset(subSurvHeigh, subSurvHeigh$Cluster == 'blue')
+
+#Individual
+seedID <- table(as.vector(blueHeight$SeedID))
+
+# Create a vector named "new_order" containing the desired order to display individuals (smaller to taller)
+new_order <- with(blueHeight, reorder(as.vector(blueHeight$SeedID), as.numeric(blueHeight$X5_w_height), median , na.rm=T))
+
+###~~~
+# Draw boxplot
+###~~~
+boxplot(as.numeric(blueHeight$X5_w_height) ~ new_order, names = paste(names(seedID), paste0("(n: ", as.vector(seedID), ")"), sep = "\n"), las=2, xlab = "", ylab = "Plantlet height (cm)", cex = .8)
+
+#Add P1, P2
+top <- which(names(seedID) %in% c("G2_b27_1", "G2_b7_1"))
+text(x=top, y=1.8, c("P1", "P2"))
+```
+
+# References
 
 <div id="refs"></div>
 
@@ -1148,5 +1765,6 @@ sessionInfo()
 Sampling at the basis of analyses presented in this study.
 
 ```{r tidy, echo=F}
-knitr::kable(MERGE, caption = "Sampling at the basis of the sagebrush rooting experiment.")
+DT::datatable(MERGE)
+#knitr::kable(MERGE, caption = "Sampling at the basis of the sagebrush rooting experiment.")
 ```
