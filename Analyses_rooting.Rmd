@@ -56,7 +56,9 @@ opts_chunk$set(cache = 2, cache.path = "cache/")
 #opts_chunk$set(fig.pos = "H")
 ```
 
-# Reproducible workflow: integrating code, data, methods and key outcomes
+# Reproducible workflow
+
+## Integrating code, data, methods and key outcomes
 
 This document is associated to Barron et al. and provides the reproducible workflow integrating data, code, methods and results associated to this study. 
 
@@ -77,11 +79,15 @@ The analyses were conducted in four steps:
   + Assessing the effect of growth regulators and rooting clusters on plantule survival and growth rates.
 
 
-# Step 1: Import and tidy raw data
+# Step 1: Import and tidy raw data 
 
-The objective of this section is to merge data on rooting and calli stored in spreadsheets (in `csv` format). Each spreadsheet corresponds to a block and the code below collate these into one `data.frame` for downstream analyses. 
+## Importing and tyding data {.tabset .tabset-pills}
 
-The final dataset (`MERGE` object) contains the following columns (see Table \@ref(tab:tidy) for more details on sampling):
+### Overview of data
+
+The objective of this section is to merge data on rooting and callus stored in spreadsheets (in `csv` format). Each spreadsheet corresponds to a block and the code below collate these into one `data.frame` for downstream analyses. The R code associated to data analyses is available in section \@ref(tidy). 
+
+The final dataset (`MERGE` object) contains the following columns (see Table \@ref(tab:statssampling) for more details on sampling):
 
 - `Block`: 1 to 5.
 - `Treatment`: `Control` (= no growth regulator), `IBA_1`, `IBA_05`, `NAA_1`, `NAA_05`. Here `1` and `05` represent concentrations of the two growth regulators (IBA and NAA) at 1 and 0.5 mg/l. 
@@ -91,11 +97,7 @@ The final dataset (`MERGE` object) contains the following columns (see Table \@r
 - `Callus`: Binary (1/0).
 - Root: `Root` with number of roots per shoot tip and `RootBin` with binary (1/0) data. Although statistical analyses were also performed on binary data, analyses are mainly based on the quantitative variable (= `Root`).
 
-## Code to import and tidy raw data
-
-Raw data in `csv` format are stored in the `01_Raw_data` folder. The processed/tidy data are saved in `csv` format in the `02_Processed_data` folder. The `MERGE` object (in class `data.frame`) will be used for downstream analyses.
-
-```{r tidy1, echo=TRUE, eval=TRUE}
+```{r tidy1, echo=FALSE, eval=TRUE}
 ###~~
 #List all csv files (raw data from blocks)
 ###~~~
@@ -187,7 +189,6 @@ for(i in 1:length(csv)){
   #MERGE all csv
   ###~~~
   MERGE <- rbind(MERGE, FINALmat)
-  
 }
 
 ###~~~
@@ -212,13 +213,167 @@ write.csv(MERGE, file=paste0("02_Processed_data/Processed_", "blocks_rooting.csv
 head(MERGE)
 ```
 
-## Statistics on plant materials 
+### R code {#tidy}
 
-Table \@ref(tab:statssampling) provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. The code below generates Table \@ref(tab:statssampling).
+Raw data in `csv` format are stored in the `01_Raw_data` folder. The processed/tidy data are saved in `csv` format in the `02_Processed_data` folder. The `MERGE` object (in class `data.frame`) will be used for downstream analyses.
 
-### Code to generate Table \@ref(tab:statssampling)
+```{r tidy12, echo=T, eval=F}
+###~~
+#List all csv files (raw data from blocks)
+###~~~
 
-```{r statssampling, echo=TRUE, eval=TRUE}
+#Raw data are stored in the 01_Raw_Data folder
+csv <- list.files(path = "01_Raw_Data", pattern='block.csv', full.names = T)
+
+#Print names of csv files
+print(csv)
+
+#Rm processed files
+toRm <- grep("Processed_", csv)
+if(length(toRm) > 0){
+  csv <- csv[-toRm]
+}
+
+###~~~
+#Execute loop to process all files and merge them (see below)
+###~~~
+# Empty object that will contain all processed data
+# Save processed data into 02_Processed_data folder
+MERGE <- NULL
+for(i in 1:length(csv)){
+  ###
+  #Read in sv file
+  mat <- read.csv(csv[i])
+  
+  ###~~~
+  #Create final matrix
+  ###~~~
+  
+  #List of individuals
+  indcsv <- LETTERS[seq( from = 1, to = 9 )]
+  
+  #Empty matrix
+  FINALmat <- data.frame(matrix(ncol=7, nrow = nrow(mat)*length(indcsv)))
+  colnames(FINALmat) <- c("Block","Treatment", "Replicate", "Genotype", "Individual", "Callus", "Root")
+  
+  ###~~~
+  #Start populating FINALmat 
+  ###~~~
+  # Add Block, Treatment and Replicates
+  #Get data for block, treatment (and replicates)
+  blockTreatRep <- rep(as.vector(mat$X), 9)
+  FINALmat$Block <- sapply(strsplit(blockTreatRep, split='_'), "[", 1)
+  FINALmat$Treatment <- paste(sapply(strsplit(blockTreatRep, split='_'), "[", 2), sapply(strsplit(blockTreatRep, split='_'), "[", 3), sep='_')
+  FINALmat$Replicate <- sapply(strsplit(blockTreatRep, split='_'), "[", 4)
+  
+  #Deal with Controls
+  contr <- grep("Control_", FINALmat$Treatment)
+  FINALmat$Replicate[contr] <- sapply(strsplit(FINALmat$Treatment[contr], split="_"), "[",2)
+  FINALmat$Treatment[contr] <- sapply(strsplit(FINALmat$Treatment[contr], split="_"), "[",1)
+  
+  ###~~~
+  # Fetch individual data
+  ###~~~
+  
+  #Where are ind in mat?
+  indcol <- match(indcsv, colnames(mat))
+  
+  #Fetch raw data for each individual in block
+  OUT <- NULL
+  for(j in 1:length(indcol)){
+    #Extract info for each individual
+    tmp <- mat[,indcol[j]:(indcol[j]+2)]
+    colnames(tmp) <- c("Ind", "Callus", "Root")
+    OUT <- rbind(OUT, tmp)
+  }
+  
+  ###~~~
+  #Add OUT to FINALmat
+  ###~~~
+  
+  #Genotypes
+  FINALmat$Genotype <- sapply(strsplit(as.vector(OUT$Ind), split='_'), "[", 1)
+  #Ind
+  FINALmat$Individual <- paste(sapply(strsplit(as.vector(OUT$Ind), split='_'), "[", 2), sapply(strsplit(as.vector(OUT$Ind), split='_'), "[", 3), sep='_')
+  #Callus
+  FINALmat$Callus <- OUT$Callus
+  #Root
+  FINALmat$Root <- OUT$Root
+  
+  ###~~~
+  #Save FINALmat
+  ###~~~
+  write.csv(FINALmat, file=paste0("02_Processed_data/Processed_", strsplit(csv[i], split="/")[[1]][2]), row.names = F, quote = F)
+  
+  ###~~~
+  #MERGE all csv
+  ###~~~
+  MERGE <- rbind(MERGE, FINALmat)
+}
+
+###~~~
+#Finalize preping of the data
+###~~~
+# Add a binary rooting col
+MERGE <- data.frame(MERGE)
+
+MERGE$IndGeno <- paste(MERGE$Genotype, MERGE$Individual, sep="_")
+
+#Create a binary for Root
+MERGE$RootBin <- MERGE$Root
+MERGE$RootBin[MERGE$RootBin > 0] <- 1
+
+###~~~
+#Save MERGED files with all blocks
+###~~~
+# Save processed data into 02_Processed_data folder
+write.csv(MERGE, file=paste0("02_Processed_data/Processed_", "blocks_rooting.csv"), row.names = F, quote = F)
+
+#Return head of MERGE (see Appendix for more details)
+head(MERGE)
+```
+
+## Statistics on plant materials {.tabset .tabset-pills}
+
+### Analyses
+
+Table \@ref(tab:statssampling) provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. The code below generates Table \@ref(tab:statssampling). The R code associated to producing Table \@ref(tab:statssampling) is available in section \@ref(statsampl). 
+
+```{r statssampling, echo=FALSE, eval=TRUE}
+#Create and populate table to summarize sampling (Table 1)
+samp_mat <- matrix(ncol=9, nrow=1)
+colnames(samp_mat) <- c("N. block", "N. treatments", "Treatments", "N. replicates", "N. genotypes", 
+                        "N. individuals", "N. ind. per genotype", "Ind. G1", "Ind. G2")
+
+#N block
+samp_mat[,1] <- length(unique(MERGE$Block))
+#N treat
+samp_mat[,2] <- length(unique(MERGE$Treatment))
+#Treat ID
+samp_mat[,3] <- paste(sort(unique(MERGE$Treatment)), collapse = ", ")
+#N replicates
+samp_mat[,4] <- length(unique(MERGE$Replicate))
+#N genotypes
+samp_mat[,5] <- length(unique(MERGE$Genotype))
+#N ind
+samp_mat[,6] <- length(unique(MERGE$IndGeno))
+#N ind per genotype
+samp_mat[,7] <- paste(paste("G1:", list(table(MERGE$Genotype)/15)[[1]][1]), paste("G2:", list(table(MERGE$Genotype)/15)[[1]][2]), sep=', ')
+#List ind G1
+samp_mat[,8] <- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == "G1"))), collapse=', ')
+#List ind G2
+samp_mat[,9] <- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == "G2"))), collapse=', ')
+
+#Write table
+#write.csv(samp_mat, file="Table_1_sampling_summary.csv", row.names = F)
+
+#Plot table
+knitr::kable(samp_mat, caption = "Summary of sampling at the basis of sagebrush rooting experiment.")
+```
+
+### R code {#statsampl}
+
+```{r statssampling2, echo=TRUE, eval=FALSE}
 #Create and populate table to summarize sampling (Table 1)
 samp_mat <- matrix(ncol=9, nrow=1)
 colnames(samp_mat) <- c("N. block", "N. treatments", "Treatments", "N. replicates", "N. genotypes", 
@@ -324,7 +479,7 @@ The input variables for these analyses are stored in `MERGE`.
 
 Please find below the analyses conducted on callus and rooting data.
 
-### Testing normality {.tabset .tabset-pills}
+### Testing for normality {.tabset .tabset-pills}
 
 #### Analyses
 

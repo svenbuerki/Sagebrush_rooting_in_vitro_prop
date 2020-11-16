@@ -401,10 +401,13 @@ div.tocify {
 </div>
 
 
-<div id="reproducible-workflow-integrating-code-data-methods-and-key-outcomes" class="section level1">
-<h1><span class="header-section-number">1</span> Reproducible workflow: integrating code, data, methods and key outcomes</h1>
+<div id="reproducible-workflow" class="section level1">
+<h1><span class="header-section-number">1</span> Reproducible workflow</h1>
+<div id="integrating-code-data-methods-and-key-outcomes" class="section level2">
+<h2><span class="header-section-number">1.1</span> Integrating code, data, methods and key outcomes</h2>
 <p>This document is associated to Barron et al. and provides the reproducible workflow integrating data, code, methods and results associated to this study.</p>
 <p>Citations of <code>R</code> packages required to conduct this research and produce this document are provided in <a href="#appendix-1">Appendix 1</a>. Version information about <code>R</code>, the operating system (OS) and attached or <code>R</code> loaded packages are available in <a href="#appendix-2">Appendix 2</a>. The data underpinning this study are deposited on <a href="https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop">GitHub</a>. Appendices together with the data and R code presented in this document should allow reproducibility of this study.</p>
+</div>
 </div>
 <div id="overview-of-methodology" class="section level1">
 <h1><span class="header-section-number">2</span> Overview of methodology</h1>
@@ -426,8 +429,12 @@ div.tocify {
 </div>
 <div id="step-1-import-and-tidy-raw-data" class="section level1">
 <h1><span class="header-section-number">3</span> Step 1: Import and tidy raw data</h1>
-<p>The objective of this section is to merge data on rooting and calli stored in spreadsheets (in <code>csv</code> format). Each spreadsheet corresponds to a block and the code below collate these into one <code>data.frame</code> for downstream analyses.</p>
-<p>The final dataset (<code>MERGE</code> object) contains the following columns (see Table <a href="#tab:tidy"><strong>??</strong></a> for more details on sampling):</p>
+<div id="importing-and-tyding-data" class="section level2 tabset tabset-pills">
+<h2><span class="header-section-number">3.1</span> Importing and tyding data</h2>
+<div id="overview-of-data" class="section level3">
+<h3><span class="header-section-number">3.1.1</span> Overview of data</h3>
+<p>The objective of this section is to merge data on rooting and callus stored in spreadsheets (in <code>csv</code> format). Each spreadsheet corresponds to a block and the code below collate these into one <code>data.frame</code> for downstream analyses. The R code associated to data analyses is available in section <a href="#tidy">3.1.2</a>.</p>
+<p>The final dataset (<code>MERGE</code> object) contains the following columns (see Table <a href="#tab:statssampling">3.1</a> for more details on sampling):</p>
 <ul>
 <li><code>Block</code>: 1 to 5.</li>
 <li><code>Treatment</code>: <code>Control</code> (= no growth regulator), <code>IBA_1</code>, <code>IBA_05</code>, <code>NAA_1</code>, <code>NAA_05</code>. Here <code>1</code> and <code>05</code> represent concentrations of the two growth regulators (IBA and NAA) at 1 and 0.5 mg/l.</li>
@@ -437,169 +444,142 @@ div.tocify {
 <li><code>Callus</code>: Binary (1/0).</li>
 <li>Root: <code>Root</code> with number of roots per shoot tip and <code>RootBin</code> with binary (1/0) data. Although statistical analyses were also performed on binary data, analyses are mainly based on the quantitative variable (= <code>Root</code>).</li>
 </ul>
-<div id="code-to-import-and-tidy-raw-data" class="section level2">
-<h2><span class="header-section-number">3.1</span> Code to import and tidy raw data</h2>
-<p>Raw data in <code>csv</code> format are stored in the <code>01_Raw_data</code> folder. The processed/tidy data are saved in <code>csv</code> format in the <code>02_Processed_data</code> folder. The <code>MERGE</code> object (in class <code>data.frame</code>) will be used for downstream analyses.</p>
-<pre class="r"><code>### ~~ List all csv files (raw data from blocks) ~~~
-
-# Raw data are stored in the 01_Raw_Data folder
-csv &lt;- list.files(path = &quot;01_Raw_Data&quot;, pattern = &quot;block.csv&quot;, 
-    full.names = T)
-
-# Print names of csv files
-print(csv)</code></pre>
 <pre><code>## [1] &quot;01_Raw_Data/1_block_8_12_2020 - 1_block.csv&quot;
 ## [2] &quot;01_Raw_Data/2_block_8_15_2020 - 2_block.csv&quot;
 ## [3] &quot;01_Raw_Data/3_block_8_15_2020 - 3_block.csv&quot;
 ## [4] &quot;01_Raw_Data/4_block_8_16_2020 - 4_block.csv&quot;
 ## [5] &quot;01_Raw_Data/5_block_8_19_2020 - 5_block.csv&quot;</code></pre>
-<pre class="r"><code># Rm processed files
+<pre><code>##   Block Treatment Replicate Genotype Individual Callus Root  IndGeno RootBin
+## 1     1    IBA_05         1       G2      b20_1      0    0 G2_b20_1       0
+## 2     1    IBA_05         2       G2      b20_1      1    3 G2_b20_1       1
+## 3     1    IBA_05         3       G2      b20_1      1    0 G2_b20_1       0
+## 4     1     IBA_1         1       G2      b20_1      1    2 G2_b20_1       1
+## 5     1     IBA_1         2       G2      b20_1      1    4 G2_b20_1       1
+## 6     1     IBA_1         3       G2      b20_1      1    1 G2_b20_1       1</code></pre>
+</div>
+<div id="tidy" class="section level3">
+<h3><span class="header-section-number">3.1.2</span> R code</h3>
+<p>Raw data in <code>csv</code> format are stored in the <code>01_Raw_data</code> folder. The processed/tidy data are saved in <code>csv</code> format in the <code>02_Processed_data</code> folder. The <code>MERGE</code> object (in class <code>data.frame</code>) will be used for downstream analyses.</p>
+<pre class="r"><code>###~~
+#List all csv files (raw data from blocks)
+###~~~
+
+#Raw data are stored in the 01_Raw_Data folder
+csv &lt;- list.files(path = &quot;01_Raw_Data&quot;, pattern=&#39;block.csv&#39;, full.names = T)
+
+#Print names of csv files
+print(csv)
+
+#Rm processed files
 toRm &lt;- grep(&quot;Processed_&quot;, csv)
-if (length(toRm) &gt; 0) {
-    csv &lt;- csv[-toRm]
+if(length(toRm) &gt; 0){
+  csv &lt;- csv[-toRm]
 }
 
-### ~~~ Execute loop to process all files and merge them (see
-### below) ~~~ Empty object that will contain all processed
-### data Save processed data into 02_Processed_data folder
+###~~~
+#Execute loop to process all files and merge them (see below)
+###~~~
+# Empty object that will contain all processed data
+# Save processed data into 02_Processed_data folder
 MERGE &lt;- NULL
-for (i in 1:length(csv)) {
-    ### Read in sv file
-    mat &lt;- read.csv(csv[i])
-    
-    ### ~~~ Create final matrix ~~~
-    
-    # List of individuals
-    indcsv &lt;- LETTERS[seq(from = 1, to = 9)]
-    
-    # Empty matrix
-    FINALmat &lt;- data.frame(matrix(ncol = 7, nrow = nrow(mat) * 
-        length(indcsv)))
-    colnames(FINALmat) &lt;- c(&quot;Block&quot;, &quot;Treatment&quot;, &quot;Replicate&quot;, 
-        &quot;Genotype&quot;, &quot;Individual&quot;, &quot;Callus&quot;, &quot;Root&quot;)
-    
-    ### ~~~ Start populating FINALmat ~~~ Add Block, Treatment and
-    ### Replicates Get data for block, treatment (and replicates)
-    blockTreatRep &lt;- rep(as.vector(mat$X), 9)
-    FINALmat$Block &lt;- sapply(strsplit(blockTreatRep, split = &quot;_&quot;), 
-        &quot;[&quot;, 1)
-    FINALmat$Treatment &lt;- paste(sapply(strsplit(blockTreatRep, 
-        split = &quot;_&quot;), &quot;[&quot;, 2), sapply(strsplit(blockTreatRep, 
-        split = &quot;_&quot;), &quot;[&quot;, 3), sep = &quot;_&quot;)
-    FINALmat$Replicate &lt;- sapply(strsplit(blockTreatRep, split = &quot;_&quot;), 
-        &quot;[&quot;, 4)
-    
-    # Deal with Controls
-    contr &lt;- grep(&quot;Control_&quot;, FINALmat$Treatment)
-    FINALmat$Replicate[contr] &lt;- sapply(strsplit(FINALmat$Treatment[contr], 
-        split = &quot;_&quot;), &quot;[&quot;, 2)
-    FINALmat$Treatment[contr] &lt;- sapply(strsplit(FINALmat$Treatment[contr], 
-        split = &quot;_&quot;), &quot;[&quot;, 1)
-    
-    ### ~~~ Fetch individual data ~~~
-    
-    # Where are ind in mat?
-    indcol &lt;- match(indcsv, colnames(mat))
-    
-    # Fetch raw data for each individual in block
-    OUT &lt;- NULL
-    for (j in 1:length(indcol)) {
-        # Extract info for each individual
-        tmp &lt;- mat[, indcol[j]:(indcol[j] + 2)]
-        colnames(tmp) &lt;- c(&quot;Ind&quot;, &quot;Callus&quot;, &quot;Root&quot;)
-        OUT &lt;- rbind(OUT, tmp)
-    }
-    
-    ### ~~~ Add OUT to FINALmat ~~~
-    
-    # Genotypes
-    FINALmat$Genotype &lt;- sapply(strsplit(as.vector(OUT$Ind), 
-        split = &quot;_&quot;), &quot;[&quot;, 1)
-    # Ind
-    FINALmat$Individual &lt;- paste(sapply(strsplit(as.vector(OUT$Ind), 
-        split = &quot;_&quot;), &quot;[&quot;, 2), sapply(strsplit(as.vector(OUT$Ind), 
-        split = &quot;_&quot;), &quot;[&quot;, 3), sep = &quot;_&quot;)
-    # Callus
-    FINALmat$Callus &lt;- OUT$Callus
-    # Root
-    FINALmat$Root &lt;- OUT$Root
-    
-    ### ~~~ Save FINALmat ~~~
-    write.csv(FINALmat, file = paste0(&quot;02_Processed_data/Processed_&quot;, 
-        strsplit(csv[i], split = &quot;/&quot;)[[1]][2]), row.names = F, 
-        quote = F)
-    
-    ### ~~~ MERGE all csv ~~~
-    MERGE &lt;- rbind(MERGE, FINALmat)
-    
+for(i in 1:length(csv)){
+  ###
+  #Read in sv file
+  mat &lt;- read.csv(csv[i])
+  
+  ###~~~
+  #Create final matrix
+  ###~~~
+  
+  #List of individuals
+  indcsv &lt;- LETTERS[seq( from = 1, to = 9 )]
+  
+  #Empty matrix
+  FINALmat &lt;- data.frame(matrix(ncol=7, nrow = nrow(mat)*length(indcsv)))
+  colnames(FINALmat) &lt;- c(&quot;Block&quot;,&quot;Treatment&quot;, &quot;Replicate&quot;, &quot;Genotype&quot;, &quot;Individual&quot;, &quot;Callus&quot;, &quot;Root&quot;)
+  
+  ###~~~
+  #Start populating FINALmat 
+  ###~~~
+  # Add Block, Treatment and Replicates
+  #Get data for block, treatment (and replicates)
+  blockTreatRep &lt;- rep(as.vector(mat$X), 9)
+  FINALmat$Block &lt;- sapply(strsplit(blockTreatRep, split=&#39;_&#39;), &quot;[&quot;, 1)
+  FINALmat$Treatment &lt;- paste(sapply(strsplit(blockTreatRep, split=&#39;_&#39;), &quot;[&quot;, 2), sapply(strsplit(blockTreatRep, split=&#39;_&#39;), &quot;[&quot;, 3), sep=&#39;_&#39;)
+  FINALmat$Replicate &lt;- sapply(strsplit(blockTreatRep, split=&#39;_&#39;), &quot;[&quot;, 4)
+  
+  #Deal with Controls
+  contr &lt;- grep(&quot;Control_&quot;, FINALmat$Treatment)
+  FINALmat$Replicate[contr] &lt;- sapply(strsplit(FINALmat$Treatment[contr], split=&quot;_&quot;), &quot;[&quot;,2)
+  FINALmat$Treatment[contr] &lt;- sapply(strsplit(FINALmat$Treatment[contr], split=&quot;_&quot;), &quot;[&quot;,1)
+  
+  ###~~~
+  # Fetch individual data
+  ###~~~
+  
+  #Where are ind in mat?
+  indcol &lt;- match(indcsv, colnames(mat))
+  
+  #Fetch raw data for each individual in block
+  OUT &lt;- NULL
+  for(j in 1:length(indcol)){
+    #Extract info for each individual
+    tmp &lt;- mat[,indcol[j]:(indcol[j]+2)]
+    colnames(tmp) &lt;- c(&quot;Ind&quot;, &quot;Callus&quot;, &quot;Root&quot;)
+    OUT &lt;- rbind(OUT, tmp)
+  }
+  
+  ###~~~
+  #Add OUT to FINALmat
+  ###~~~
+  
+  #Genotypes
+  FINALmat$Genotype &lt;- sapply(strsplit(as.vector(OUT$Ind), split=&#39;_&#39;), &quot;[&quot;, 1)
+  #Ind
+  FINALmat$Individual &lt;- paste(sapply(strsplit(as.vector(OUT$Ind), split=&#39;_&#39;), &quot;[&quot;, 2), sapply(strsplit(as.vector(OUT$Ind), split=&#39;_&#39;), &quot;[&quot;, 3), sep=&#39;_&#39;)
+  #Callus
+  FINALmat$Callus &lt;- OUT$Callus
+  #Root
+  FINALmat$Root &lt;- OUT$Root
+  
+  ###~~~
+  #Save FINALmat
+  ###~~~
+  write.csv(FINALmat, file=paste0(&quot;02_Processed_data/Processed_&quot;, strsplit(csv[i], split=&quot;/&quot;)[[1]][2]), row.names = F, quote = F)
+  
+  ###~~~
+  #MERGE all csv
+  ###~~~
+  MERGE &lt;- rbind(MERGE, FINALmat)
 }
 
-### ~~~ Finalize preping of the data ~~~ Add a binary rooting
-### col
+###~~~
+#Finalize preping of the data
+###~~~
+# Add a binary rooting col
 MERGE &lt;- data.frame(MERGE)
 
-MERGE$IndGeno &lt;- paste(MERGE$Genotype, MERGE$Individual, sep = &quot;_&quot;)
+MERGE$IndGeno &lt;- paste(MERGE$Genotype, MERGE$Individual, sep=&quot;_&quot;)
 
-# Create a binary for Root
+#Create a binary for Root
 MERGE$RootBin &lt;- MERGE$Root
 MERGE$RootBin[MERGE$RootBin &gt; 0] &lt;- 1
 
-### ~~~ Save MERGED files with all blocks ~~~ Save processed
-### data into 02_Processed_data folder
-write.csv(MERGE, file = paste0(&quot;02_Processed_data/Processed_&quot;, 
-    &quot;blocks_rooting.csv&quot;), row.names = F, quote = F)
+###~~~
+#Save MERGED files with all blocks
+###~~~
+# Save processed data into 02_Processed_data folder
+write.csv(MERGE, file=paste0(&quot;02_Processed_data/Processed_&quot;, &quot;blocks_rooting.csv&quot;), row.names = F, quote = F)
 
-# Return head of MERGE (see Appendix for more details)
+#Return head of MERGE (see Appendix for more details)
 head(MERGE)</code></pre>
-<pre><code>##   Block Treatment Replicate Genotype Individual Callus Root
-## 1     1    IBA_05         1       G2      b20_1      0    0
-## 2     1    IBA_05         2       G2      b20_1      1    3
-## 3     1    IBA_05         3       G2      b20_1      1    0
-## 4     1     IBA_1         1       G2      b20_1      1    2
-## 5     1     IBA_1         2       G2      b20_1      1    4
-## 6     1     IBA_1         3       G2      b20_1      1    1
-##    IndGeno RootBin
-## 1 G2_b20_1       0
-## 2 G2_b20_1       1
-## 3 G2_b20_1       0
-## 4 G2_b20_1       1
-## 5 G2_b20_1       1
-## 6 G2_b20_1       1</code></pre>
 </div>
-<div id="statistics-on-plant-materials" class="section level2">
+</div>
+<div id="statistics-on-plant-materials" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">3.2</span> Statistics on plant materials</h2>
-<p>Table <a href="#tab:statssampling">3.1</a> provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. The code below generates Table <a href="#tab:statssampling">3.1</a>.</p>
-<div id="code-to-generate-table-reftabstatssampling" class="section level3">
-<h3><span class="header-section-number">3.2.1</span> Code to generate Table <a href="#tab:statssampling">3.1</a></h3>
-<pre class="r"><code>#Create and populate table to summarize sampling (Table 1)
-samp_mat &lt;- matrix(ncol=9, nrow=1)
-colnames(samp_mat) &lt;- c(&quot;N. block&quot;, &quot;N. treatments&quot;, &quot;Treatments&quot;, &quot;N. replicates&quot;, &quot;N. genotypes&quot;, 
-                        &quot;N. individuals&quot;, &quot;N. ind. per genotype&quot;, &quot;Ind. G1&quot;, &quot;Ind. G2&quot;)
-
-#N block
-samp_mat[,1] &lt;- length(unique(MERGE$Block))
-#N treat
-samp_mat[,2] &lt;- length(unique(MERGE$Treatment))
-#Treat ID
-samp_mat[,3] &lt;- paste(sort(unique(MERGE$Treatment)), collapse = &quot;, &quot;)
-#N replicates
-samp_mat[,4] &lt;- length(unique(MERGE$Replicate))
-#N genotypes
-samp_mat[,5] &lt;- length(unique(MERGE$Genotype))
-#N ind
-samp_mat[,6] &lt;- length(unique(MERGE$IndGeno))
-#N ind per genotype
-samp_mat[,7] &lt;- paste(paste(&quot;G1:&quot;, list(table(MERGE$Genotype)/15)[[1]][1]), paste(&quot;G2:&quot;, list(table(MERGE$Genotype)/15)[[1]][2]), sep=&#39;, &#39;)
-#List ind G1
-samp_mat[,8] &lt;- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == &quot;G1&quot;))), collapse=&#39;, &#39;)
-#List ind G2
-samp_mat[,9] &lt;- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == &quot;G2&quot;))), collapse=&#39;, &#39;)
-
-#Write table
-#write.csv(samp_mat, file=&quot;Table_1_sampling_summary.csv&quot;, row.names = F)
-
-#Plot table
-knitr::kable(samp_mat, caption = &quot;Summary of sampling at the basis of sagebrush rooting experiment.&quot;)</code></pre>
+<div id="analyses" class="section level3">
+<h3><span class="header-section-number">3.2.1</span> Analyses</h3>
+<p>Table <a href="#tab:statssampling">3.1</a> provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. The code below generates Table <a href="#tab:statssampling">3.1</a>. The R code associated to producing Table <a href="#tab:statssampling">3.1</a> is available in section <a href="#statsampl">3.2.2</a>.</p>
 <table>
 <caption><span id="tab:statssampling">Table 3.1: </span>Summary of sampling at the basis of sagebrush rooting experiment.</caption>
 <colgroup>
@@ -640,6 +620,38 @@ knitr::kable(samp_mat, caption = &quot;Summary of sampling at the basis of sageb
 </tr>
 </tbody>
 </table>
+</div>
+<div id="statsampl" class="section level3">
+<h3><span class="header-section-number">3.2.2</span> R code</h3>
+<pre class="r"><code>#Create and populate table to summarize sampling (Table 1)
+samp_mat &lt;- matrix(ncol=9, nrow=1)
+colnames(samp_mat) &lt;- c(&quot;N. block&quot;, &quot;N. treatments&quot;, &quot;Treatments&quot;, &quot;N. replicates&quot;, &quot;N. genotypes&quot;, 
+                        &quot;N. individuals&quot;, &quot;N. ind. per genotype&quot;, &quot;Ind. G1&quot;, &quot;Ind. G2&quot;)
+
+#N block
+samp_mat[,1] &lt;- length(unique(MERGE$Block))
+#N treat
+samp_mat[,2] &lt;- length(unique(MERGE$Treatment))
+#Treat ID
+samp_mat[,3] &lt;- paste(sort(unique(MERGE$Treatment)), collapse = &quot;, &quot;)
+#N replicates
+samp_mat[,4] &lt;- length(unique(MERGE$Replicate))
+#N genotypes
+samp_mat[,5] &lt;- length(unique(MERGE$Genotype))
+#N ind
+samp_mat[,6] &lt;- length(unique(MERGE$IndGeno))
+#N ind per genotype
+samp_mat[,7] &lt;- paste(paste(&quot;G1:&quot;, list(table(MERGE$Genotype)/15)[[1]][1]), paste(&quot;G2:&quot;, list(table(MERGE$Genotype)/15)[[1]][2]), sep=&#39;, &#39;)
+#List ind G1
+samp_mat[,8] &lt;- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == &quot;G1&quot;))), collapse=&#39;, &#39;)
+#List ind G2
+samp_mat[,9] &lt;- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == &quot;G2&quot;))), collapse=&#39;, &#39;)
+
+#Write table
+#write.csv(samp_mat, file=&quot;Table_1_sampling_summary.csv&quot;, row.names = F)
+
+#Plot table
+knitr::kable(samp_mat, caption = &quot;Summary of sampling at the basis of sagebrush rooting experiment.&quot;)</code></pre>
 </div>
 </div>
 </div>
@@ -790,9 +802,9 @@ knitr::kable(RootingStatbyTreat, row.names=F, caption = &quot;Effect of growth r
 <div id="statistical-analyses-on-root-data" class="section level2">
 <h2><span class="header-section-number">5.1</span> Statistical analyses on root data</h2>
 <p>Please find below the analyses conducted on callus and rooting data.</p>
-<div id="testing-normality" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">5.1.1</span> Testing normality</h3>
-<div id="analyses" class="section level4">
+<div id="testing-for-normality" class="section level3 tabset tabset-pills">
+<h3><span class="header-section-number">5.1.1</span> Testing for normality</h3>
+<div id="analyses-1" class="section level4">
 <h4><span class="header-section-number">5.1.1.1</span> Analyses</h4>
 <p>Before conducting statistical analyses, we have to test for normality of the rooting data (count) by using the Shapiro-Wilk normality test implemented in the R base function <code>shapiro.test()</code>. A <em>p</em>-value &lt;= 0.01 is will be used for significance.</p>
 <pre><code>## 
@@ -1093,7 +1105,7 @@ summary(M1)</code></pre>
 </div>
 <div id="investigating-treatment-effect" class="section level3 tabset tabset-pills">
 <h3><span class="header-section-number">5.1.3</span> Investigating treatment effect</h3>
-<div id="analyses-1" class="section level4">
+<div id="analyses-2" class="section level4">
 <h4><span class="header-section-number">5.1.3.1</span> Analyses</h4>
 <p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess treatment effects and rank those (with a <em>p</em>-value of &lt;= 0.01). Results of these analyses are presented below and the R code is available in section <a href="#RTreat">5.1.3.2</a>.</p>
 <pre><code>## [1] &quot;Perform Kruskal-Wallis Rank Sum Test: Root ~ Treatment&quot;</code></pre>
@@ -1237,7 +1249,7 @@ text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;ab&quot;,&quot;a&quot;
 </div>
 <div id="investigate-individual-effect" class="section level3 tabset tabset-pills">
 <h3><span class="header-section-number">5.1.4</span> Investigate individual effect</h3>
-<div id="analyses-2" class="section level4">
+<div id="analyses-3" class="section level4">
 <h4><span class="header-section-number">5.1.4.1</span> Analyses</h4>
 <p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a <em>p</em>-value of &lt;= 0.01). Results of these analyses are presented below and the R code is available in section <a href="#RInd">5.1.4.2</a>. To qualify as a top performer, an individual has to outperform &gt;= 20% of individuals (based on pairwise Wilcox tests with a <em>p</em>-value &lt;= 0.01).</p>
 <pre><code>## [1] &quot;Perform Kruskal-Wallis Rank Sum Test: Root ~ Individual&quot;</code></pre>
@@ -1330,7 +1342,7 @@ knitr::kable(TopInd, caption = &quot;List of individual that are outperforming a
 </div>
 <div id="clustering-analysis-on-rooting-data" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">5.2</span> Clustering analysis on rooting data</h2>
-<div id="analyses-3" class="section level3">
+<div id="analyses-4" class="section level3">
 <h3><span class="header-section-number">5.2.1</span> Analyses</h3>
 <p>A clustering analysis was used to compare rooting performance between individuals based on an euclidean distance (using the <code>Root</code> count data; see section <a href="#Rclustroot">5.2.2</a> for R code). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table <a href="#tab:tablegroups">5.4</a>) based on individual rooting performances (Figure <a href="#fig:heatmap2">5.3</a>):</p>
 <ul>
@@ -1608,7 +1620,7 @@ Figure 5.4: Barplot of callus production during the rooting experiment.
 </div>
 <div id="investigate-treatment-and-individual-effects" class="section level3 tabset tabset-pills">
 <h3><span class="header-section-number">5.3.2</span> Investigate treatment and individual effects</h3>
-<div id="analyses-4" class="section level4">
+<div id="analyses-5" class="section level4">
 <h4><span class="header-section-number">5.3.2.1</span> Analyses</h4>
 <p>We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section <a href="#RcodeCallus">5.3.2.2</a>.</p>
 <pre><code>## Analysis of Deviance Table
@@ -1819,7 +1831,7 @@ knitr::kable(signCalTreatInd, row.names=F, caption = &quot;Significant (p-value 
 </div>
 <div id="clustering-analysis-on-callus-data" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">5.4</span> Clustering analysis on callus data</h2>
-<div id="analyses-5" class="section level3">
+<div id="analyses-6" class="section level3">
 <h3><span class="header-section-number">5.4.1</span> Analyses</h3>
 <p>The code to produce the clustering analysis based on <code>Callus</code> data and associated heatmap is provided below and Figure <a href="#fig:heatmapplot">5.5</a> shows results of the analysis. Outcomes of this analysis are:</p>
 <ul>
@@ -2045,7 +2057,7 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = &quot;Effect of
 <h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> growth of plantlets</h1>
 <div id="sampling-and-preliminary-analyses" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.1</span> Sampling and preliminary analyses</h2>
-<div id="analyses-6" class="section level3">
+<div id="analyses-7" class="section level3">
 <h3><span class="header-section-number">6.1.1</span> Analyses</h3>
 <p>Data on survival and plantlets heights are stored in <code>01_Raw_Data/Survival_height_clones.csv</code>. The code below provides statistics on the number of individual and shoot tips included in this experiment. The R code for these analyses is available in section <a href="#codesurv">6.1.2</a>.</p>
 <pre><code>##                        Sampling       
@@ -2491,7 +2503,7 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 </div>
 <div id="statistical-analyses-on-survival-data" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.2</span> Statistical analyses on survival data</h2>
-<div id="analyses-7" class="section level3">
+<div id="analyses-8" class="section level3">
 <h3><span class="header-section-number">6.2.1</span> Analyses</h3>
 <p>Here, we will use statistical analyses to test whether treatment or individual predict survival and heights of plantlets after 5-weeks of culture. The distribution of the survival data is in Figure <a href="#fig:distrSurv">6.1</a> and it supports using GLM models with a binomial family distribution (same approach than with the callus data). The R code is available in section <a href="#survcodeR">6.2.2</a>.</p>
 <div class="figure"><span id="fig:distrSurv"></span>
@@ -2630,7 +2642,7 @@ summary(M2surv)</code></pre>
 <div id="statistical-analyses-on-growth-data" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.3</span> Statistical analyses on growth data</h2>
 <p>Here, we will only work on alive plantlets (<code>survheig$X5_w_survival</code> == 1) and conduct statistical analyses to test whether individuals from the different rooting clusters have different growth rates. First, we have to test whether the continuous growth data follow a normal distribution using the Shapiro-Wilk normality test. The R code for all these analyses is available in section <a href="#codegrowthstat">6.3.2</a>.</p>
-<div id="analyses-8" class="section level3">
+<div id="analyses-9" class="section level3">
 <h3><span class="header-section-number">6.3.1</span> Analyses</h3>
 <div id="test-for-normality" class="section level4">
 <h4><span class="header-section-number">6.3.1.1</span> Test for normality</h4>
@@ -2730,7 +2742,7 @@ print(TopIndgrowth)</code></pre>
 </div>
 <div id="boxplot-of-plantlet-heights-for-individuals-in-blue-rooting-cluster" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.4</span> Boxplot of plantlet heights for individuals in blue rooting cluster</h2>
-<div id="analyses-9" class="section level3">
+<div id="analyses-10" class="section level3">
 <h3><span class="header-section-number">6.4.1</span> Analyses</h3>
 <p>Figure <a href="#fig:boxplotheightblue">6.2</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> among the top three individuals with the fastest growth in our experiment (with <code>G2_b7_1</code> being the fastest grower and isolated as P2 in previous analyses). The top two individuals identified by the rooting analysis are also shown on the boxplot. The R code is available in section <a href="#boxgrowthcode">6.4.2</a>.</p>
 <div class="figure"><span id="fig:boxplotheightblue"></span>
