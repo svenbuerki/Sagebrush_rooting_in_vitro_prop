@@ -70,32 +70,30 @@ In this document, we are presenting the code associated to the analyses performe
 
 The analyses were conducted in four steps:
 
-- **Step 1:** Import and tidy raw data.
-- **Step 2:** Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips.
-- **Step 3:** Comparative analyses on tissue culture data. This was done following a two-tier approach:
+- **Step 1:** Present, import and tidy data (see section \@ref(step1)).
+- **Step 2:** Preliminary analyses on rooting experiment (see section \@ref(step2)).
+- **Step 3:** Comparative analyses on rooting data (see section \@ref(step3)). This was done following a two-tier approach:
   + Statistical analyses (test for normality and conduct parametric or non-parametric statistics and multiple pairwise-comparison tests with *p*-value <= 0.01).
   + Clustering analyses.
-- **Step 4:** *In vitro* growth of plantules. 
+- **Step 4:** *In vitro* survival and growth of plantules (see section \@ref(step4)). 
   + Assessing the effect of growth regulators and rooting clusters on plantule survival and growth rates.
 
+# Step 1: Present, import and tidy data {#step1}
 
-# Step 1: Import and tidy raw data 
+## Data presentation
 
-## Importing and tyding data {.tabset .tabset-pills}
+The raw data used for this study are available in the [Sagebrush_rooting_in_vitro_prop](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/tree/master/01_Raw_Data) GitHub repository in the `01_Raw_Data` folder. The data can be split into two categories supporting analyses presented in this study:
 
-### Overview of data
+1. Tissue culture data: These data are related to the rooting experiment conducted on shoot tips.
+2. *In vitro* survival and growth of plantules: These data are related to the survival and growth experiment of rooted shoot tips into growth media.
 
-The objective of this section is to merge data on rooting and callus stored in spreadsheets (in `csv` format). Each spreadsheet corresponds to a block and the code below collate these into one `data.frame` for downstream analyses. The R code associated to data analyses is available in section \@ref(tidy). 
+We are providing more information on these data below.
 
-The final dataset (`MERGE` object) contains the following columns (see Table \@ref(tab:statssampling) for more details on sampling):
+### Tissue culture data {.tabset .tabset-pills}
 
-- `Block`: 1 to 5.
-- `Treatment`: `Control` (= no growth regulator), `IBA_1`, `IBA_05`, `NAA_1`, `NAA_05`. Here `1` and `05` represent concentrations of the two growth regulators (IBA and NAA) at 1 and 0.5 mg/l. 
-- `Replicate`: 1 to 3.
-- `Genotype`: `G1` and `G2`.
-- Individual: `Individual` and `IndGeno`. The latter variable combines data on genotype and individual and will be used throughout the document.
-- `Callus`: Binary (1/0).
-- Root: `Root` with number of roots per shoot tip and `RootBin` with binary (1/0) data. Although statistical analyses were also performed on binary data, analyses are mainly based on the quantitative variable (= `Root`).
+#### Import and tidy data
+
+The objective of this section is to merge data on rooting and callus stored in spreadsheets (in `csv` format). Each spreadsheet corresponds to a block and the code provided in section \@ref(tidy) collates these data into one `data.frame` for downstream analyses. 
 
 ```{r tidy1, echo=FALSE, eval=TRUE}
 ###~~
@@ -106,6 +104,7 @@ The final dataset (`MERGE` object) contains the following columns (see Table \@r
 csv <- list.files(path = "01_Raw_Data", pattern='block.csv', full.names = T)
 
 #Print names of csv files
+print("List of csv files with block data:")
 print(csv)
 
 #Rm processed files
@@ -210,10 +209,23 @@ MERGE$RootBin[MERGE$RootBin > 0] <- 1
 write.csv(MERGE, file=paste0("02_Processed_data/Processed_", "blocks_rooting.csv"), row.names = F, quote = F)
 
 #Return head of MERGE (see Appendix for more details)
-head(MERGE)
+print("Merge files and print head of data.frame:")
+head(MERGE[,1:ncol(MERGE[-1])])
 ```
 
-### R code {#tidy}
+The final dataset (`MERGE`) contains the following columns (see Table \@ref(tab:statssampling) for more details on sampling):
+
+- `Block`: 1 to 5. Each individual were randomly allocated to a block and a block has 9 individual.
+- `Treatment`: `Control` (= no growth regulator), `IBA_1` (IBA 1 mg/l), `IBA_05` (IBA 0.5 mg/l), `NAA_1` (NAA 1 mg/l), `NAA_05` (NAA 0.5 mg/l).
+- `Replicate`: 1 to 3. Each individual had 3 shoot tips randomly allocated per treatment.
+- `Genotype`: `G1` (drought-tolerant genotype from ID3 population) and `G2` (drought-sensitive population from UT2 population). See distribution [map](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html).
+- Individual: `Individual` and `IndGeno`. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.
+- `Callus`: Binary (1 = present; 0 = absent).
+- `Root`: Count of number of roots per shoot tip.
+
+The `MERGE` dataset is available in [Appendix 3] and can be directly there. The individual and merged processed files are available in the `02_Processed_data` folder (see file `Processed_blocks_rooting.csv` for merged data or click [here](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv)).
+
+#### R code {#tidy}
 
 Raw data in `csv` format are stored in the `01_Raw_data` folder. The processed/tidy data are saved in `csv` format in the `02_Processed_data` folder. The `MERGE` object (in class `data.frame`) will be used for downstream analyses.
 
@@ -333,6 +345,19 @@ write.csv(MERGE, file=paste0("02_Processed_data/Processed_", "blocks_rooting.csv
 head(MERGE)
 ```
 
+### *In vitro* survival and growth of plantules {.tabset .tabset-pills}
+
+Data on survival and plantlets heights at 3 and 5 weeks are stored in the `01_Raw_Data` folder in `Survival_height_clones.csv`. The dataset is available in [Appendix 4] and can be directly downloaded there. Please find below the description of the variables:
+
+- `SeedID`: This is equal to `IndGeno` in `MERGE` and therefore refers to the rooted shoot tip that was transferred.
+- `Cluster`: Rooting cluster as inferred by the clustering analysis.
+- `X3_w_survival` and `X5_w_survival`: Binary survival (1 = alive, 0 = dead) data at 3 and 5 weeks.
+- `X3_w_height` and `X5_w_height`: Continuous plantlets heights data (in cm) at 3 and 5 weeks.
+
+# Step 2: Preliminary analyses on rooting experiment {#step2}
+
+Preliminary data summarizing results of our experiments are provided here to assess the effect of growth regulators on *in vitro* rooting of *Artemisia tridentata*. During the course of the experiment, calli developed on a large proportion of shoot tips, which was unexpected based on preliminary data. We are therefore summarizing these data here by treatment and will devote a portion of the analyses to investigate whether callus development was associated to treatments and whether those inhibited or promoted rooting.
+
 ## Statistics on plant materials {.tabset .tabset-pills}
 
 ### Analyses
@@ -405,17 +430,14 @@ samp_mat[,9] <- paste(sort(unique(subset(MERGE$IndGeno, MERGE$Genotype == "G2"))
 knitr::kable(samp_mat, caption = "Summary of sampling at the basis of sagebrush rooting experiment.")
 ```
 
-# Step 2: Preliminary analyses on the effect of growth regulators on rooting and calli development on shoot tips
 
-Preliminary data summarizing results of our experiments are provided here to assess the effect of growth regulators on *in vitro* rooting of *Artemisia tridentata*. During the course of the experiment, calli developed on a large proportion of shoot tips, which was unexpected based on preliminary data. We are therefore summarizing these data here by treatment and will devote a portion of the analyses to investigate whether callus development was associated to treatments and whether those inhibited or promoted rooting.
+## Effect of growth regulators on *in vitro* callus development in *Artemisia tridentata* {.tabset .tabset-pills}
 
-## Effect of growth regulators on *in vitro* callus development in *Artemisia tridentata*
+### Analyses
 
-The effect of growth regulators on calli development is provided in Table \@ref(tab:growthbyregulatorcallus) and compared to the control treatment (= no growth regulator). These data show contrasting calli development between the control and treatments including growth hormones. Control shoot tips had limited calli development, whereas responses for those undergoing treatments were very high (>70%; Table \@ref(tab:growthbyregulatorcallus)).
+The effect of growth regulators on callus development is provided in Table \@ref(tab:growthbyregulatorcallus) and compared to the control treatment (= no growth regulator). These data show contrasting calli development between the control and treatments including growth hormones. Control shoot tips had limited calli development, whereas responses for those undergoing treatments were very high (>70%; Table \@ref(tab:growthbyregulatorcallus)). The R code associated to these analyses is presented in section \@ref(growthbyregulatorcallus).
 
-### Code to generate Table \@ref(tab:growthbyregulatorcallus)
-
-```{r growthbyregulatorcallus, echo=T, eval=T}
+```{r growthbyregulatorcallus, echo=F, eval=T}
 #Matrix summarizing effect of growth regulators on rooting
 CallusStatbyTreat <- matrix(ncol=3, nrow=5)
 colnames(CallusStatbyTreat) <- c("Growth regulator", "Concentration (mg/l)", "Response (%)")
@@ -439,14 +461,39 @@ for(i in 1:nrow(CallusStatbyTreat)){
 knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates (+/- standard deviation).")
 ```
 
+### R code {#growthbyregulatorcallus}
 
-## Effect of growth regulators on *in vitro* rooting of *Artemisia tridentata*
+```{r growthbyregulatorcalluscode, echo=T, eval=F}
+#Matrix summarizing effect of growth regulators on rooting
+CallusStatbyTreat <- matrix(ncol=3, nrow=5)
+colnames(CallusStatbyTreat) <- c("Growth regulator", "Concentration (mg/l)", "Response (%)")
+rownames(CallusStatbyTreat) <- sort(unique(MERGE$Treatment))
 
-The effect of growth regulators is provided in Table \@ref(tab:growthbyregulator) and compared to the control treatment (= no growth regulator). These data show a very high level of variation in rooting (see column `Av. No. roots`). We are hypothesizing that this trend is caused by an individual effect. To test this hypothesis we will conduct comparative analyses (see **Step 4**) to sort individuals based on their rooting abilities. Finally, the effect of growth regulators on *in vitro* rooting will be compared within each cluster.  
+#Convert to dataframe
+CallusStatbyTreat <- as.data.frame(CallusStatbyTreat)
 
-### Code to generate Table \@ref(tab:growthbyregulator)
+#Populate matrix
+CallusStatbyTreat$`Growth regulator` <- sapply(strsplit(rownames(CallusStatbyTreat), split="_"),"[[",1)
+CallusStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(CallusStatbyTreat)[2:nrow(CallusStatbyTreat)], split="_"),"[[",2))
 
-```{r growthbyregulator, echo=T, eval=T}
+#Infer Response and mean no roots
+for(i in 1:nrow(CallusStatbyTreat)){
+  foo <- subset(MERGE, MERGE$Treatment == rownames(CallusStatbyTreat)[i])
+  CallusStatbyTreat$`Response (%)`[i] <- paste(round(100*mean(foo$Callus),2), "+/-", round(sd(foo$Callus),2), sep = " ") 
+}
+
+
+#Plot table
+knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates (+/- standard deviation).")
+```
+
+## Effect of growth regulators on *in vitro* rooting of *Artemisia tridentata* {.tabset .tabset-pills}
+
+### Analyses
+
+The effect of growth regulators is provided in Table \@ref(tab:growthbyregulator) and compared to the control treatment (= no growth regulator). These data show a very high level of variation in rooting (see column `Av. No. roots`). We are hypothesizing that this trend is caused by an individual effect. To test this hypothesis we will conduct comparative analyses (see **Step 4**) to sort individuals based on their rooting abilities. Finally, the effect of growth regulators on *in vitro* rooting will be compared within each cluster. The R code associated to these analyses is presented in section \@ref(growthbyregulatorcode).
+
+```{r growthbyregulator, echo=F, eval=T}
 #Matrix summarizing effect of growth regulators on rooting
 RootingStatbyTreat <- matrix(ncol=4, nrow=5)
 colnames(RootingStatbyTreat) <- c("Growth regulator", "Concentration (mg/l)", "Response (%)", "Av. No. of roots")
@@ -471,13 +518,40 @@ for(i in 1:nrow(RootingStatbyTreat)){
 knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates +/- standard deviation; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
 ```
 
-# Step 3: Comparative analyses
+### R code {#growthbyregulatorcode}
+
+```{r growthbyregulatorcode, echo=T, eval=F}
+#Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreat <- matrix(ncol=4, nrow=5)
+colnames(RootingStatbyTreat) <- c("Growth regulator", "Concentration (mg/l)", "Response (%)", "Av. No. of roots")
+rownames(RootingStatbyTreat) <- sort(unique(MERGE$Treatment))
+
+#Convert to dataframe
+RootingStatbyTreat <- as.data.frame(RootingStatbyTreat)
+
+#Populate matrix
+RootingStatbyTreat$`Growth regulator` <- sapply(strsplit(rownames(RootingStatbyTreat), split="_"),"[[",1)
+RootingStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(RootingStatbyTreat)[2:nrow(RootingStatbyTreat)], split="_"),"[[",2))
+
+#Infer Response and mean no roots
+for(i in 1:nrow(RootingStatbyTreat)){
+  foo <- subset(MERGE, MERGE$Treatment == rownames(RootingStatbyTreat)[i])
+  RootingStatbyTreat$`Response (%)`[i] <- paste(round(100*(mean(foo$RootBin)),2), "+/-", round(sd(foo$RootBin),2), sep=" ")
+  RootingStatbyTreat$`Av. No. of roots`[i] <- paste(round(mean(foo$Root),2), "+/-", round(sd(foo$Root),2), sep=" ")
+}
+
+
+#Plot table
+knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates +/- standard deviation; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
+```
+
+# Step 3: Comparative analyses on rooting data {#step3}
 
 The input variables for these analyses are stored in `MERGE`.
 
 ## Statistical analyses on root data
 
-Please find below the analyses conducted on callus and rooting data.
+Please find below the analyses conducted on root (count data) and callus (binary) data.
 
 ### Testing for normality {.tabset .tabset-pills}
 
@@ -1277,7 +1351,7 @@ for(i in 1:nrow(RootingStatbyTreatCal)){
 knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.")
 ```
 
-# Step 4: *In vitro* growth of plantlets
+# Step 4: *In vitro* survival and growth of plantules {#step4}
 
 ## Sampling and preliminary analyses {.tabset .tabset-pills}
 
@@ -1917,9 +1991,24 @@ sessionInfo()
 
 # Appendix 3 {.appendix}
 
-Sampling at the basis of analyses presented in this study.
+Tissue culture data at the basis of analyses presented in step 3.
 
 ```{r tidy, echo=F}
-DT::datatable(MERGE)
+DT::datatable(MERGE, extensions = 'Buttons', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
 #knitr::kable(MERGE, caption = "Sampling at the basis of the sagebrush rooting experiment.")
 ```
+
+# Appendix 4 {.appendix}
+
+*In vitro* survival and growth data for plantlets at the basis of analyses presented in step 4.
+
+```{r survgrowthappendix, echo=F}
+###~~~
+#Load data on survival and height
+###~~~
+survheig <- read.csv("01_Raw_Data/Survival_height_clones.csv")
+
+DT::datatable(survheig[,c(4,5,8,9,10,11)], extensions = 'Buttons', options = list(dom = 'Blfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+#knitr::kable(MERGE, caption = "Sampling at the basis of the sagebrush rooting experiment.")
+```
+
