@@ -614,7 +614,12 @@ head(MERGE)</code></pre>
 <h2><span class="header-section-number">4.1</span> Statistics on plant materials</h2>
 <div id="analyses" class="section level3">
 <h3><span class="header-section-number">4.1.1</span> Analyses</h3>
-<p>Table <a href="#tab:statssampling">4.1</a> provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. The code below generates Table <a href="#tab:statssampling">4.1</a>. The R code associated to producing Table <a href="#tab:statssampling">4.1</a> is available in section <a href="#statsampl">4.1.2</a>.</p>
+<p>Table <a href="#tab:statssampling">4.1</a> provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each.</p>
+<p>Overall, the sampling at the basis of the rooting experiment could summarized as follows:</p>
+<blockquote>
+<p>“45 individual lines x 5 treatments x 3 replicates, for n = 675 total shoot tips.”</p>
+</blockquote>
+<p>The code below generates Table <a href="#tab:statssampling">4.1</a>. The R code associated to producing Table <a href="#tab:statssampling">4.1</a> is available in section <a href="#statsampl">4.1.2</a>.</p>
 <table>
 <caption><span id="tab:statssampling">Table 4.1: </span>Summary of sampling at the basis of sagebrush rooting experiment.</caption>
 <colgroup>
@@ -836,29 +841,255 @@ knitr::kable(RootingStatbyTreat, row.names=F, caption = &quot;Effect of growth r
 <div id="step3" class="section level1">
 <h1><span class="header-section-number">5</span> Step 3: Comparative analyses on rooting data</h1>
 <p>The input variables for these analyses are stored in <code>MERGE</code>.</p>
+<div id="statistical-analyses-on-callus-data" class="section level2">
+<h2><span class="header-section-number">5.1</span> Statistical analyses on callus data</h2>
+<div id="selecting-the-best-method" class="section level3">
+<h3><span class="header-section-number">5.1.1</span> Selecting the best method</h3>
+<p>Table <a href="#tab:growthbyregulatorcallus">4.2</a> demonstrated that &gt;70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (&lt; 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.</p>
+<p>The callus data were scored as binary (0 = absent; 1 = present) and the distribution of that data is in Figure <a href="#fig:distrCall">5.1</a>.</p>
+<pre class="r"><code>barplot(table(MERGE$Callus), xlab=&quot;Binary data on callus&quot;, ylab=&quot;Occurrence&quot;)</code></pre>
+<div class="figure"><span id="fig:distrCall"></span>
+<img src="Analyses_rooting_files/figure-html/distrCall-1.png" alt="Barplot of callus production during the rooting experiment." width="672" />
+<p class="caption">
+Figure 5.1: Barplot of callus production during the rooting experiment.
+</p>
+</div>
+<p>This type of data calls for the use of non-parametric analyses as done for the root (count) data. In this context, we will use GLM models to assess treatment and individual effects on callus production.</p>
+</div>
+<div id="investigate-treatment-and-individual-effects" class="section level3 tabset tabset-pills">
+<h3><span class="header-section-number">5.1.2</span> Investigate treatment and individual effects</h3>
+<div id="analyses-3" class="section level4">
+<h4><span class="header-section-number">5.1.2.1</span> Analyses</h4>
+<p>We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section <a href="#RcodeCallus">5.1.2.2</a>.</p>
+<pre><code>## Analysis of Deviance Table
+## 
+## Model 1: Callus ~ Treatment
+## Model 2: Callus ~ Treatment + IndGeno
+##   Resid. Df Resid. Dev Df Deviance  Pr(&gt;Chi)    
+## 1       670     534.48                          
+## 2       626     359.31 44   175.18 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Callus ~ Treatment + IndGeno, family = binomial(link = &quot;logit&quot;), 
+##     data = MERGE)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.6414  -0.1133   0.1898   0.4458   3.1787  
+## 
+## Coefficients:
+##                   Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)     -4.272e+00  1.200e+00  -3.559 0.000373 ***
+## TreatmentIBA_05  6.042e+00  6.959e-01   8.681  &lt; 2e-16 ***
+## TreatmentIBA_1   6.920e+00  7.268e-01   9.521  &lt; 2e-16 ***
+## TreatmentNAA_05  6.591e+00  7.144e-01   9.227  &lt; 2e-16 ***
+## TreatmentNAA_1   7.305e+00  7.436e-01   9.823  &lt; 2e-16 ***
+## IndGenoG1_b1_1  -1.297e+00  1.219e+00  -1.064 0.287425    
+## IndGenoG1_b1_2  -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b10_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b12_1 -3.595e+00  1.223e+00  -2.940 0.003279 ** 
+## IndGenoG1_b13_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b15_1 -3.173e+00  1.193e+00  -2.659 0.007841 ** 
+## IndGenoG1_b16_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b18_1  9.606e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b19_1  8.941e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b2_1  -1.718e+00  1.191e+00  -1.442 0.149190    
+## IndGenoG1_b20_1  9.503e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b21_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b25_1  9.676e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b26_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b29_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b3_1   9.347e-14  1.432e+00   0.000 1.000000    
+## IndGenoG1_b4_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b5_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b6_1  -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG1_b7_1  -1.945e+01  8.196e+02  -0.024 0.981071    
+## IndGenoG1_b8_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG1_b9_1  -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG2_18_1  -2.800e+00  1.179e+00  -2.374 0.017607 *  
+## IndGenoG2_29_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b11_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG2_b15_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b16_1 -1.718e+00  1.191e+00  -1.442 0.149190    
+## IndGenoG2_b17_1 -2.092e+00  1.178e+00  -1.775 0.075824 .  
+## IndGenoG2_b19_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b2_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b20_1  1.531e-13  1.432e+00   0.000 1.000000    
+## IndGenoG2_b21_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b21_2  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b24_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b25_1  9.411e-14  1.432e+00   0.000 1.000000    
+## IndGenoG2_b26_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b27_1  1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b27_2 -1.718e+00  1.191e+00  -1.442 0.149190    
+## IndGenoG2_b28_1 -7.740e-01  1.278e+00  -0.606 0.544747    
+## IndGenoG2_b4_1   9.771e-14  1.432e+00   0.000 1.000000    
+## IndGenoG2_b5_1  -3.173e+00  1.193e+00  -2.659 0.007841 ** 
+## IndGenoG2_b6_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b7_1   1.687e+00  1.899e+00   0.889 0.374122    
+## IndGenoG2_b8_1   9.690e-14  1.432e+00   0.000 1.000000    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 862.04  on 674  degrees of freedom
+## Residual deviance: 359.31  on 626  degrees of freedom
+## AIC: 457.31
+## 
+## Number of Fisher Scoring iterations: 16</code></pre>
+<p>The analyses demonstrate that there is significant treatment and individual effects.</p>
+<div id="ranking-treatments" class="section level5">
+<h5><span class="header-section-number">5.1.2.1.1</span> Ranking treatments</h5>
+<p>The <em>emmeans</em> function implemented in the <code>emmeans</code> R package <span class="citation">(Lenth <a href="#ref-R-emmeans">2020</a>)</span> was used to compare treatments (with a <em>p</em>-value &lt;= 0.01; the R code is available in section <a href="#RcodeCallus">5.1.2.2</a>):</p>
+<table>
+<caption><span id="tab:emmeansCal">Table 5.1: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
+<thead>
+<tr class="header">
+<th align="left">contrast</th>
+<th align="right">estimate</th>
+<th align="right">SE</th>
+<th align="right">z.ratio</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Control - IBA_05</td>
+<td align="right">-6.041565</td>
+<td align="right">0.6959323</td>
+<td align="right">-8.681255</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Control - IBA_1</td>
+<td align="right">-6.919518</td>
+<td align="right">0.7267807</td>
+<td align="right">-9.520779</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Control - NAA_05</td>
+<td align="right">-6.591417</td>
+<td align="right">0.7143659</td>
+<td align="right">-9.226947</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Control - NAA_1</td>
+<td align="right">-7.304505</td>
+<td align="right">0.7436334</td>
+<td align="right">-9.822723</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p>Table <a href="#tab:emmeansCal">5.1</a> summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:</p>
+<ul>
+<li><ol style="list-style-type: lower-alpha">
+<li>Control is significantly different than the other treatments (<code>***</code>). Here, very limited calli production was observed in shoot tips included in the control treatment.</li>
+</ol></li>
+<li><ol start="2" style="list-style-type: lower-alpha">
+<li>No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.</li>
+</ol></li>
+</ul>
+</div>
+<div id="ranking-individuals" class="section level5">
+<h5><span class="header-section-number">5.1.2.1.2</span> Ranking individuals</h5>
+<p>We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section <a href="#RcodeCallus">5.1.2.2</a>.</p>
+<table>
+<caption><span id="tab:emmeansCalInd">Table 5.2: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
+<thead>
+<tr class="header">
+<th align="left">contrast</th>
+<th align="right">estimate</th>
+<th align="right">SE</th>
+<th align="right">z.ratio</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+</div>
+</div>
+<div id="RcodeCallus" class="section level4">
+<h4><span class="header-section-number">5.1.2.2</span> R code</h4>
+<pre class="r"><code>###~~~
+#GLMs
+###~~~
+
+# GLM to investigate treatment effect on callus production
+M1cal &lt;- glm(Callus ~ Treatment, family = binomial(link=&quot;logit&quot;), data = MERGE)
+
+# GLM to investigate treatment and individual effects on callus production
+M2cal &lt;- glm(Callus ~ Treatment + IndGeno, family = binomial(link=&quot;logit&quot;), data = MERGE)
+
+# Which model best fit the data?
+anova(M1cal, M2cal, test = &quot;Chisq&quot;)
+
+# M2 better fits the data, but is it not over fitting it?
+pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
+
+# Summary M2
+print(summary(M2cal))
+
+###~~~
+#Ranking treatments
+###~~~
+
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallus &lt;- emmeans(M2cal, list(pairwise ~ Treatment))
+
+# Identify significant pairwise comparisons
+signCalTreat &lt;- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat &lt;- signCalTreat[which(signCalTreat$p.value &lt;= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreat, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)
+
+###~~~
+#Ranking individuals
+###~~~
+
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallusInd &lt;- emmeans(M2cal, list(pairwise ~ IndGeno))
+
+# Identify significant pairwise comparisons
+signCalTreatInd &lt;- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
+signCalTreatInd &lt;- signCalTreatInd[which(signCalTreatInd$p.value &lt;= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreatInd, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)</code></pre>
+</div>
+</div>
+</div>
 <div id="statistical-analyses-on-root-data" class="section level2">
-<h2><span class="header-section-number">5.1</span> Statistical analyses on root data</h2>
+<h2><span class="header-section-number">5.2</span> Statistical analyses on root data</h2>
 <p>Please find below the analyses conducted on root (count data) and callus (binary) data.</p>
 <div id="testing-for-normality" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">5.1.1</span> Testing for normality</h3>
-<div id="analyses-3" class="section level4">
-<h4><span class="header-section-number">5.1.1.1</span> Analyses</h4>
+<h3><span class="header-section-number">5.2.1</span> Testing for normality</h3>
+<div id="analyses-4" class="section level4">
+<h4><span class="header-section-number">5.2.1.1</span> Analyses</h4>
 <p>Before conducting statistical analyses, we have to test for normality of the rooting data (count) by using the Shapiro-Wilk normality test implemented in the R base function <code>shapiro.test()</code>. A <em>p</em>-value &lt;= 0.01 is will be used for significance.</p>
 <pre><code>## 
 ##  Shapiro-Wilk normality test
 ## 
 ## data:  MERGE$Root
 ## W = 0.62681, p-value &lt; 2.2e-16</code></pre>
-<p>This test strongly rejects normality. The visualization of the data (Figure <a href="#fig:distrRoot">5.1</a>) together with the low mean (1.05) confirm that the root count data does not approximate a normal distribution. This is often because these type of data are truncated at zero, that is, negative values are impossible and the distribution is therefore skewed to the right. This is confirmed by the skewness coefficient of 2.46, which demonstrates that the data has a positively skewed distribution (see Figure <a href="#fig:distrRoot">5.1</a>). Square-root or log transformation methods could be applied to normalize the data, but those are not applicable with zero values. In this context, we are opting to conduct non-parametric analyses.</p>
+<p>This test strongly rejects normality. The visualization of the data (Figure <a href="#fig:distrRoot">5.2</a>) together with the low mean (1.05) confirm that the root count data does not approximate a normal distribution. This is often because these type of data are truncated at zero, that is, negative values are impossible and the distribution is therefore skewed to the right. This is confirmed by the skewness coefficient of 2.46, which demonstrates that the data has a positively skewed distribution (see Figure <a href="#fig:distrRoot">5.2</a>). Square-root or log transformation methods could be applied to normalize the data, but those are not applicable with zero values. In this context, we are opting to conduct non-parametric analyses.</p>
 <div class="figure"><span id="fig:distrRoot"></span>
 <img src="Analyses_rooting_files/figure-html/distrRoot-1.png" alt="Distribution of number of roots per shoot tips" width="672" />
 <p class="caption">
-Figure 5.1: Distribution of number of roots per shoot tips
+Figure 5.2: Distribution of number of roots per shoot tips
 </p>
 </div>
 </div>
 <div id="r-code" class="section level4">
-<h4><span class="header-section-number">5.1.1.2</span> R code</h4>
+<h4><span class="header-section-number">5.2.1.2</span> R code</h4>
 <pre class="r"><code>###~~~
 #Conducting Shapiro-Wilk normality test on root data
 ###~~~
@@ -881,20 +1112,20 @@ hist(MERGE$Root, xlab=&quot;Number of roots per shoot tip&quot;, main=&quot;&quo
 skewness(MERGE$Root, na.rm = TRUE)</code></pre>
 </div>
 </div>
-<div id="selecting-the-best-method" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">5.1.2</span> Selecting the best method</h3>
+<div id="selecting-the-best-method-1" class="section level3 tabset tabset-pills">
+<h3><span class="header-section-number">5.2.2</span> Selecting the best method</h3>
 <div id="rationale" class="section level4">
-<h4><span class="header-section-number">5.1.2.1</span> Rationale</h4>
+<h4><span class="header-section-number">5.2.2.1</span> Rationale</h4>
 <p>A shown above, non-parametric analyses have to be conducted on the root (count) data. In this context, we can analyze our data using either general linear models (GLMs) or the Kruskal-Wallis rank sum test. In this study, we aim at:</p>
 <ol style="list-style-type: decimal">
 <li>Testing whether a treatment is better suited to promote rooting of shoot tips.</li>
 <li>Testing whether some individuals have higher rooting rates independently to treatment (those would be used as candidate for genome sequencing and/or GxE research).</li>
 </ol>
-<p>Both of these aims require ranking variables. Figure <a href="#fig:distrRoot">5.1</a> suggests that the Poisson model would best fit the data for the GLM analyses; however it is skewed towards zero (with the highest frequency), which is problematic with classic GLM models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the <code>pscl</code> R package <span class="citation">(Jackman et al. <a href="#ref-R-pscl">2020</a>)</span> to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood (using either Poisson or Negative binomial distributions). It is not recommended that zero-inflated models be applied to small samples (see <a href="https://stats.idre.ucla.edu/r/dae/zip/">here</a>). Analyses presented in section <a href="#glm">5.1.2.2</a> demonstrated that zero-inflated models (even with Negative binomial distribution) failed to assess individual effect on rooting most likely due to the small sample size at individual level (n=15 samples per individual). In this context, <strong>we are opting for analyzing our data using the Kruskal-Wallis tests to test for treatment and individual effects</strong>.</p>
+<p>Both of these aims require ranking variables. Figure <a href="#fig:distrRoot">5.2</a> suggests that the Poisson model would best fit the data for the GLM analyses; however it is skewed towards zero (with the highest frequency), which is problematic with classic GLM models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the <code>pscl</code> R package <span class="citation">(Jackman et al. <a href="#ref-R-pscl">2020</a>)</span> to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood (using either Poisson or Negative binomial distributions). It is not recommended that zero-inflated models be applied to small samples (see <a href="https://stats.idre.ucla.edu/r/dae/zip/">here</a>). Analyses presented in section <a href="#glm">5.2.2.2</a> demonstrated that zero-inflated models (even with Negative binomial distribution) failed to assess individual effect on rooting most likely due to the small sample size at individual level (n=15 samples per individual). In this context, <strong>we are opting for analyzing our data using the Kruskal-Wallis tests to test for treatment and individual effects</strong>.</p>
 </div>
 <div id="glm" class="section level4">
-<h4><span class="header-section-number">5.1.2.2</span> Zero-inflated GLM models</h4>
-<p>As shown in Figure <a href="#fig:distrRoot">5.1</a> we still need to test what model best fit the data. Here, we will be investigating whether treatment and individual affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model. Due to the inability of zero-inflated GLM models to analyze individual effects, we are opting for analyzing our data using the approach implemented in the Kruskal-Wallis test.</p>
+<h4><span class="header-section-number">5.2.2.2</span> Zero-inflated GLM models</h4>
+<p>As shown in Figure <a href="#fig:distrRoot">5.2</a> we still need to test what model best fit the data. Here, we will be investigating whether treatment and individual affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model. Due to the inability of zero-inflated GLM models to analyze individual effects, we are opting for analyzing our data using the approach implemented in the Kruskal-Wallis test.</p>
 <pre class="r"><code>###~~~
 #Treatment effect
 ###~~~
@@ -972,7 +1203,7 @@ signRootTreat &lt;- signRootTreat[which(signRootTreat$p.value &lt;= 0.01),c(1:3,
 #Print table
 knitr::kable(signRootTreat, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)</code></pre>
 <table>
-<caption><span id="tab:zeroinflRoot">Table 5.1: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
+<caption><span id="tab:zeroinflRoot">Table 5.3: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
 <thead>
 <tr class="header">
 <th align="left">contrast</th>
@@ -1141,10 +1372,10 @@ summary(M1)</code></pre>
 </div>
 </div>
 <div id="investigating-treatment-effect" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">5.1.3</span> Investigating treatment effect</h3>
-<div id="analyses-4" class="section level4">
-<h4><span class="header-section-number">5.1.3.1</span> Analyses</h4>
-<p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess treatment effects and rank those (with a <em>p</em>-value of &lt;= 0.01). Results of these analyses are presented below and the R code is available in section <a href="#RTreat">5.1.3.2</a>.</p>
+<h3><span class="header-section-number">5.2.3</span> Investigating treatment effect</h3>
+<div id="analyses-5" class="section level4">
+<h4><span class="header-section-number">5.2.3.1</span> Analyses</h4>
+<p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess treatment effects and rank those (with a <em>p</em>-value of &lt;= 0.01). Results of these analyses are presented below and the R code is available in section <a href="#RTreat">5.2.3.2</a>.</p>
 <pre><code>## [1] &quot;Perform Kruskal-Wallis Rank Sum Test: Root ~ Treatment&quot;</code></pre>
 <pre><code>## 
 ##  Kruskal-Wallis rank sum test
@@ -1153,7 +1384,7 @@ summary(M1)</code></pre>
 ## Kruskal-Wallis chi-squared = 82.163, df = 4, p-value &lt; 2.2e-16</code></pre>
 <pre><code>## [1] &quot;Perform Wilcox test on Root ~ Treatment&quot;</code></pre>
 <table>
-<caption><span id="tab:kruskalTreat">Table 5.2: </span>Results of Wilcox test on Root ~ Treatment (p-value &lt;= 0.01).</caption>
+<caption><span id="tab:kruskalTreat">Table 5.4: </span>Results of Wilcox test on Root ~ Treatment (p-value &lt;= 0.01).</caption>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -1208,7 +1439,7 @@ summary(M1)</code></pre>
 </tr>
 </tbody>
 </table>
-<p>Table <a href="#tab:kruskalTreat">5.2</a> allows ranking treatments as follows (from best to worst):</p>
+<p>Table <a href="#tab:kruskalTreat">5.4</a> allows ranking treatments as follows (from best to worst):</p>
 <ul>
 <li><code>IBA_1</code>: a</li>
 <li><code>IBA_05</code>: ab</li>
@@ -1217,18 +1448,18 @@ summary(M1)</code></pre>
 <li><code>Control</code>: c</li>
 </ul>
 <div id="boxplot-of-rooting-by-treatment" class="section level5">
-<h5><span class="header-section-number">5.1.3.1.1</span> Boxplot of rooting by treatment</h5>
-<p>To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (<code>MERGE</code>). Figure <a href="#fig:boxplot1">5.2</a> supports ranking from the statistical analysis (Table <a href="#tab:kruskalTreat">5.2</a> and would suggest that <code>IBA_1</code> is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).</p>
+<h5><span class="header-section-number">5.2.3.1.1</span> Boxplot of rooting by treatment</h5>
+<p>To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (<code>MERGE</code>). Figure <a href="#fig:boxplot1">5.3</a> supports ranking from the statistical analysis (Table <a href="#tab:kruskalTreat">5.4</a> and would suggest that <code>IBA_1</code> is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).</p>
 <div class="figure"><span id="fig:boxplot1"></span>
 <img src="Analyses_rooting_files/figure-html/boxplot1-1.png" alt="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis." width="100%" />
 <p class="caption">
-Figure 5.2: Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.
+Figure 5.3: Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.
 </p>
 </div>
 </div>
 </div>
 <div id="RTreat" class="section level4">
-<h4><span class="header-section-number">5.1.3.2</span> R code</h4>
+<h4><span class="header-section-number">5.2.3.2</span> R code</h4>
 <pre class="r"><code>###~~~
 # Run Kruskal-Wallis Rank Sum Test
 ###~~~
@@ -1285,10 +1516,10 @@ text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;ab&quot;,&quot;a&quot;
 </div>
 </div>
 <div id="investigate-individual-effect" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">5.1.4</span> Investigate individual effect</h3>
-<div id="analyses-5" class="section level4">
-<h4><span class="header-section-number">5.1.4.1</span> Analyses</h4>
-<p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a <em>p</em>-value of &lt;= 0.01). Results of these analyses are presented below and the R code is available in section <a href="#RInd">5.1.4.2</a>. To qualify as a top performer, an individual has to outperform &gt;= 20% of individuals (based on pairwise Wilcox tests with a <em>p</em>-value &lt;= 0.01).</p>
+<h3><span class="header-section-number">5.2.4</span> Investigate individual effect</h3>
+<div id="analyses-6" class="section level4">
+<h4><span class="header-section-number">5.2.4.1</span> Analyses</h4>
+<p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a <em>p</em>-value of &lt;= 0.01). Results of these analyses are presented below and the R code is available in section <a href="#RInd">5.2.4.2</a>. To qualify as a top performer, an individual has to outperform &gt;= 20% of individuals (based on pairwise Wilcox tests with a <em>p</em>-value &lt;= 0.01).</p>
 <pre><code>## [1] &quot;Perform Kruskal-Wallis Rank Sum Test: Root ~ Individual&quot;</code></pre>
 <pre><code>## 
 ##  Kruskal-Wallis rank sum test
@@ -1297,7 +1528,7 @@ text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;ab&quot;,&quot;a&quot;
 ## Kruskal-Wallis chi-squared = 184.14, df = 44, p-value &lt; 2.2e-16</code></pre>
 <pre><code>## [1] &quot;Perform Wilcox test on Root ~ Individual&quot;</code></pre>
 <table>
-<caption><span id="tab:kruskalInd">Table 5.3: </span>List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval &lt;= 0.01).</caption>
+<caption><span id="tab:kruskalInd">Table 5.5: </span>List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval &lt;= 0.01).</caption>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -1315,10 +1546,10 @@ text(x=c(1,2,3,4,5), y=rep(12.5,5), c(&quot;c&quot;,&quot;ab&quot;,&quot;a&quot;
 </tr>
 </tbody>
 </table>
-<p>The analyses reported in Table <a href="#tab:kruskalInd">5.3</a> demonstrate that only two individuals (G2_b27_1, G2_b7_1, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.</p>
+<p>The analyses reported in Table <a href="#tab:kruskalInd">5.5</a> demonstrate that only two individuals (G2_b27_1, G2_b7_1, which are referred to as P1 and P2) are significantly outperforming at least 20% of the individuals based on their rooting abilities independently to treatment.</p>
 </div>
 <div id="RInd" class="section level4">
-<h4><span class="header-section-number">5.1.4.2</span> R code</h4>
+<h4><span class="header-section-number">5.2.4.2</span> R code</h4>
 <pre class="r"><code>###~~~
 # Run Kruskal-Wallis Rank Sum Test
 ###~~~
@@ -1377,25 +1608,36 @@ knitr::kable(TopInd, caption = &quot;List of individual that are outperforming a
 </div>
 </div>
 </div>
-<div id="clustering-analysis-on-rooting-data" class="section level2 tabset tabset-pills">
-<h2><span class="header-section-number">5.2</span> Clustering analysis on rooting data</h2>
-<div id="analyses-6" class="section level3">
-<h3><span class="header-section-number">5.2.1</span> Analyses</h3>
-<p>A clustering analysis was used to compare rooting performance between individuals based on an euclidean distance (using the <code>Root</code> count data; see section <a href="#Rclustroot">5.2.2</a> for R code). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table <a href="#tab:tablegroups">5.4</a>) based on individual rooting performances (Figure <a href="#fig:heatmap2">5.3</a>):</p>
+<div id="clustering-analyses-on-rooting-data" class="section level2 tabset tabset-pills">
+<h2><span class="header-section-number">5.3</span> Clustering analyses on rooting data</h2>
+<p>In this section, we are applying a clustering approach on callus (binary) and root (count) data to further investigate individual effects independently to treatments. We first conduct independent clustering analyses on the two variables to sort individual lines based on their abilities to promote callus development and roots. These analyses will allow identifying callus and root clusters, which will then be compared by plotting those on the respective clustering analyses. To further characterize the clusters, ridgeline plots (or density plots) will be inferred for each variable and individual lines sorted by clusters.</p>
+<div id="analyses-7" class="section level3">
+<h3><span class="header-section-number">5.3.1</span> Analyses</h3>
+<p>Clustering analyses were performed between individual lines based on the euclidean distance and the hierarchical clustering method implemented in the R <em>stats</em> package (using the <code>Callus</code> binary and <code>Root</code> count data; see section <a href="#Rclustroot">5.3.2</a> for R code). See Figure <a href="#fig:clusterTrees">5.4</a> for results and those are discussed below (by variable).</p>
+<div class="figure"><span id="fig:clusterTrees"></span>
+<img src="Analyses_rooting_files/figure-html/clusterTrees-1.png" alt="Clustering analyses based on callus (a) and root (b) data. For each variable, clusters are represented by shaded polygons, whereas the circles represent the assignment of the individual lines in the other analysis." width="100%" />
+<p class="caption">
+Figure 5.4: Clustering analyses based on callus (a) and root (b) data. For each variable, clusters are represented by shaded polygons, whereas the circles represent the assignment of the individual lines in the other analysis.
+</p>
+</div>
+<p>To further compare the clusters identified in Figure <a href="#fig:clusterTrees">5.4</a> ridgeline plots (or density plots; more on this topic <a href="https://www.data-to-viz.com/graph/ridgeline.html">here</a>) were inferred for each variable using the R package <em>ggridges</em>. See Figure <a href="#fig:RidgelinesClusterTrees">5.5</a> for the results.</p>
+<div class="figure"><span id="fig:RidgelinesClusterTrees"></span>
+<img src="Analyses_rooting_files/figure-html/RidgelinesClusterTrees-1.png" alt="Ridgeline plots based on callus (a) and root (b) data. For each variable, individual lines are sorted based on the clustering analysis and ridgeline plots are colored based on clusters." width="100%" />
+<p class="caption">
+Figure 5.5: Ridgeline plots based on callus (a) and root (b) data. For each variable, individual lines are sorted based on the clustering analysis and ridgeline plots are colored based on clusters.
+</p>
+</div>
+<div id="root-data" class="section level4">
+<h4><span class="header-section-number">5.3.1.1</span> Root data</h4>
+<p>This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the ridgeline plot). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available in section <a href="#Rclustroot">5.3.2</a>. The analysis clearly distinguished three clusters (of even number of individuals; see Table <a href="#tab:tablegroups">5.6</a>) based on individual rooting performances (Figure <a href="#fig:clusterTrees">5.4</a>):</p>
 <ul>
 <li>Black cluster: No to very little rooting.</li>
 <li>Pink cluster: Some rooting observed.</li>
 <li>Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster.</li>
 </ul>
-<div class="figure"><span id="fig:heatmap2"></span>
-<img src="03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.png" alt="Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed." width="100%" />
-<p class="caption">
-Figure 5.3: Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed.
-</p>
-</div>
-<p>The number of individual per rooting clusters inferred from the clustering analysis is displayed in Table <a href="#tab:tablegroups">5.4</a>. The R code to generate this table is in section <a href="#Rclustroot">5.2.2</a>.</p>
+<p>The number of individual per rooting clusters inferred from the clustering analysis is displayed in Table <a href="#tab:tablegroups">5.6</a>. The R code to generate this table is in section <a href="#Rclustroot">5.3.2</a>.</p>
 <table>
-<caption><span id="tab:tablegroups">Table 5.4: </span>Table summarizing composition of clusters based on rooting data.</caption>
+<caption><span id="tab:tablegroups">Table 5.6: </span>Table summarizing composition of clusters based on rooting data.</caption>
 <thead>
 <tr class="header">
 <th align="left"></th>
@@ -1425,11 +1667,11 @@ Figure 5.3: Heatmap comparing calli production of shoot tips of diploid Artemisi
 </tr>
 </tbody>
 </table>
-<div id="effect-of-growth-regulators-on-in-vitro-rooting-sorted-by-clusters" class="section level4">
-<h4><span class="header-section-number">5.2.1.1</span> Effect of growth regulators on <em>in vitro</em> rooting sorted by clusters</h4>
-<p>Table <a href="#tab:growthbyregulatorcluster">5.5</a> shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.3</a>). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table <a href="#tab:growthbyregulatorcluster">5.5</a>). The R code to generate this table is in section <a href="#Rclustroot">5.2.2</a>.</p>
+<div id="effect-of-growth-regulators-on-in-vitro-rooting-sorted-by-clusters" class="section level5">
+<h5><span class="header-section-number">5.3.1.1.1</span> Effect of growth regulators on <em>in vitro</em> rooting sorted by clusters</h5>
+<p>Table <a href="#tab:growthbyregulatorcluster">5.7</a> shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure <a href="#fig:RidgelinesClusterTrees">5.5</a>). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table <a href="#tab:growthbyregulatorcluster">5.7</a>). The R code to generate this table is in section <a href="#Rclustroot">5.3.2</a>.</p>
 <table>
-<caption><span id="tab:growthbyregulatorcluster">Table 5.5: </span>Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.</caption>
+<caption><span id="tab:growthbyregulatorcluster">Table 5.7: </span>Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.</caption>
 <thead>
 <tr class="header">
 <th align="left">Cluster</th>
@@ -1550,347 +1792,18 @@ Figure 5.3: Heatmap comparing calli production of shoot tips of diploid Artemisi
 <p>This will be investigated by looking at top performer individuals identified by i) statistical analyses and ii) clustering analysis.</p>
 </div>
 </div>
-<div id="Rclustroot" class="section level3">
-<h3><span class="header-section-number">5.2.2</span> R code</h3>
-<pre class="r"><code>###~~
-#Clustering analysis on rooting data
-###~~~
-
-# Create our own color palette from green to red for heatmap
-my_palette &lt;- colorRampPalette(c(&quot;green&quot;, &quot;yellow&quot;, &quot;red&quot;))(n = 299)
-
-# Input data for clustering and heatmap
-mat_data &lt;- table(MERGE$IndGeno, MERGE$Root)
-
-# Load file with color of individuals (which group based on clusters they belong to)
-colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
-
-# Annotate best perfoming individuals and add P1, P2
-toAdd &lt;- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P1)&quot;, &quot; (P2)&quot;))
-
-pdf(&quot;03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf&quot;)
-# Perform clustering/heatmap and draw plot
-heatmap.2(mat_data,
-          cellnote = mat_data, # same data set for cell labels
-          main = &quot;&quot;, # heat map title
-          notecol=&quot;black&quot;,      # change font color of cell labels to black
-          notecex = .8, # cex of numbers in cells
-          density.info=&quot;none&quot;,  # turns off density plot inside color legend
-          trace=&quot;none&quot;,         # turns off trace lines inside the heat map
-          xlab = &#39;N. roots per tip (1 ind. has 15 tips)&#39;, #Label of x axis
-          cexRow = .8, # cex of rows (= samples ID)
-          margins =c(4,9),     # widens margins around plot
-          col=my_palette,       # use on color palette defined earlier
-          #breaks=col_breaks,    # enable color transition at specified limits
-          dendrogram=&quot;row&quot;, # only draw a row dendrogram
-          key=F,
-          keysize = 0.4,
-          RowSideColors = as.vector(colInd$Group),
-          Colv=&quot;NA&quot;) # turn off column clustering
-dev.off()
-
-###~~~
-#Produce pivot table with number of individual per group and genotype composition
-###~~~
-# Load file with color of individuals (which group based on clusters they belong to)
-colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
-
-###~~~
-#Effect of growth regulators on *in vitro* rooting sorted by clusters
-###~~~
-# colInd add Genotypes
-colInd$Genotype &lt;- sapply(strsplit(as.vector(colInd$Individual), split=&quot;_&quot;), &quot;[[&quot;, 1)
-tabGroup &lt;- table(colInd$Group, colInd$Genotype)
-tabGroup &lt;- tabGroup[c(1,3,2),]
-tabGroup &lt;- as.data.frame.matrix(tabGroup)
-tabGroup$TOT &lt;- rowSums(tabGroup)
-
-# Plot table
-knitr::kable(tabGroup, row.names=T, caption = &quot;Table summarizing composition of clusters based on rooting data.&quot;)
-
-#Load file with color of individuals (which group based on clusters they belong to)
-colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
-treat &lt;- sort(unique(MERGE$Treatment))
-
-#Matrix summarizing effect of growth regulators on rooting
-RootingStatbyTreatC &lt;- matrix(ncol=6, nrow=15)
-colnames(RootingStatbyTreatC) &lt;- c(&quot;Cluster&quot;,&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, &quot;Response (%)&quot;, &quot;Av. No. of roots&quot;, &quot;Treatment&quot;)
-
-#Add col in MERGE with cluster
-MERGE$ClusterRoot &lt;- colInd$Group[match(MERGE$IndGeno, colInd$Individual)]
-
-#Convert to dataframe
-RootingStatbyTreatC &lt;- as.data.frame(RootingStatbyTreatC)
-
-#Populate matrix
-RootingStatbyTreatC$Cluster &lt;- sort(rep(sort(unique(MERGE$ClusterRoot)),5))
-RootingStatbyTreatC$`Growth regulator` &lt;- rep(sapply(strsplit(treat, split=&quot;_&quot;),&quot;[[&quot;,1),3)
-RootingStatbyTreatC$`Concentration (mg/l)` &lt;- rep(c(&quot;-&quot;, sapply(strsplit(treat[2:length(treat)], split=&quot;_&quot;),&quot;[[&quot;,2)),3)
-RootingStatbyTreatC$Treatment &lt;- rep(treat, 3)
-
-#Infer Response and mean no roots
-for(i in 1:nrow(RootingStatbyTreatC)){
-  foo &lt;- subset(MERGE, MERGE$Treatment == RootingStatbyTreatC$Treatment[i] &amp; MERGE$ClusterRoot == RootingStatbyTreatC$Cluster[i])
-  RootingStatbyTreatC$`Response (%)`[i] &lt;- paste(round(100*(mean(foo$RootBin)),2), &quot;+/-&quot;, round(sd(foo$RootBin),2), sep= &quot; &quot;)
-  RootingStatbyTreatC$`Av. No. of roots`[i] &lt;- paste(round(mean(foo$Root),2), &quot;+/-&quot;, round(sd(foo$Root),2), sep=&quot; &quot;)
-}
-
-#Plot table
-knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = &quot;Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.&quot;)</code></pre>
-</div>
-</div>
-<div id="statistical-analyses-on-callus-data" class="section level2">
-<h2><span class="header-section-number">5.3</span> Statistical analyses on callus data</h2>
-<div id="selecting-the-best-method-1" class="section level3">
-<h3><span class="header-section-number">5.3.1</span> Selecting the best method</h3>
-<p>Table <a href="#tab:growthbyregulatorcallus">4.2</a> demonstrated that &gt;70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (&lt; 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.</p>
-<p>The callus data were scored as binary (0 = absent; 1 = present) and the distribution of that data is in Figure <a href="#fig:distrCall">5.4</a>.</p>
-<pre class="r"><code>barplot(table(MERGE$Callus), xlab=&quot;Binary data on callus&quot;, ylab=&quot;Occurrence&quot;)</code></pre>
-<div class="figure"><span id="fig:distrCall"></span>
-<img src="Analyses_rooting_files/figure-html/distrCall-1.png" alt="Barplot of callus production during the rooting experiment." width="672" />
-<p class="caption">
-Figure 5.4: Barplot of callus production during the rooting experiment.
-</p>
-</div>
-<p>This type of data calls for the use of non-parametric analyses as done for the root (count) data. In this context, we will use GLM models to assess treatment and individual effects on callus production.</p>
-</div>
-<div id="investigate-treatment-and-individual-effects" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">5.3.2</span> Investigate treatment and individual effects</h3>
-<div id="analyses-7" class="section level4">
-<h4><span class="header-section-number">5.3.2.1</span> Analyses</h4>
-<p>We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section <a href="#RcodeCallus">5.3.2.2</a>.</p>
-<pre><code>## Analysis of Deviance Table
-## 
-## Model 1: Callus ~ Treatment
-## Model 2: Callus ~ Treatment + IndGeno
-##   Resid. Df Resid. Dev Df Deviance  Pr(&gt;Chi)    
-## 1       670     534.48                          
-## 2       626     359.31 44   175.18 &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre><code>## [1] 1</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = Callus ~ Treatment + IndGeno, family = binomial(link = &quot;logit&quot;), 
-##     data = MERGE)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.6414  -0.1133   0.1898   0.4458   3.1787  
-## 
-## Coefficients:
-##                   Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)     -4.272e+00  1.200e+00  -3.559 0.000373 ***
-## TreatmentIBA_05  6.042e+00  6.959e-01   8.681  &lt; 2e-16 ***
-## TreatmentIBA_1   6.920e+00  7.268e-01   9.521  &lt; 2e-16 ***
-## TreatmentNAA_05  6.591e+00  7.144e-01   9.227  &lt; 2e-16 ***
-## TreatmentNAA_1   7.305e+00  7.436e-01   9.823  &lt; 2e-16 ***
-## IndGenoG1_b1_1  -1.297e+00  1.219e+00  -1.064 0.287425    
-## IndGenoG1_b1_2  -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG1_b10_1 -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG1_b12_1 -3.595e+00  1.223e+00  -2.940 0.003279 ** 
-## IndGenoG1_b13_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG1_b15_1 -3.173e+00  1.193e+00  -2.659 0.007841 ** 
-## IndGenoG1_b16_1 -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG1_b18_1  9.606e-14  1.432e+00   0.000 1.000000    
-## IndGenoG1_b19_1  8.941e-14  1.432e+00   0.000 1.000000    
-## IndGenoG1_b2_1  -1.718e+00  1.191e+00  -1.442 0.149190    
-## IndGenoG1_b20_1  9.503e-14  1.432e+00   0.000 1.000000    
-## IndGenoG1_b21_1 -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG1_b25_1  9.676e-14  1.432e+00   0.000 1.000000    
-## IndGenoG1_b26_1 -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG1_b29_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG1_b3_1   9.347e-14  1.432e+00   0.000 1.000000    
-## IndGenoG1_b4_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG1_b5_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG1_b6_1  -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG1_b7_1  -1.945e+01  8.196e+02  -0.024 0.981071    
-## IndGenoG1_b8_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG1_b9_1  -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG2_18_1  -2.800e+00  1.179e+00  -2.374 0.017607 *  
-## IndGenoG2_29_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b11_1 -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG2_b15_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b16_1 -1.718e+00  1.191e+00  -1.442 0.149190    
-## IndGenoG2_b17_1 -2.092e+00  1.178e+00  -1.775 0.075824 .  
-## IndGenoG2_b19_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b2_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b20_1  1.531e-13  1.432e+00   0.000 1.000000    
-## IndGenoG2_b21_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b21_2  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b24_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b25_1  9.411e-14  1.432e+00   0.000 1.000000    
-## IndGenoG2_b26_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b27_1  1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b27_2 -1.718e+00  1.191e+00  -1.442 0.149190    
-## IndGenoG2_b28_1 -7.740e-01  1.278e+00  -0.606 0.544747    
-## IndGenoG2_b4_1   9.771e-14  1.432e+00   0.000 1.000000    
-## IndGenoG2_b5_1  -3.173e+00  1.193e+00  -2.659 0.007841 ** 
-## IndGenoG2_b6_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b7_1   1.687e+00  1.899e+00   0.889 0.374122    
-## IndGenoG2_b8_1   9.690e-14  1.432e+00   0.000 1.000000    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## (Dispersion parameter for binomial family taken to be 1)
-## 
-##     Null deviance: 862.04  on 674  degrees of freedom
-## Residual deviance: 359.31  on 626  degrees of freedom
-## AIC: 457.31
-## 
-## Number of Fisher Scoring iterations: 16</code></pre>
-<p>The analyses demonstrate that there is significant treatment and individual effects.</p>
-<div id="ranking-treatments" class="section level5">
-<h5><span class="header-section-number">5.3.2.1.1</span> Ranking treatments</h5>
-<p>The <em>emmeans</em> function implemented in the <code>emmeans</code> R package <span class="citation">(Lenth <a href="#ref-R-emmeans">2020</a>)</span> was used to compare treatments (with a <em>p</em>-value &lt;= 0.01; the R code is available in section <a href="#RcodeCallus">5.3.2.2</a>):</p>
-<table>
-<caption><span id="tab:emmeansCal">Table 5.6: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
-<thead>
-<tr class="header">
-<th align="left">contrast</th>
-<th align="right">estimate</th>
-<th align="right">SE</th>
-<th align="right">z.ratio</th>
-<th align="right">p.value</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">Control - IBA_05</td>
-<td align="right">-6.041565</td>
-<td align="right">0.6959323</td>
-<td align="right">-8.681255</td>
-<td align="right">0</td>
-</tr>
-<tr class="even">
-<td align="left">Control - IBA_1</td>
-<td align="right">-6.919518</td>
-<td align="right">0.7267807</td>
-<td align="right">-9.520779</td>
-<td align="right">0</td>
-</tr>
-<tr class="odd">
-<td align="left">Control - NAA_05</td>
-<td align="right">-6.591417</td>
-<td align="right">0.7143659</td>
-<td align="right">-9.226947</td>
-<td align="right">0</td>
-</tr>
-<tr class="even">
-<td align="left">Control - NAA_1</td>
-<td align="right">-7.304505</td>
-<td align="right">0.7436334</td>
-<td align="right">-9.822723</td>
-<td align="right">0</td>
-</tr>
-</tbody>
-</table>
-<p>Table <a href="#tab:emmeansCal">5.6</a> summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:</p>
+<div id="callus-data" class="section level4">
+<h4><span class="header-section-number">5.3.1.2</span> Callus data</h4>
+<p>The code used to produce these analyses is available in section <a href="#Rclustroot">5.3.2</a>. The analysis clearly distinguished three clusters based on individual lines producing callus (Figure <a href="#fig:clusterTrees">5.4</a>):</p>
 <ul>
-<li><ol style="list-style-type: lower-alpha">
-<li>Control is significantly different than the other treatments (<code>***</code>). Here, very limited calli production was observed in shoot tips included in the control treatment.</li>
-</ol></li>
-<li><ol start="2" style="list-style-type: lower-alpha">
-<li>No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.</li>
-</ol></li>
+<li>Red cluster: Very limited callus production.</li>
+<li>Green cluster: Intermediate callus production.</li>
+<li>Orange cluster: High callus production.</li>
 </ul>
-</div>
-<div id="ranking-individuals" class="section level5">
-<h5><span class="header-section-number">5.3.2.1.2</span> Ranking individuals</h5>
-<p>We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section <a href="#RcodeCallus">5.3.2.2</a>.</p>
-<table>
-<caption><span id="tab:emmeansCalInd">Table 5.7: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
-<thead>
-<tr class="header">
-<th align="left">contrast</th>
-<th align="right">estimate</th>
-<th align="right">SE</th>
-<th align="right">z.ratio</th>
-<th align="right">p.value</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-</div>
-</div>
-<div id="RcodeCallus" class="section level4">
-<h4><span class="header-section-number">5.3.2.2</span> R code</h4>
-<pre class="r"><code>###~~~
-#GLMs
-###~~~
-
-# GLM to investigate treatment effect on callus production
-M1cal &lt;- glm(Callus ~ Treatment, family = binomial(link=&quot;logit&quot;), data = MERGE)
-
-# GLM to investigate treatment and individual effects on callus production
-M2cal &lt;- glm(Callus ~ Treatment + IndGeno, family = binomial(link=&quot;logit&quot;), data = MERGE)
-
-# Which model best fit the data?
-anova(M1cal, M2cal, test = &quot;Chisq&quot;)
-
-# M2 better fits the data, but is it not over fitting it?
-pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
-
-# Summary M2
-print(summary(M2cal))
-
-###~~~
-#Ranking treatments
-###~~~
-
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallus &lt;- emmeans(M2cal, list(pairwise ~ Treatment))
-
-# Identify significant pairwise comparisons
-signCalTreat &lt;- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
-signCalTreat &lt;- signCalTreat[which(signCalTreat$p.value &lt;= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreat, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)
-
-###~~~
-#Ranking individuals
-###~~~
-
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallusInd &lt;- emmeans(M2cal, list(pairwise ~ IndGeno))
-
-# Identify significant pairwise comparisons
-signCalTreatInd &lt;- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
-signCalTreatInd &lt;- signCalTreatInd[which(signCalTreatInd$p.value &lt;= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreatInd, row.names=F, caption = &quot;Significant (p-value &lt;= 0.01) treatment pairwise comparisons.&quot;)</code></pre>
-</div>
-</div>
-</div>
-<div id="clustering-analysis-on-callus-data" class="section level2 tabset tabset-pills">
-<h2><span class="header-section-number">5.4</span> Clustering analysis on callus data</h2>
-<div id="analyses-8" class="section level3">
-<h3><span class="header-section-number">5.4.1</span> Analyses</h3>
-<p>The code to produce the clustering analysis based on <code>Callus</code> data and associated heatmap is provided below and Figure <a href="#fig:heatmapplot">5.5</a> shows results of the analysis. Outcomes of this analysis are:</p>
-<ul>
-<li>Three clusters based on calli production:
-<ul>
-<li>Bottom cluster has individuals with no to very limited calli production.</li>
-<li>Intermediate cluster has individuals with 50/50 calli production.</li>
-<li>Top cluster has individuals with individuals producing calli.</li>
-</ul></li>
-<li>Clusters from the rooting analysis are not recovered here (each calli cluster are composed by a mixture of clusters from the rooting analysis). This suggests that calli production do not inhibit rooting.</li>
-<li>To performer individuals are shared between the intermediate and top clusters (supporting previous statement).</li>
-</ul>
-<p>Please see section <a href="#Rcodecallusclust">5.4.2</a> for more details on R code.</p>
-<div class="figure"><span id="fig:heatmapplot"></span>
-<img src="03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png" alt="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed." width="100%" />
-<p class="caption">
-Figure 5.5: Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.
-</p>
-</div>
-<div id="effect-of-growth-regulators-on-in-vitro-calli-production-in-artemisia-tridentata-sorted-by-rooting-clusters" class="section level4">
-<h4><span class="header-section-number">5.4.1.1</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h4>
-<p>Table <a href="#tab:growthbyregulatorclustercallus">5.8</a> shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2">5.3</a>). The R code is available in section <a href="#Rcodecallusclust">5.4.2</a>.</p>
+<p>The clusters from the rooting analysis are not recovered here (each callus cluster are composed by a mixture of clusters from the rooting analysis) (see Figure <a href="#fig:clusterTrees">5.4</a>. This suggests that calli production do not inhibit rooting.</p>
+<div id="effect-of-growth-regulators-on-in-vitro-calli-production-in-artemisia-tridentata-sorted-by-rooting-clusters" class="section level5">
+<h5><span class="header-section-number">5.3.1.2.1</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h5>
+<p>Table <a href="#tab:growthbyregulatorclustercallus">5.8</a> shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2"><strong>??</strong></a>). The R code is available in section <a href="#Rcodecallusclust"><strong>??</strong></a>.</p>
 <table>
 <caption><span id="tab:growthbyregulatorclustercallus">Table 5.8: </span>Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.</caption>
 <thead>
@@ -2012,46 +1925,205 @@ Figure 5.5: Heatmap comparing calli production of sagebrush individuals showing 
 </table>
 </div>
 </div>
-<div id="Rcodecallusclust" class="section level3">
-<h3><span class="header-section-number">5.4.2</span> R code</h3>
-<pre class="r"><code>###~~~
-#Clustering analysis on calli data
+</div>
+<div id="Rclustroot" class="section level3">
+<h3><span class="header-section-number">5.3.2</span> R code</h3>
+<pre class="r"><code>####~~~~
+#Clustering analyses
+####~~~~
+
+#Perform clustering analyses on callus (binary) and root (count) data
+# based on euclidian distance
+
+###
+# Callus data
+###
+# Input data for clustering and heatmap
+mat_callus &lt;- table(MERGE$IndGeno, MERGE$Callus)
+
+#Clustering analysis
+clustCal &lt;- hclust(dist(mat_callus))
+#convert to phylo class
+trCal &lt;- as.phylo(clustCal)
+
+#Find MRCA of clusters
+#Red clade
+RedNode &lt;- getMRCA(trCal, c(&quot;G2_b5_1&quot;, &quot;G1_b7_1&quot;))
+#Green node
+GreenNode &lt;- getMRCA(trCal, c(&quot;G2_b16_1&quot;, &quot;G2_b17_1&quot;))
+#Orange node
+OrangeNode &lt;- getMRCA(trCal, c(&quot;G1_b10_1&quot;, &quot;G2_b7_1&quot;))
+
+
+###
+# Root data
+###
+# Input data for clustering and heatmap
+mat_root &lt;- table(MERGE$IndGeno, MERGE$Root)
+
+#Clustering analysis
+clustRt &lt;- hclust(dist(mat_root))
+#convert to phylo class
+trRt &lt;- as.phylo(clustRt)
+
+#Find MRCA of clusters
+#Blue clade
+blueNode &lt;- getMRCA(trRt, c(&quot;G2_b27_1&quot;, &quot;G1_b2_1&quot;))
+#Black node
+blackNode &lt;- getMRCA(trRt, c(&quot;G2_b25_1&quot;, &quot;G2_b26_1&quot;))
+#Pink node
+pinkNode &lt;- getMRCA(trRt, c(&quot;G2_18_1&quot;, &quot;G1_b19_1&quot;))
+
+###~~~
+#Matrix with clusters and tips
+###~~~
+#This will serve to plot and compare the clustering analyses
+MatClustInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
+
+###~~~
+#Draw trees
 ###~~~
 
-# Create our own color palette from green to red for heatmap
-my_palette &lt;- colorRampPalette(c(&quot;green&quot;, &quot;yellow&quot;, &quot;red&quot;))(n = 299)
+#Callus tree
+trCalplot &lt;- ggtree(trCal, layout=&quot;circular&quot;, branch.length=&quot;none&quot;, color=&quot;black&quot;) + 
+  geom_tiplab(aes(angle=angle), color=&#39;black&#39;, offset=.7, cex = 2.5) +
+  geom_hilight(node=RedNode, fill=&quot;red&quot;, alpha=.6) +
+  geom_hilight(node=GreenNode, fill=&quot;green&quot;, alpha=.6) +
+  geom_hilight(node=OrangeNode, fill=&quot;orange&quot;, alpha=.6) +
+  geom_tippoint(color = as.character(MatClustInd[,2]), size = 3) +
+  xlim_tree(22)
 
-#Input data for heatmap
-mat_data &lt;- table(MERGE$IndGeno, MERGE$Callus)
+#Root tree
+trRtplot &lt;- ggtree(trRt, layout=&quot;circular&quot;, branch.length=&quot;none&quot;, color=&quot;black&quot;) + 
+  geom_tiplab(aes(angle=angle), color=&#39;black&#39;, offset=.6, cex = 2.5) +
+  geom_hilight(node=blackNode, fill=&quot;black&quot;, alpha=.6) +
+  geom_hilight(node=pinkNode, fill=&quot;pink&quot;, alpha=.6) +
+  geom_hilight(node=blueNode, fill=&quot;blue&quot;, alpha=.6) +
+  geom_tippoint(color = as.character(MatClustInd[,3]), size = 3) +
+  xlim_tree(12)
+
+ggarrange(trCalplot, trRtplot,ncol = 2, nrow = 1, labels=&quot;auto&quot;)
+
+###~~~~
+# Ridgeline plots
+###~~~~
+###~~~
+#Add a new col in MERGE with order of tips based on hclust analysis
+# This will help sorting individuals for ridgeline plot
+###~~~
+
+#Root data
+is_tipRt &lt;- trRt$edge[,2] &lt;= length(trRt$tip.label)
+ordered_tipsRt &lt;- trRt$edge[is_tipRt, 2]
+newtipsRt &lt;- trRt$tip.label[ordered_tipsRt]
+
+MERGE$ClustOrdRt &lt;- rep(&quot;NA&quot;, nrow(MERGE))
+for(i in 1:length(newtipsRt)){
+  MERGE$ClustOrdRt[grep(newtipsRt[i], MERGE$IndGeno)] &lt;- i
+}
+#Pad tip numbers to allow sorting them (for ridgeline plot)
+MERGE$ClustOrdRt &lt;- str_pad(MERGE$ClustOrdRt, 2, pad = &quot;0&quot;)
+
+#Callus data
+is_tipCal &lt;- trCal$edge[,2] &lt;= length(trCal$tip.label)
+ordered_tipsCal &lt;- trCal$edge[is_tipCal, 2]
+newtipsCal &lt;- trCal$tip.label[ordered_tipsCal]
+
+MERGE$ClustOrdCal &lt;- rep(&quot;NA&quot;, nrow(MERGE))
+for(i in 1:length(newtipsCal)){
+  MERGE$ClustOrdCal[grep(newtipsCal[i], MERGE$IndGeno)] &lt;- i
+}
+#Pad tip numbers to allow sorting them (for ridgeline plot)
+MERGE$ClustOrdCal &lt;- str_pad(MERGE$ClustOrdCal, 2, pad = &quot;0&quot;)
+
+###~~~
+#Add clusters in MERGE: For coloring ridgeline series
+###~~~
+colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
+#Add col in MERGE with cluster
+MERGE$ClusterRoot &lt;- colInd$Root_Cluster[match(MERGE$IndGeno, colInd$Individual)]
+MERGE$ClusterRoot &lt;- as.vector(MERGE$ClusterRoot)
+
+MERGE$ClusterCallus &lt;- colInd$Callus_Cluster[match(MERGE$IndGeno, colInd$Individual)]
+MERGE$ClusterCallus &lt;- as.vector(MERGE$ClusterCallus)
+
+###
+#Ridgeline plot
+###
+
+# Callus ridgeline
+CallusRidge &lt;- MERGE %&gt;%
+  mutate(text = fct_reorder(IndGeno, ClustOrdCal)) %&gt;%
+  ggplot(aes(x = Callus, y = text, fill = ClusterCallus)) +
+  scale_fill_manual(values = unique(as.vector(MERGE$ClusterCallus))) +
+  geom_density_ridges(stat=&quot;binline&quot;, binwidth = 1) +
+  xlab(&quot;Callus data (0 = absence; 1 = presence)&quot;) +
+  ylab(&quot;Individual lines (by clusters)     &quot;) +
+  theme_ridges() + 
+  theme(legend.position = &quot;none&quot;, text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+
+
+# Root ridgeline
+RootRidge &lt;- MERGE %&gt;%
+  mutate(text = fct_reorder(IndGeno, ClustOrdRt)) %&gt;%
+  ggplot(aes(x = Root, y = text, fill = ClusterRoot)) +
+  scale_fill_manual(values = c(&quot;grey&quot;, &quot;blue&quot;,&quot;pink&quot;)) +
+  geom_density_ridges(stat=&quot;binline&quot;, binwidth = 1) +
+  theme_ridges() + 
+  xlab(&quot;Root data (number of roots per shoot tip)&quot;) +
+  ylab(&quot;Individual lines (by clusters)     &quot;) +
+  theme(legend.position = &quot;none&quot;, text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+
+ggarrange(CallusRidge, RootRidge, ncol = 2, nrow = 1, labels=&quot;auto&quot;)
+
+###~~~
+#Produce pivot table with number of individual per group and genotype composition
+###~~~
+# Load file with color of individuals (which group based on clusters they belong to)
+colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
+
+###~~~
+#Effect of growth regulators on *in vitro* rooting sorted by clusters
+###~~~
+# colInd add Genotypes
+colInd$Genotype &lt;- sapply(strsplit(as.vector(colInd$Individual), split=&quot;_&quot;), &quot;[[&quot;, 1)
+tabGroup &lt;- table(colInd$Group, colInd$Genotype)
+tabGroup &lt;- tabGroup[c(1,3,2),]
+tabGroup &lt;- as.data.frame.matrix(tabGroup)
+tabGroup$TOT &lt;- rowSums(tabGroup)
+
+# Plot table
+knitr::kable(tabGroup, row.names=T, caption = &quot;Table summarizing composition of clusters based on rooting data.&quot;)
 
 #Load file with color of individuals (which group based on clusters they belong to)
 colInd &lt;- read.csv(&quot;02_Processed_data/Rooting_clusters_individuals.csv&quot;)
+treat &lt;- sort(unique(MERGE$Treatment))
 
-#Annotate best perfoming individuals (based on Tukey test) and add P1, P2
-toAdd &lt;- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] &lt;- paste0(rownames(mat_data)[toAdd], c(&quot; (P1)&quot;, &quot; (P2)&quot;))
+#Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreatC &lt;- matrix(ncol=6, nrow=15)
+colnames(RootingStatbyTreatC) &lt;- c(&quot;Cluster&quot;,&quot;Growth regulator&quot;, &quot;Concentration (mg/l)&quot;, &quot;Response (%)&quot;, &quot;Av. No. of roots&quot;, &quot;Treatment&quot;)
 
-pdf(&quot;03_Figures_report/Fig_3_Heatmap_compare_ind_callus.pdf&quot;)
-#Draw plot
-heatmap.2(mat_data,
-                 cellnote = mat_data, # same data set for cell labels
-                 main = &quot;&quot;, # heat map title
-                 notecol=&quot;black&quot;,      # change font color of cell labels to black
-                 notecex = .8, # cex of numbers in cells
-                 density.info=&quot;none&quot;,  # turns off density plot inside color legend
-                 trace=&quot;none&quot;,         # turns off trace lines inside the heat map
-                 xlab = &#39;Presence (1) / absence (0) of callus in tip&#39;, #Label of x axis
-                 cexRow = .8,
-          cexCol = .9,# cex of rows (= samples ID)
-                 margins =c(4,9),     # widens margins around plot
-                 col=my_palette,       # use on color palette defined earlier
-                 #breaks=col_breaks,    # enable color transition at specified limits
-                 dendrogram=&quot;row&quot;, # only draw a row dendrogram
-                 key=F,
-                 keysize = 0.4,
-                 RowSideColors = as.vector(colInd$Group),
-                 Colv=&quot;NA&quot;)
-dev.off()
+#Add col in MERGE with cluster
+MERGE$ClusterRoot &lt;- colInd$Group[match(MERGE$IndGeno, colInd$Individual)]
+
+#Convert to dataframe
+RootingStatbyTreatC &lt;- as.data.frame(RootingStatbyTreatC)
+
+#Populate matrix
+RootingStatbyTreatC$Cluster &lt;- sort(rep(sort(unique(MERGE$ClusterRoot)),5))
+RootingStatbyTreatC$`Growth regulator` &lt;- rep(sapply(strsplit(treat, split=&quot;_&quot;),&quot;[[&quot;,1),3)
+RootingStatbyTreatC$`Concentration (mg/l)` &lt;- rep(c(&quot;-&quot;, sapply(strsplit(treat[2:length(treat)], split=&quot;_&quot;),&quot;[[&quot;,2)),3)
+RootingStatbyTreatC$Treatment &lt;- rep(treat, 3)
+
+#Infer Response and mean no roots
+for(i in 1:nrow(RootingStatbyTreatC)){
+  foo &lt;- subset(MERGE, MERGE$Treatment == RootingStatbyTreatC$Treatment[i] &amp; MERGE$ClusterRoot == RootingStatbyTreatC$Cluster[i])
+  RootingStatbyTreatC$`Response (%)`[i] &lt;- paste(round(100*(mean(foo$RootBin)),2), &quot;+/-&quot;, round(sd(foo$RootBin),2), sep= &quot; &quot;)
+  RootingStatbyTreatC$`Av. No. of roots`[i] &lt;- paste(round(mean(foo$Root),2), &quot;+/-&quot;, round(sd(foo$Root),2), sep=&quot; &quot;)
+}
+
+#Plot table
+knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = &quot;Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.&quot;)
 
 ###~~~
 #Effect of growth regulators on calli production sorted by rooting cluster
@@ -2094,7 +2166,7 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = &quot;Effect of
 <h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> survival and growth of plantules</h1>
 <div id="sampling-and-preliminary-analyses" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.1</span> Sampling and preliminary analyses</h2>
-<div id="analyses-9" class="section level3">
+<div id="analyses-8" class="section level3">
 <h3><span class="header-section-number">6.1.1</span> Analyses</h3>
 <p>Data on survival and plantlets heights are stored in <code>01_Raw_Data/Survival_height_clones.csv</code>. The code below provides statistics on the number of individual and shoot tips included in this experiment. The R code for these analyses is available in section <a href="#codesurv">6.1.2</a>.</p>
 <pre><code>##                        Sampling       
@@ -2540,7 +2612,7 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 </div>
 <div id="statistical-analyses-on-survival-data" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.2</span> Statistical analyses on survival data</h2>
-<div id="analyses-10" class="section level3">
+<div id="analyses-9" class="section level3">
 <h3><span class="header-section-number">6.2.1</span> Analyses</h3>
 <p>Here, we will use statistical analyses to test whether treatment or individual predict survival and heights of plantlets after 5-weeks of culture. The distribution of the survival data is in Figure <a href="#fig:distrSurv">6.1</a> and it supports using GLM models with a binomial family distribution (same approach than with the callus data). The R code is available in section <a href="#survcodeR">6.2.2</a>.</p>
 <div class="figure"><span id="fig:distrSurv"></span>
@@ -2679,7 +2751,7 @@ summary(M2surv)</code></pre>
 <div id="statistical-analyses-on-growth-data" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.3</span> Statistical analyses on growth data</h2>
 <p>Here, we will only work on alive plantlets (<code>survheig$X5_w_survival</code> == 1) and conduct statistical analyses to test whether individuals from the different rooting clusters have different growth rates. First, we have to test whether the continuous growth data follow a normal distribution using the Shapiro-Wilk normality test. The R code for all these analyses is available in section <a href="#codegrowthstat">6.3.2</a>.</p>
-<div id="analyses-11" class="section level3">
+<div id="analyses-10" class="section level3">
 <h3><span class="header-section-number">6.3.1</span> Analyses</h3>
 <div id="test-for-normality" class="section level4">
 <h4><span class="header-section-number">6.3.1.1</span> Test for normality</h4>
@@ -2779,7 +2851,7 @@ print(TopIndgrowth)</code></pre>
 </div>
 <div id="boxplot-of-plantlet-heights-for-individuals-in-blue-rooting-cluster" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.4</span> Boxplot of plantlet heights for individuals in blue rooting cluster</h2>
-<div id="analyses-12" class="section level3">
+<div id="analyses-11" class="section level3">
 <h3><span class="header-section-number">6.4.1</span> Analyses</h3>
 <p>Figure <a href="#fig:boxplotheightblue">6.2</a> shows the distribution of plantlets heights after five weeks of culture for individuals belonging to the blue rooting cluster of diploid <em>Artemisia tridentata</em> subsp. <em>tridentata</em>. As predicted by the statistical analyses on plantlet heights, <code>G2_b7_1</code> among the top three individuals with the fastest growth in our experiment (with <code>G2_b7_1</code> being the fastest grower and isolated as P2 in previous analyses). The top two individuals identified by the rooting analysis are also shown on the boxplot. The R code is available in section <a href="#boxgrowthcode">6.4.2</a>.</p>
 <div class="figure"><span id="fig:boxplotheightblue"></span>
@@ -2889,27 +2961,53 @@ Guide</em>. ISBN 9781138359338. Boca Raton, Florida: Chapman and Hall/CRC,
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] DT_0.16              lsmeans_2.30-0       emmeans_1.5.2-1     
-##  [4] lmtest_0.9-38        zoo_1.8-8            pscl_1.5.5          
-##  [7] RColorBrewer_1.1-2   gplots_3.1.0         devtools_2.3.2      
-## [10] usethis_1.6.3        formatR_1.7          knitcitations_1.0.10
-## [13] bookdown_0.21        rmarkdown_2.4        knitr_1.30          
+##  [1] moments_0.14             forcats_0.5.0            TreeTools_1.4.0         
+##  [4] ggridges_0.5.2           stringr_1.4.0            ape_5.4-1               
+##  [7] ggtree_2.0.4             ggpubr_0.4.0             ggplot2_3.3.2           
+## [10] chisq.posthoc.test_0.1.2 DT_0.16                  lsmeans_2.30-0          
+## [13] emmeans_1.5.2-1          lmtest_0.9-38            zoo_1.8-8               
+## [16] pscl_1.5.5               RColorBrewer_1.1-2       gplots_3.1.0            
+## [19] devtools_2.3.2           usethis_1.6.3            formatR_1.7             
+## [22] knitcitations_1.0.10     bookdown_0.21            rmarkdown_2.4           
+## [25] knitr_1.30              
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.5         lubridate_1.7.9    mvtnorm_1.1-1      lattice_0.20-41   
-##  [5] prettyunits_1.1.1  ps_1.4.0           gtools_3.8.2       assertthat_0.2.1  
-##  [9] rprojroot_1.3-2    digest_0.6.25      R6_2.4.1           plyr_1.8.6        
-## [13] backports_1.1.10   evaluate_0.14      coda_0.19-4        httr_1.4.2        
-## [17] highr_0.8          rlang_0.4.8        callr_3.5.1        desc_1.2.0        
-## [21] RefManageR_1.2.12  stringr_1.4.0      htmlwidgets_1.5.2  compiler_3.6.1    
-## [25] xfun_0.18          pkgbuild_1.1.0     htmltools_0.5.0    codetools_0.2-16  
-## [29] fansi_0.4.1        crayon_1.3.4       withr_2.3.0        MASS_7.3-53       
-## [33] bitops_1.0-6       grid_3.6.1         jsonlite_1.7.1     xtable_1.8-4      
-## [37] magrittr_1.5       bibtex_0.4.2.3     KernSmooth_2.23-17 estimability_1.3  
-## [41] cli_2.1.0          stringi_1.5.3      fs_1.5.0           remotes_2.2.0     
-## [45] testthat_2.3.2     xml2_1.3.2         ellipsis_0.3.1     generics_0.0.2    
-## [49] tools_3.6.1        glue_1.4.2         processx_3.4.4     pkgload_1.1.0     
-## [53] yaml_2.2.1         caTools_1.18.0     sessioninfo_1.1.1  memoise_1.1.0</code></pre>
+##   [1] colorspace_1.4-1    ggsignif_0.6.0      ellipsis_0.3.1     
+##   [4] rio_0.5.16          rprojroot_1.3-2     estimability_1.3   
+##   [7] fs_1.5.0            farver_2.0.3        remotes_2.2.0      
+##  [10] bit64_4.0.5         fansi_0.4.1         mvtnorm_1.1-1      
+##  [13] lubridate_1.7.9     RefManageR_1.2.12   xml2_1.3.2         
+##  [16] codetools_0.2-16    R.methodsS3_1.8.1   pkgload_1.1.0      
+##  [19] jsonlite_1.7.1      broom_0.7.1         R.oo_1.24.0        
+##  [22] BiocManager_1.30.10 compiler_3.6.1      httr_1.4.2         
+##  [25] rvcheck_0.1.8       backports_1.1.10    Matrix_1.2-18      
+##  [28] assertthat_0.2.1    lazyeval_0.2.2      cli_2.1.0          
+##  [31] htmltools_0.5.0     prettyunits_1.1.1   tools_3.6.1        
+##  [34] igraph_1.2.6        coda_0.19-4         gtable_0.3.0       
+##  [37] glue_1.4.2          dplyr_1.0.2         fastmatch_1.1-0    
+##  [40] Rcpp_1.0.5          carData_3.0-4       cellranger_1.1.0   
+##  [43] vctrs_0.3.4         nlme_3.1-149        gbRd_0.4-11        
+##  [46] xfun_0.18           rbibutils_1.4       ps_1.4.0           
+##  [49] openxlsx_4.2.2      testthat_2.3.2      lifecycle_0.2.0    
+##  [52] phangorn_2.5.5      gtools_3.8.2        rstatix_0.6.0      
+##  [55] MASS_7.3-53         scales_1.1.1        hms_0.5.3          
+##  [58] parallel_3.6.1      yaml_2.2.1          curl_4.3           
+##  [61] memoise_1.1.0       stringi_1.5.3       highr_0.8          
+##  [64] desc_1.2.0          tidytree_0.3.3      caTools_1.18.0     
+##  [67] pkgbuild_1.1.0      zip_2.1.1           bibtex_0.4.2.3     
+##  [70] Rdpack_2.1          rlang_0.4.8         pkgconfig_2.0.3    
+##  [73] bitops_1.0-6        evaluate_0.14       lattice_0.20-41    
+##  [76] purrr_0.3.4         labeling_0.3        treeio_1.10.0      
+##  [79] htmlwidgets_1.5.2   cowplot_1.1.0       bit_4.0.4          
+##  [82] processx_3.4.4      tidyselect_1.1.0    plyr_1.8.6         
+##  [85] magrittr_1.5        R6_2.4.1            generics_0.0.2     
+##  [88] pillar_1.4.6        haven_2.3.1         foreign_0.8-75     
+##  [91] withr_2.3.0         abind_1.4-5         tibble_3.0.4       
+##  [94] crayon_1.3.4        car_3.0-10          KernSmooth_2.23-17 
+##  [97] grid_3.6.1          readxl_1.3.1        data.table_1.12.8  
+## [100] callr_3.5.1         digest_0.6.25       R.cache_0.14.0     
+## [103] xtable_1.8-4        tidyr_1.1.2         R.utils_2.10.1     
+## [106] munsell_0.5.0       quadprog_1.5-8      sessioninfo_1.1.1</code></pre>
 </div>
 <div id="appendix-3" class="section level1 appendix">
 <h1><span class="header-section-number">10</span> Appendix 3</h1>

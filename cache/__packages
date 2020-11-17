@@ -18,3 +18,9 @@ chisq.posthoc.test
 moments
 ggplot2
 ggpubr
+ggtree
+ape
+stringr
+ggridges
+TreeTools
+forcats

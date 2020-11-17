@@ -28,6 +28,13 @@ library(emmeans)
 library(DT)
 library(chisq.posthoc.test)
 library(ggpubr)
+library(ggtree)
+library(ape)
+library(stringr)
+library(ggridges)
+library(ggplot2)
+library(TreeTools)
+library(forcats)
 
 #Generate BibTex citation file for all R packages used to produce report
 knitr::write_bib(.packages(), file = 'packages.bib')
@@ -362,7 +369,13 @@ Preliminary data summarizing results of our experiments are provided here to ass
 
 ### Analyses
 
-Table \@ref(tab:statssampling) provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. The code below generates Table \@ref(tab:statssampling). The R code associated to producing Table \@ref(tab:statssampling) is available in section \@ref(statsampl). 
+Table \@ref(tab:statssampling) provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. 
+
+Overall, the sampling at the basis of the rooting experiment could summarized as follows:
+
+> "45 individual lines x 5 treatments x 3 replicates, for n = 675 total shoot tips."
+
+The code below generates Table \@ref(tab:statssampling). The R code associated to producing Table \@ref(tab:statssampling) is available in section \@ref(statsampl). 
 
 ```{r statssampling, echo=FALSE, eval=TRUE}
 #Create and populate table to summarize sampling (Table 1)
@@ -548,6 +561,133 @@ knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regula
 # Step 3: Comparative analyses on rooting data {#step3}
 
 The input variables for these analyses are stored in `MERGE`.
+
+## Statistical analyses on callus data 
+
+### Selecting the best method
+
+Table \@ref(tab:growthbyregulatorcallus) demonstrated that >70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (< 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.
+
+The callus data were scored as binary (0 = absent; 1 = present) and the distribution of that data is in Figure \@ref(fig:distrCall).
+
+```{r distrCall, echo=T, eval=T, fig.cap="Barplot of callus production during the rooting experiment."}
+barplot(table(MERGE$Callus), xlab="Binary data on callus", ylab="Occurrence")
+```
+
+This type of data calls for the use of non-parametric analyses as done for the root (count) data. In this context, we will use GLM models to assess treatment and individual effects on callus production.
+
+### Investigate treatment and individual effects {.tabset .tabset-pills}
+
+#### Analyses
+
+We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section \@ref(RcodeCallus).
+
+```{r callusmodels, echo=F, eval=T}
+# GLM to investigate treatment effect on callus production
+M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
+
+# GLM to investigate treatment and individual effects on callus production
+M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
+
+# Which model best fit the data?
+anova(M1cal, M2cal, test = "Chisq")
+
+# M2 better fits the data, but is it not over fitting it?
+pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
+
+# Summary M2
+print(summary(M2cal))
+```
+
+The analyses demonstrate that there is significant treatment and individual effects.
+
+##### Ranking treatments
+
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01; the R code is available in section \@ref(RcodeCallus)):
+
+```{r emmeansCal, eval=T, echo=F}
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
+
+# Identify significant pairwise comparisons
+signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```
+
+Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
+
+- (a) Control is significantly different than the other treatments (`***`). Here, very limited calli production was observed in shoot tips included in the control treatment.
+- (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.
+
+##### Ranking individuals
+
+We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section \@ref(RcodeCallus).
+
+```{r emmeansCalInd, eval=T, echo=F}
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
+
+# Identify significant pairwise comparisons
+signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
+signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```
+
+#### R code {#RcodeCallus}
+
+```{r callusGLMR, echo=T, eval=F}
+###~~~
+#GLMs
+###~~~
+
+# GLM to investigate treatment effect on callus production
+M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
+
+# GLM to investigate treatment and individual effects on callus production
+M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
+
+# Which model best fit the data?
+anova(M1cal, M2cal, test = "Chisq")
+
+# M2 better fits the data, but is it not over fitting it?
+pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
+
+# Summary M2
+print(summary(M2cal))
+
+###~~~
+#Ranking treatments
+###~~~
+
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
+
+# Identify significant pairwise comparisons
+signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+
+###~~~
+#Ranking individuals
+###~~~
+
+# Estimated marginal means (Least-squares means) for treatments using M2
+posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
+
+# Identify significant pairwise comparisons
+signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
+signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```
 
 ## Statistical analyses on root data
 
@@ -921,19 +1061,176 @@ colnames(TopInd) <- c("Percentage of individuals outperformed")
 knitr::kable(TopInd, caption = "List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval <= 0.01).")
 ```
 
-## Clustering analysis on rooting data {.tabset .tabset-pills}
+## Clustering analyses on rooting data {.tabset .tabset-pills}
+
+In this section, we are applying a clustering approach on callus (binary) and root (count) data to further investigate individual effects independently to treatments. We first conduct independent clustering analyses on the two variables to sort individual lines based on their abilities to promote callus development and roots. These analyses will allow identifying callus and root clusters, which will then be compared by plotting those on the respective clustering analyses. To further characterize the clusters, ridgeline plots (or density plots) will be inferred for each variable and individual lines sorted by clusters.   
 
 ### Analyses
 
-A clustering analysis was used to compare rooting performance between individuals based on an euclidean distance (using the `Root` count data; see section \@ref(Rclustroot) for R code). This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the heatmap). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available below. The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:heatmap2)):
+Clustering analyses were performed between individual lines based on the euclidean distance and the hierarchical clustering method implemented in the R *stats* package (using the `Callus` binary and `Root` count data; see section \@ref(Rclustroot) for R code). See Figure \@ref(fig:clusterTrees) for results and those are discussed below (by variable).
+
+```{r clusterTrees, echo = F, eval = T, , warning = F, out.width = "100%", fig.cap="Clustering analyses based on callus (a) and root (b) data. For each variable, clusters are represented by shaded polygons, whereas the circles represent the assignment of the individual lines in the other analysis."}
+####~~~~
+#Clustering analyses
+####~~~~
+
+#Perform clustering analyses on callus (binary) and root (count) data
+# based on euclidian distance
+
+###
+# Callus data
+###
+# Input data for clustering and heatmap
+mat_callus <- table(MERGE$IndGeno, MERGE$Callus)
+
+#Clustering analysis
+clustCal <- hclust(dist(mat_callus))
+#convert to phylo class
+trCal <- as.phylo(clustCal)
+
+#Find MRCA of clusters
+#Red clade
+RedNode <- getMRCA(trCal, c("G2_b5_1", "G1_b7_1"))
+#Green node
+GreenNode <- getMRCA(trCal, c("G2_b16_1", "G2_b17_1"))
+#Orange node
+OrangeNode <- getMRCA(trCal, c("G1_b10_1", "G2_b7_1"))
+
+
+###
+# Root data
+###
+# Input data for clustering and heatmap
+mat_root <- table(MERGE$IndGeno, MERGE$Root)
+
+#Clustering analysis
+clustRt <- hclust(dist(mat_root))
+#convert to phylo class
+trRt <- as.phylo(clustRt)
+
+#Find MRCA of clusters
+#Blue clade
+blueNode <- getMRCA(trRt, c("G2_b27_1", "G1_b2_1"))
+#Black node
+blackNode <- getMRCA(trRt, c("G2_b25_1", "G2_b26_1"))
+#Pink node
+pinkNode <- getMRCA(trRt, c("G2_18_1", "G1_b19_1"))
+
+###~~~
+#Matrix with clusters and tips
+###~~~
+#This will serve to plot and compare the clustering analyses
+MatClustInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+
+###~~~
+#Draw trees
+###~~~
+
+#Callus tree
+trCalplot <- ggtree(trCal, layout="circular", branch.length="none", color="black") + 
+  geom_tiplab(aes(angle=angle), color='black', offset=.7, cex = 2.5) +
+  geom_hilight(node=RedNode, fill="red", alpha=.6) +
+  geom_hilight(node=GreenNode, fill="green", alpha=.6) +
+  geom_hilight(node=OrangeNode, fill="orange", alpha=.6) +
+  geom_tippoint(color = as.character(MatClustInd[,2]), size = 3) +
+  xlim_tree(22)
+
+#Root tree
+trRtplot <- ggtree(trRt, layout="circular", branch.length="none", color="black") + 
+  geom_tiplab(aes(angle=angle), color='black', offset=.6, cex = 2.5) +
+  geom_hilight(node=blackNode, fill="black", alpha=.6) +
+  geom_hilight(node=pinkNode, fill="pink", alpha=.6) +
+  geom_hilight(node=blueNode, fill="blue", alpha=.6) +
+  geom_tippoint(color = as.character(MatClustInd[,3]), size = 3) +
+  xlim_tree(12)
+
+ggarrange(trCalplot, trRtplot,ncol = 2, nrow = 1, labels="auto")
+```
+
+To further compare the clusters identified in Figure \@ref(fig:clusterTrees) ridgeline plots (or density plots; more on this topic [here](https://www.data-to-viz.com/graph/ridgeline.html)) were inferred for each variable using the R package *ggridges*. See Figure \@ref(fig:RidgelinesClusterTrees) for the results. 
+
+```{r RidgelinesClusterTrees, echo=F, eval=T, out.width = "100%", fig.cap="Ridgeline plots based on callus (a) and root (b) data. For each variable, individual lines are sorted based on the clustering analysis and ridgeline plots are colored based on clusters."}
+
+###~~~~
+# Ridgeline plots
+###~~~~
+###~~~
+#Add a new col in MERGE with order of tips based on hclust analysis
+# This will help sorting individuals for ridgeline plot
+###~~~
+
+#Root data
+is_tipRt <- trRt$edge[,2] <= length(trRt$tip.label)
+ordered_tipsRt <- trRt$edge[is_tipRt, 2]
+newtipsRt <- trRt$tip.label[ordered_tipsRt]
+
+MERGE$ClustOrdRt <- rep("NA", nrow(MERGE))
+for(i in 1:length(newtipsRt)){
+  MERGE$ClustOrdRt[grep(newtipsRt[i], MERGE$IndGeno)] <- i
+}
+#Pad tip numbers to allow sorting them (for ridgeline plot)
+MERGE$ClustOrdRt <- str_pad(MERGE$ClustOrdRt, 2, pad = "0")
+
+#Callus data
+is_tipCal <- trCal$edge[,2] <= length(trCal$tip.label)
+ordered_tipsCal <- trCal$edge[is_tipCal, 2]
+newtipsCal <- trCal$tip.label[ordered_tipsCal]
+
+MERGE$ClustOrdCal <- rep("NA", nrow(MERGE))
+for(i in 1:length(newtipsCal)){
+  MERGE$ClustOrdCal[grep(newtipsCal[i], MERGE$IndGeno)] <- i
+}
+#Pad tip numbers to allow sorting them (for ridgeline plot)
+MERGE$ClustOrdCal <- str_pad(MERGE$ClustOrdCal, 2, pad = "0")
+
+###~~~
+#Add clusters in MERGE: For coloring ridgeline series
+###~~~
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+#Add col in MERGE with cluster
+MERGE$ClusterRoot <- colInd$Root_Cluster[match(MERGE$IndGeno, colInd$Individual)]
+MERGE$ClusterRoot <- as.vector(MERGE$ClusterRoot)
+
+MERGE$ClusterCallus <- colInd$Callus_Cluster[match(MERGE$IndGeno, colInd$Individual)]
+MERGE$ClusterCallus <- as.vector(MERGE$ClusterCallus)
+
+###
+#Ridgeline plot
+###
+
+# Callus ridgeline
+CallusRidge <- MERGE %>%
+  mutate(text = fct_reorder(IndGeno, ClustOrdCal)) %>%
+  ggplot(aes(x = Callus, y = text, fill = ClusterCallus)) +
+  scale_fill_manual(values = c("green", "orange","red")) +
+  geom_density_ridges(stat="binline", binwidth = 1) +
+  xlab("Callus data (0 = absence; 1 = presence)") +
+  ylab("Individual lines (by clusters)     ") +
+  theme_ridges() + 
+  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+
+
+# Root ridgeline
+RootRidge <- MERGE %>%
+  mutate(text = fct_reorder(IndGeno, ClustOrdRt)) %>%
+  ggplot(aes(x = Root, y = text, fill = ClusterRoot)) +
+  scale_fill_manual(values = c("grey", "blue","pink")) +
+  geom_density_ridges(stat="binline", binwidth = 1) +
+  theme_ridges() + 
+  xlab("Root data (number of roots per shoot tip)") +
+  ylab("Individual lines (by clusters)     ") +
+  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+
+ggarrange(CallusRidge, RootRidge, ncol = 2, nrow = 1, labels="auto")
+```
+
+#### Root data
+
+This analysis sorted individuals into rooting clusters based on their abilities to initiate rooting (which is also shown by the ridgeline plot). Finally, to performer individuals (P1 and P2) identified by the statistical analyses are also represented on the graph. The code used to produce these analyses is available in section \@ref(Rclustroot). The analysis clearly distinguished three clusters (of even number of individuals; see Table \@ref(tab:tablegroups)) based on individual rooting performances (Figure \@ref(fig:clusterTrees)):
 
 - Black cluster: No to very little rooting.
 - Pink cluster: Some rooting observed.
 - Blue cluster: Most individuals are exhibiting high rooting capacity and the top three performers belong to this cluster.
-
-```{r heatmap2, echo=F, eval=T, fig.cap="Heatmap comparing calli production of shoot tips of diploid Artemisia tridentata subsp. tridentata showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identified by the Tukey tests on rooting data is also displayed.", out.width="100%"}
-knitr::include_graphics("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.png")
-```
 
 The number of individual per rooting clusters inferred from the clustering analysis is displayed in Table \@ref(tab:tablegroups). The R code to generate this table is in section \@ref(Rclustroot).
 
@@ -955,9 +1252,9 @@ tabGroup$TOT <- rowSums(tabGroup)
 knitr::kable(tabGroup, row.names=T, caption = "Table summarizing composition of clusters based on rooting data.")
 ```
 
-#### Effect of growth regulators on *in vitro* rooting sorted by clusters
+##### Effect of growth regulators on *in vitro* rooting sorted by clusters
 
-Table \@ref(tab:growthbyregulatorcluster) shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table \@ref(tab:growthbyregulatorcluster)). The R code to generate this table is in section \@ref(Rclustroot).
+Table \@ref(tab:growthbyregulatorcluster) shows that IBA at both concentrations seem to have a significant effect on rooting for individuals belonging to the blue cluster (Figure \@ref(fig:RidgelinesClusterTrees)). Responses are very high (both at 87.18%) and the number of roots per tip are 2.97 +/- 2.25 for IBA 0.5 and 3.59 +/- 3.41 for IBA 1 (Table \@ref(tab:growthbyregulatorcluster)). The R code to generate this table is in section \@ref(Rclustroot).
 
 ```{r growthbyregulatorcluster, echo=F, eval=T}
 #Load file with color of individuals (which group based on clusters they belong to)
@@ -994,46 +1291,207 @@ knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth
 
 This will be investigated by looking at top performer individuals identified by i) statistical analyses and ii) clustering analysis.
 
-### R code {#Rclustroot}
+#### Callus data
 
-```{r codeclustRoot, echo=T, eval=F}
-###~~
-#Clustering analysis on rooting data
+The code used to produce these analyses is available in section \@ref(Rclustroot). The analysis clearly distinguished three clusters based on individual lines producing callus (Figure \@ref(fig:clusterTrees)):
+  
+- Red cluster: Very limited callus production.
+- Green cluster: Intermediate callus production.
+- Orange cluster: High callus production.
+
+The clusters from the rooting analysis are not recovered here (each callus cluster are composed by a mixture of clusters from the rooting analysis) (see Figure \@ref(fig:clusterTrees). This suggests that calli production do not inhibit rooting.
+
+##### Effect of growth regulators on *in vitro* calli production in *Artemisia tridentata* sorted by rooting clusters
+
+Table \@ref(tab:growthbyregulatorclustercallus) shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). The R code is available in section \@ref(Rcodecallusclust).
+
+```{r growthbyregulatorclustercallus, echo=F, eval=T}
 ###~~~
-
-# Create our own color palette from green to red for heatmap
-my_palette <- colorRampPalette(c("green", "yellow", "red"))(n = 299)
-
-# Input data for clustering and heatmap
-mat_data <- table(MERGE$IndGeno, MERGE$Root)
+#Effect of growth regulators on calli production sorted by rooting cluster
+###~~~
 
 # Load file with color of individuals (which group based on clusters they belong to)
 colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 
-# Annotate best perfoming individuals and add P1, P2
-toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)"))
+# Create vector of treatments
+treat <- sort(unique(MERGE$Treatment))
 
-pdf("03_Figures_report/Fig_2_Heatmap_compare_ind_rooting.pdf")
-# Perform clustering/heatmap and draw plot
-heatmap.2(mat_data,
-          cellnote = mat_data, # same data set for cell labels
-          main = "", # heat map title
-          notecol="black",      # change font color of cell labels to black
-          notecex = .8, # cex of numbers in cells
-          density.info="none",  # turns off density plot inside color legend
-          trace="none",         # turns off trace lines inside the heat map
-          xlab = 'N. roots per tip (1 ind. has 15 tips)', #Label of x axis
-          cexRow = .8, # cex of rows (= samples ID)
-          margins =c(4,9),     # widens margins around plot
-          col=my_palette,       # use on color palette defined earlier
-          #breaks=col_breaks,    # enable color transition at specified limits
-          dendrogram="row", # only draw a row dendrogram
-          key=F,
-          keysize = 0.4,
-          RowSideColors = as.vector(colInd$Group),
-          Colv="NA") # turn off column clustering
-dev.off()
+# Matrix summarizing effect of growth regulators on rooting
+RootingStatbyTreatCal <- matrix(ncol=5, nrow=15)
+colnames(RootingStatbyTreatCal) <- c("Cluster","Growth regulator", "Concentration (mg/l)", "Response (%)", "Treatment")
+
+# Add col in MERGE with cluster
+MERGE$ClusterRoot <- colInd$Group[match(MERGE$IndGeno, colInd$Individual)]
+
+# Convert to dataframe
+RootingStatbyTreatCal <- as.data.frame(RootingStatbyTreatCal)
+
+# Populate matrix
+RootingStatbyTreatCal$Cluster <- sort(rep(sort(unique(MERGE$ClusterRoot)),5))
+RootingStatbyTreatCal$`Growth regulator` <- rep(sapply(strsplit(treat, split="_"),"[[",1),3)
+RootingStatbyTreatCal$`Concentration (mg/l)` <- rep(c("-", sapply(strsplit(treat[2:length(treat)], split="_"),"[[",2)),3)
+RootingStatbyTreatCal$Treatment <- rep(treat, 3)
+
+# Infer Response
+for(i in 1:nrow(RootingStatbyTreatCal)){
+  foo <- subset(MERGE, MERGE$Treatment == RootingStatbyTreatCal$Treatment[i] & MERGE$ClusterRoot == RootingStatbyTreatCal$Cluster[i])
+  RootingStatbyTreatCal$`Response (%)`[i] <- round(100*(mean(foo$Callus)),2)
+}
+
+#Plot table
+knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.")
+```
+
+### R code {#Rclustroot}
+
+```{r codeclustRoot, echo=T, eval=F}
+####~~~~
+#Clustering analyses
+####~~~~
+
+#Perform clustering analyses on callus (binary) and root (count) data
+# based on euclidian distance
+
+###
+# Callus data
+###
+# Input data for clustering and heatmap
+mat_callus <- table(MERGE$IndGeno, MERGE$Callus)
+
+#Clustering analysis
+clustCal <- hclust(dist(mat_callus))
+#convert to phylo class
+trCal <- as.phylo(clustCal)
+
+#Find MRCA of clusters
+#Red clade
+RedNode <- getMRCA(trCal, c("G2_b5_1", "G1_b7_1"))
+#Green node
+GreenNode <- getMRCA(trCal, c("G2_b16_1", "G2_b17_1"))
+#Orange node
+OrangeNode <- getMRCA(trCal, c("G1_b10_1", "G2_b7_1"))
+
+
+###
+# Root data
+###
+# Input data for clustering and heatmap
+mat_root <- table(MERGE$IndGeno, MERGE$Root)
+
+#Clustering analysis
+clustRt <- hclust(dist(mat_root))
+#convert to phylo class
+trRt <- as.phylo(clustRt)
+
+#Find MRCA of clusters
+#Blue clade
+blueNode <- getMRCA(trRt, c("G2_b27_1", "G1_b2_1"))
+#Black node
+blackNode <- getMRCA(trRt, c("G2_b25_1", "G2_b26_1"))
+#Pink node
+pinkNode <- getMRCA(trRt, c("G2_18_1", "G1_b19_1"))
+
+###~~~
+#Matrix with clusters and tips
+###~~~
+#This will serve to plot and compare the clustering analyses
+MatClustInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+
+###~~~
+#Draw trees
+###~~~
+
+#Callus tree
+trCalplot <- ggtree(trCal, layout="circular", branch.length="none", color="black") + 
+  geom_tiplab(aes(angle=angle), color='black', offset=.7, cex = 2.5) +
+  geom_hilight(node=RedNode, fill="red", alpha=.6) +
+  geom_hilight(node=GreenNode, fill="green", alpha=.6) +
+  geom_hilight(node=OrangeNode, fill="orange", alpha=.6) +
+  geom_tippoint(color = as.character(MatClustInd[,2]), size = 3) +
+  xlim_tree(22)
+
+#Root tree
+trRtplot <- ggtree(trRt, layout="circular", branch.length="none", color="black") + 
+  geom_tiplab(aes(angle=angle), color='black', offset=.6, cex = 2.5) +
+  geom_hilight(node=blackNode, fill="black", alpha=.6) +
+  geom_hilight(node=pinkNode, fill="pink", alpha=.6) +
+  geom_hilight(node=blueNode, fill="blue", alpha=.6) +
+  geom_tippoint(color = as.character(MatClustInd[,3]), size = 3) +
+  xlim_tree(12)
+
+ggarrange(trCalplot, trRtplot,ncol = 2, nrow = 1, labels="auto")
+
+###~~~~
+# Ridgeline plots
+###~~~~
+###~~~
+#Add a new col in MERGE with order of tips based on hclust analysis
+# This will help sorting individuals for ridgeline plot
+###~~~
+
+#Root data
+is_tipRt <- trRt$edge[,2] <= length(trRt$tip.label)
+ordered_tipsRt <- trRt$edge[is_tipRt, 2]
+newtipsRt <- trRt$tip.label[ordered_tipsRt]
+
+MERGE$ClustOrdRt <- rep("NA", nrow(MERGE))
+for(i in 1:length(newtipsRt)){
+  MERGE$ClustOrdRt[grep(newtipsRt[i], MERGE$IndGeno)] <- i
+}
+#Pad tip numbers to allow sorting them (for ridgeline plot)
+MERGE$ClustOrdRt <- str_pad(MERGE$ClustOrdRt, 2, pad = "0")
+
+#Callus data
+is_tipCal <- trCal$edge[,2] <= length(trCal$tip.label)
+ordered_tipsCal <- trCal$edge[is_tipCal, 2]
+newtipsCal <- trCal$tip.label[ordered_tipsCal]
+
+MERGE$ClustOrdCal <- rep("NA", nrow(MERGE))
+for(i in 1:length(newtipsCal)){
+  MERGE$ClustOrdCal[grep(newtipsCal[i], MERGE$IndGeno)] <- i
+}
+#Pad tip numbers to allow sorting them (for ridgeline plot)
+MERGE$ClustOrdCal <- str_pad(MERGE$ClustOrdCal, 2, pad = "0")
+
+###~~~
+#Add clusters in MERGE: For coloring ridgeline series
+###~~~
+colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
+#Add col in MERGE with cluster
+MERGE$ClusterRoot <- colInd$Root_Cluster[match(MERGE$IndGeno, colInd$Individual)]
+MERGE$ClusterRoot <- as.vector(MERGE$ClusterRoot)
+
+MERGE$ClusterCallus <- colInd$Callus_Cluster[match(MERGE$IndGeno, colInd$Individual)]
+MERGE$ClusterCallus <- as.vector(MERGE$ClusterCallus)
+
+###
+#Ridgeline plot
+###
+
+# Callus ridgeline
+CallusRidge <- MERGE %>%
+  mutate(text = fct_reorder(IndGeno, ClustOrdCal)) %>%
+  ggplot(aes(x = Callus, y = text, fill = ClusterCallus)) +
+  scale_fill_manual(values = unique(as.vector(MERGE$ClusterCallus))) +
+  geom_density_ridges(stat="binline", binwidth = 1) +
+  xlab("Callus data (0 = absence; 1 = presence)") +
+  ylab("Individual lines (by clusters)     ") +
+  theme_ridges() + 
+  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+
+
+# Root ridgeline
+RootRidge <- MERGE %>%
+  mutate(text = fct_reorder(IndGeno, ClustOrdRt)) %>%
+  ggplot(aes(x = Root, y = text, fill = ClusterRoot)) +
+  scale_fill_manual(values = c("grey", "blue","pink")) +
+  geom_density_ridges(stat="binline", binwidth = 1) +
+  theme_ridges() + 
+  xlab("Root data (number of roots per shoot tip)") +
+  ylab("Individual lines (by clusters)     ") +
+  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+
+ggarrange(CallusRidge, RootRidge, ncol = 2, nrow = 1, labels="auto")
 
 ###~~~
 #Produce pivot table with number of individual per group and genotype composition
@@ -1083,237 +1541,6 @@ for(i in 1:nrow(RootingStatbyTreatC)){
 
 #Plot table
 knitr::kable(RootingStatbyTreatC[,1:5], row.names=F, caption = "Effect of growth regulator on in vitro rooting of Artemisia tridentata sorted by cluster. Response: mean of the three replicates +/- standard deviation; Av. No. of roots: mean +/- standard deviation.")
-
-```
-
-## Statistical analyses on callus data 
-
-### Selecting the best method
-
-Table \@ref(tab:growthbyregulatorcallus) demonstrated that >70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (< 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.
-
-The callus data were scored as binary (0 = absent; 1 = present) and the distribution of that data is in Figure \@ref(fig:distrCall).
-
-```{r distrCall, echo=T, eval=T, fig.cap="Barplot of callus production during the rooting experiment."}
-barplot(table(MERGE$Callus), xlab="Binary data on callus", ylab="Occurrence")
-```
-
-This type of data calls for the use of non-parametric analyses as done for the root (count) data. In this context, we will use GLM models to assess treatment and individual effects on callus production.
-
-### Investigate treatment and individual effects {.tabset .tabset-pills}
-
-#### Analyses
-
-We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section \@ref(RcodeCallus).
-
-```{r callusmodels, echo=F, eval=T}
-# GLM to investigate treatment effect on callus production
-M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
-
-# GLM to investigate treatment and individual effects on callus production
-M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
-
-# Which model best fit the data?
-anova(M1cal, M2cal, test = "Chisq")
-
-# M2 better fits the data, but is it not over fitting it?
-pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
-
-# Summary M2
-print(summary(M2cal))
-```
-
-The analyses demonstrate that there is significant treatment and individual effects.
-
-##### Ranking treatments
-
-The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01; the R code is available in section \@ref(RcodeCallus)):
-
-```{r emmeansCal, eval=T, echo=F}
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
-
-# Identify significant pairwise comparisons
-signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
-signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
-```
-
-Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
-
-- (a) Control is significantly different than the other treatments (`***`). Here, very limited calli production was observed in shoot tips included in the control treatment.
-- (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.
-
-##### Ranking individuals
-
-We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section \@ref(RcodeCallus).
-
-```{r emmeansCalInd, eval=T, echo=F}
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
-
-# Identify significant pairwise comparisons
-signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
-signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
-```
-
-#### R code {#RcodeCallus}
-
-```{r callusGLMR, echo=T, eval=F}
-###~~~
-#GLMs
-###~~~
-
-# GLM to investigate treatment effect on callus production
-M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
-
-# GLM to investigate treatment and individual effects on callus production
-M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
-
-# Which model best fit the data?
-anova(M1cal, M2cal, test = "Chisq")
-
-# M2 better fits the data, but is it not over fitting it?
-pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
-
-# Summary M2
-print(summary(M2cal))
-
-###~~~
-#Ranking treatments
-###~~~
-
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
-
-# Identify significant pairwise comparisons
-signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
-signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
-
-###~~~
-#Ranking individuals
-###~~~
-
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
-
-# Identify significant pairwise comparisons
-signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
-signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
-```
-
-## Clustering analysis on callus data {.tabset .tabset-pills}
-
-### Analyses
-
-The code to produce the clustering analysis based on `Callus` data and associated heatmap is provided below and Figure \@ref(fig:heatmapplot) shows results of the analysis. Outcomes of this analysis are:
-
-- Three clusters based on calli production:
-  + Bottom cluster has individuals with no to very limited calli production.
-  + Intermediate cluster has individuals with 50/50 calli production.
-  + Top cluster has individuals with individuals producing calli.
-- Clusters from the rooting analysis are not recovered here (each calli cluster are composed by a mixture of clusters from the rooting analysis). This suggests that calli production do not inhibit rooting.
-- To performer individuals are shared between the intermediate and top clusters (supporting previous statement).
-
-Please see section \@ref(Rcodecallusclust) for more details on R code.
-
-```{r heatmapplot, echo=F, eval=T, fig.cap="Heatmap comparing calli production of sagebrush individuals showing three clusters, which are not identical to those inferred with rooting data. The position of top performers as identifed by the Tukey tests is also displayed.", out.width="100%"}
-knitr::include_graphics("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.png")
-```
-
-#### Effect of growth regulators on *in vitro* calli production in *Artemisia tridentata* sorted by rooting clusters
-
-Table \@ref(tab:growthbyregulatorclustercallus) shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). The R code is available in section \@ref(Rcodecallusclust).
-
-```{r growthbyregulatorclustercallus, echo=F, eval=T}
-###~~~
-#Effect of growth regulators on calli production sorted by rooting cluster
-###~~~
-
-# Load file with color of individuals (which group based on clusters they belong to)
-colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
-
-# Create vector of treatments
-treat <- sort(unique(MERGE$Treatment))
-
-# Matrix summarizing effect of growth regulators on rooting
-RootingStatbyTreatCal <- matrix(ncol=5, nrow=15)
-colnames(RootingStatbyTreatCal) <- c("Cluster","Growth regulator", "Concentration (mg/l)", "Response (%)", "Treatment")
-
-# Add col in MERGE with cluster
-MERGE$ClusterRoot <- colInd$Group[match(MERGE$IndGeno, colInd$Individual)]
-
-# Convert to dataframe
-RootingStatbyTreatCal <- as.data.frame(RootingStatbyTreatCal)
-
-# Populate matrix
-RootingStatbyTreatCal$Cluster <- sort(rep(sort(unique(MERGE$ClusterRoot)),5))
-RootingStatbyTreatCal$`Growth regulator` <- rep(sapply(strsplit(treat, split="_"),"[[",1),3)
-RootingStatbyTreatCal$`Concentration (mg/l)` <- rep(c("-", sapply(strsplit(treat[2:length(treat)], split="_"),"[[",2)),3)
-RootingStatbyTreatCal$Treatment <- rep(treat, 3)
-
-# Infer Response
-for(i in 1:nrow(RootingStatbyTreatCal)){
-  foo <- subset(MERGE, MERGE$Treatment == RootingStatbyTreatCal$Treatment[i] & MERGE$ClusterRoot == RootingStatbyTreatCal$Cluster[i])
-  RootingStatbyTreatCal$`Response (%)`[i] <- round(100*(mean(foo$Callus)),2)
-}
-
-#Plot table
-knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.")
-```
-
-### R code {#Rcodecallusclust}
-
-```{r Rcodecallusclust, echo=T, eval=F}
-###~~~
-#Clustering analysis on calli data
-###~~~
-
-# Create our own color palette from green to red for heatmap
-my_palette <- colorRampPalette(c("green", "yellow", "red"))(n = 299)
-
-#Input data for heatmap
-mat_data <- table(MERGE$IndGeno, MERGE$Callus)
-
-#Load file with color of individuals (which group based on clusters they belong to)
-colInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
-
-#Annotate best perfoming individuals (based on Tukey test) and add P1, P2
-toAdd <- which(rownames(mat_data) %in% rownames(TopInd))
-rownames(mat_data)[toAdd] <- paste0(rownames(mat_data)[toAdd], c(" (P1)", " (P2)"))
-
-pdf("03_Figures_report/Fig_3_Heatmap_compare_ind_callus.pdf")
-#Draw plot
-heatmap.2(mat_data,
-                 cellnote = mat_data, # same data set for cell labels
-                 main = "", # heat map title
-                 notecol="black",      # change font color of cell labels to black
-                 notecex = .8, # cex of numbers in cells
-                 density.info="none",  # turns off density plot inside color legend
-                 trace="none",         # turns off trace lines inside the heat map
-                 xlab = 'Presence (1) / absence (0) of callus in tip', #Label of x axis
-                 cexRow = .8,
-          cexCol = .9,# cex of rows (= samples ID)
-                 margins =c(4,9),     # widens margins around plot
-                 col=my_palette,       # use on color palette defined earlier
-                 #breaks=col_breaks,    # enable color transition at specified limits
-                 dendrogram="row", # only draw a row dendrogram
-                 key=F,
-                 keysize = 0.4,
-                 RowSideColors = as.vector(colInd$Group),
-                 Colv="NA")
-dev.off()
 
 ###~~~
 #Effect of growth regulators on calli production sorted by rooting cluster
