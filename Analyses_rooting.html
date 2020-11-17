@@ -430,9 +430,9 @@ div.tocify {
 <li>Statistical analyses (test for normality and conduct parametric or non-parametric statistics and multiple pairwise-comparison tests with <em>p</em>-value &lt;= 0.01).</li>
 <li>Clustering analyses.</li>
 </ul></li>
-<li><strong>Step 4:</strong> <em>In vitro</em> survival and growth of plantules (see section <a href="#step4">6</a>).
+<li><strong>Step 4:</strong> <em>In vitro</em> survival and growth of plantlets (see section <a href="#step4">6</a>).
 <ul>
-<li>Assessing the effect of growth regulators and rooting clusters on plantule survival and growth rates.</li>
+<li>Assessing the effect of growth regulators and rooting clusters on plantlet survival and growth rates.</li>
 </ul></li>
 </ul>
 </div>
@@ -443,7 +443,7 @@ div.tocify {
 <p>The raw data used for this study are available in the <a href="https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/tree/master/01_Raw_Data">Sagebrush_rooting_in_vitro_prop</a> GitHub repository in the <code>01_Raw_Data</code> folder. The data can be split into two categories supporting analyses presented in this study:</p>
 <ol style="list-style-type: decimal">
 <li>Tissue culture data: These data are related to the rooting experiment conducted on shoot tips.</li>
-<li><em>In vitro</em> survival and growth of plantules: These data are related to the survival and growth experiment of rooted shoot tips into growth media.</li>
+<li><em>In vitro</em> survival and growth of plantlets: These data are related to the survival and growth experiment of rooted shoot tips into growth media.</li>
 </ol>
 <p>We are providing more information on these data below.</p>
 <div id="tissue-culture-data" class="section level3 tabset tabset-pills">
@@ -469,13 +469,14 @@ div.tocify {
 <ul>
 <li><code>Block</code>: 1 to 5. Each individual were randomly allocated to a block and a block has 9 individual.</li>
 <li><code>Treatment</code>: <code>Control</code> (= no growth regulator), <code>IBA_1</code> (IBA 1 mg/l), <code>IBA_05</code> (IBA 0.5 mg/l), <code>NAA_1</code> (NAA 1 mg/l), <code>NAA_05</code> (NAA 0.5 mg/l).</li>
-<li><code>Replicate</code>: 1 to 3. Each individual had 3 shoot tips randomly allocated per treatment.</li>
+<li><code>Replicate</code>: 1 to 3. Each individual line had 3 shoot tips randomly allocated per treatment.</li>
 <li><code>Genotype</code>: <code>G1</code> (drought-tolerant genotype from ID3 population) and <code>G2</code> (drought-sensitive population from UT2 population). See distribution <a href="https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html">map</a>.</li>
-<li>Individual: <code>Individual</code> and <code>IndGeno</code>. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.</li>
+<li>Individual line: <code>Individual</code> and <code>IndGeno</code>. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.</li>
 <li><code>Callus</code>: Binary (1 = present; 0 = absent).</li>
 <li><code>Root</code>: Count of number of roots per shoot tip.</li>
 </ul>
-<p>The <code>MERGE</code> dataset is available in <a href="#appendix-3">Appendix 3</a> and can be directly there. The individual and merged processed files are available in the <code>02_Processed_data</code> folder (see file <code>Processed_blocks_rooting.csv</code> for merged data or click <a href="https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv">here</a>).</p>
+<p>The coding rational used to discriminate individual lines is as follows: <code>Genotype</code><em><code>box</code></em><code>Individual in box</code>. Indeed, multiple seedlings were grown per Magenta box and we wanted to keep track of their provenance.</p>
+<p>The <code>MERGE</code> dataset is available in <a href="#appendix-3">Appendix 3</a> and can be directly there. Individual and merged processed files are available in the <code>02_Processed_data</code> folder (see file <code>Processed_blocks_rooting.csv</code> for merged data or click <a href="https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv">here</a>).</p>
 </div>
 <div id="tidy" class="section level4">
 <h4><span class="header-section-number">3.1.1.2</span> R code</h4>
@@ -595,8 +596,8 @@ write.csv(MERGE, file=paste0(&quot;02_Processed_data/Processed_&quot;, &quot;blo
 head(MERGE)</code></pre>
 </div>
 </div>
-<div id="in-vitro-survival-and-growth-of-plantules" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">3.1.2</span> <em>In vitro</em> survival and growth of plantules</h3>
+<div id="in-vitro-survival-and-growth-of-plantlets" class="section level3 tabset tabset-pills">
+<h3><span class="header-section-number">3.1.2</span> <em>In vitro</em> survival and growth of plantlets</h3>
 <p>Data on survival and plantlets heights at 3 and 5 weeks are stored in the <code>01_Raw_Data</code> folder in <code>Survival_height_clones.csv</code>. The dataset is available in <a href="#appendix-4">Appendix 4</a> and can be directly downloaded there. Please find below the description of the variables:</p>
 <ul>
 <li><code>SeedID</code>: This is equal to <code>IndGeno</code> in <code>MERGE</code> and therefore refers to the rooted shoot tip that was transferred.</li>
@@ -614,7 +615,7 @@ head(MERGE)</code></pre>
 <h2><span class="header-section-number">4.1</span> Statistics on plant materials</h2>
 <div id="analyses" class="section level3">
 <h3><span class="header-section-number">4.1.1</span> Analyses</h3>
-<p>Table <a href="#tab:statssampling">4.1</a> provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each.</p>
+<p>Table <a href="#tab:statssampling">4.1</a> provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual line, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each.</p>
 <p>Overall, the sampling at the basis of the rooting experiment could summarized as follows:</p>
 <blockquote>
 <p>“45 individual lines x 5 treatments x 3 replicates, for n = 675 total shoot tips.”</p>
@@ -999,7 +1000,7 @@ Figure 5.1: Barplot of callus production during the rooting experiment.
 </div>
 <div id="ranking-individuals" class="section level5">
 <h5><span class="header-section-number">5.1.2.1.2</span> Ranking individuals</h5>
-<p>We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section <a href="#RcodeCallus">5.1.2.2</a>.</p>
+<p>We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing callus independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section <a href="#RcodeCallus">5.1.2.2</a>.</p>
 <table>
 <caption><span id="tab:emmeansCalInd">Table 5.2: </span>Significant (p-value &lt;= 0.01) treatment pairwise comparisons.</caption>
 <thead>
@@ -1803,7 +1804,7 @@ Figure 5.5: Ridgeline plots based on callus (a) and root (b) data. For each vari
 <p>The clusters from the rooting analysis are not recovered here (each callus cluster are composed by a mixture of clusters from the rooting analysis) (see Figure <a href="#fig:clusterTrees">5.4</a>. This suggests that calli production do not inhibit rooting.</p>
 <div id="effect-of-growth-regulators-on-in-vitro-calli-production-in-artemisia-tridentata-sorted-by-rooting-clusters" class="section level5">
 <h5><span class="header-section-number">5.3.1.2.1</span> Effect of growth regulators on <em>in vitro</em> calli production in <em>Artemisia tridentata</em> sorted by rooting clusters</h5>
-<p>Table <a href="#tab:growthbyregulatorclustercallus">5.8</a> shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure <a href="#fig:heatmap2"><strong>??</strong></a>). The R code is available in section <a href="#Rcodecallusclust"><strong>??</strong></a>.</p>
+<p>Table <a href="#tab:growthbyregulatorclustercallus">5.8</a> shows that IBA at both concentrations seem to have a significant effect on callus production for individuals belonging to the blue cluster (Figure <a href="#fig:clusterTrees">5.4</a>). The R code is available in section <a href="#Rclustroot">5.3.2</a>.</p>
 <table>
 <caption><span id="tab:growthbyregulatorclustercallus">Table 5.8: </span>Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.</caption>
 <thead>
@@ -2163,7 +2164,7 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = &quot;Effect of
 </div>
 </div>
 <div id="step4" class="section level1">
-<h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> survival and growth of plantules</h1>
+<h1><span class="header-section-number">6</span> Step 4: <em>In vitro</em> survival and growth of plantlets</h1>
 <div id="sampling-and-preliminary-analyses" class="section level2 tabset tabset-pills">
 <h2><span class="header-section-number">6.1</span> Sampling and preliminary analyses</h2>
 <div id="analyses-8" class="section level3">

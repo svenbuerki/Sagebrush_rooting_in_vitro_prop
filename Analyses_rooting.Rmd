@@ -82,8 +82,8 @@ The analyses were conducted in four steps:
 - **Step 3:** Comparative analyses on rooting data (see section \@ref(step3)). This was done following a two-tier approach:
   + Statistical analyses (test for normality and conduct parametric or non-parametric statistics and multiple pairwise-comparison tests with *p*-value <= 0.01).
   + Clustering analyses.
-- **Step 4:** *In vitro* survival and growth of plantules (see section \@ref(step4)). 
-  + Assessing the effect of growth regulators and rooting clusters on plantule survival and growth rates.
+- **Step 4:** *In vitro* survival and growth of plantlets (see section \@ref(step4)). 
+  + Assessing the effect of growth regulators and rooting clusters on plantlet survival and growth rates.
 
 # Step 1: Present, import and tidy data {#step1}
 
@@ -92,7 +92,7 @@ The analyses were conducted in four steps:
 The raw data used for this study are available in the [Sagebrush_rooting_in_vitro_prop](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/tree/master/01_Raw_Data) GitHub repository in the `01_Raw_Data` folder. The data can be split into two categories supporting analyses presented in this study:
 
 1. Tissue culture data: These data are related to the rooting experiment conducted on shoot tips.
-2. *In vitro* survival and growth of plantules: These data are related to the survival and growth experiment of rooted shoot tips into growth media.
+2. *In vitro* survival and growth of plantlets: These data are related to the survival and growth experiment of rooted shoot tips into growth media.
 
 We are providing more information on these data below.
 
@@ -224,13 +224,15 @@ The final dataset (`MERGE`) contains the following columns (see Table \@ref(tab:
 
 - `Block`: 1 to 5. Each individual were randomly allocated to a block and a block has 9 individual.
 - `Treatment`: `Control` (= no growth regulator), `IBA_1` (IBA 1 mg/l), `IBA_05` (IBA 0.5 mg/l), `NAA_1` (NAA 1 mg/l), `NAA_05` (NAA 0.5 mg/l).
-- `Replicate`: 1 to 3. Each individual had 3 shoot tips randomly allocated per treatment.
+- `Replicate`: 1 to 3. Each individual line had 3 shoot tips randomly allocated per treatment.
 - `Genotype`: `G1` (drought-tolerant genotype from ID3 population) and `G2` (drought-sensitive population from UT2 population). See distribution [map](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html).
-- Individual: `Individual` and `IndGeno`. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.
+- Individual line: `Individual` and `IndGeno`. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.
 - `Callus`: Binary (1 = present; 0 = absent).
 - `Root`: Count of number of roots per shoot tip.
 
-The `MERGE` dataset is available in [Appendix 3] and can be directly there. The individual and merged processed files are available in the `02_Processed_data` folder (see file `Processed_blocks_rooting.csv` for merged data or click [here](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv)).
+The coding rational used to discriminate individual lines is as follows: `Genotype`_`box`_`Individual in box`. Indeed, multiple seedlings were grown per Magenta box and we wanted to keep track of their provenance. 
+
+The `MERGE` dataset is available in [Appendix 3] and can be directly there. Individual and merged processed files are available in the `02_Processed_data` folder (see file `Processed_blocks_rooting.csv` for merged data or click [here](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv)).
 
 #### R code {#tidy}
 
@@ -352,7 +354,7 @@ write.csv(MERGE, file=paste0("02_Processed_data/Processed_", "blocks_rooting.csv
 head(MERGE)
 ```
 
-### *In vitro* survival and growth of plantules {.tabset .tabset-pills}
+### *In vitro* survival and growth of plantlets {.tabset .tabset-pills}
 
 Data on survival and plantlets heights at 3 and 5 weeks are stored in the `01_Raw_Data` folder in `Survival_height_clones.csv`. The dataset is available in [Appendix 4] and can be directly downloaded there. Please find below the description of the variables:
 
@@ -369,7 +371,7 @@ Preliminary data summarizing results of our experiments are provided here to ass
 
 ### Analyses
 
-Table \@ref(tab:statssampling) provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. 
+Table \@ref(tab:statssampling) provides a summary of plant materials included in this study. Overall, 45 individuals distributed into two genotypes (which were evenly sampled) were generated from seeds. For each individual line, 15 shoot tips were produced and included into five treatments with three replicates (= 3 shoot tips/ind./treatment). Individuals were randomly allocated to 5 blocks containing 9 individual each. 
 
 Overall, the sampling at the basis of the rooting experiment could summarized as follows:
 
@@ -624,7 +626,7 @@ Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focu
 
 ##### Ranking individuals
 
-We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing calli independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section \@ref(RcodeCallus).
+We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing callus independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section \@ref(RcodeCallus).
 
 ```{r emmeansCalInd, eval=T, echo=F}
 # Estimated marginal means (Least-squares means) for treatments using M2
@@ -1127,22 +1129,30 @@ MatClustInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 ###~~~
 
 #Callus tree
+#Add top performers
+trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))] <- c(paste(trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))][1], " P1", sep=""), paste(trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))][2], " P2", sep=""))
+
 trCalplot <- ggtree(trCal, layout="circular", branch.length="none", color="black") + 
-  geom_tiplab(aes(angle=angle), color='black', offset=.7, cex = 2.5) +
+  geom_tiplab(aes(angle=angle), color='black', offset=.7, size = 2) +
   geom_hilight(node=RedNode, fill="red", alpha=.6) +
   geom_hilight(node=GreenNode, fill="green", alpha=.6) +
   geom_hilight(node=OrangeNode, fill="orange", alpha=.6) +
   geom_tippoint(color = as.character(MatClustInd[,2]), size = 3) +
-  xlim_tree(22)
+  #theme(plot.margin=unit(c(6,6,6,6), "cm")) +
+  xlim_tree(21)
 
 #Root tree
+#Add top performers
+trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))] <- c(paste(trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))][1], "P1", sep=""), paste(trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))][2], " P2", sep=""))
+
 trRtplot <- ggtree(trRt, layout="circular", branch.length="none", color="black") + 
-  geom_tiplab(aes(angle=angle), color='black', offset=.6, cex = 2.5) +
+  geom_tiplab(aes(angle=angle), color='black', offset=.4, size = 2) +
   geom_hilight(node=blackNode, fill="black", alpha=.6) +
   geom_hilight(node=pinkNode, fill="pink", alpha=.6) +
   geom_hilight(node=blueNode, fill="blue", alpha=.6) +
+  #theme(plot.margin=unit(c(6,6,6,6), "cm")) +
   geom_tippoint(color = as.character(MatClustInd[,3]), size = 3) +
-  xlim_tree(12)
+  xlim_tree(11)
 
 ggarrange(trCalplot, trRtplot,ncol = 2, nrow = 1, labels="auto")
 ```
@@ -1207,7 +1217,7 @@ CallusRidge <- MERGE %>%
   xlab("Callus data (0 = absence; 1 = presence)") +
   ylab("Individual lines (by clusters)     ") +
   theme_ridges() + 
-  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7), axis.text.x = element_text(size = 7)) 
 
 
 # Root ridgeline
@@ -1219,7 +1229,7 @@ RootRidge <- MERGE %>%
   theme_ridges() + 
   xlab("Root data (number of roots per shoot tip)") +
   ylab("Individual lines (by clusters)     ") +
-  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7)) 
+  theme(legend.position = "none", text = element_text(size = 7), axis.text.y = element_text(size = 7), axis.text.x = element_text(size = 7))  
 
 ggarrange(CallusRidge, RootRidge, ncol = 2, nrow = 1, labels="auto")
 ```
@@ -1303,7 +1313,7 @@ The clusters from the rooting analysis are not recovered here (each callus clust
 
 ##### Effect of growth regulators on *in vitro* calli production in *Artemisia tridentata* sorted by rooting clusters
 
-Table \@ref(tab:growthbyregulatorclustercallus) shows that IBA at both concentrations seem to have a significant effect on calli production for individuals belonging to the blue cluster (Figure \@ref(fig:heatmap2)). The R code is available in section \@ref(Rcodecallusclust).
+Table \@ref(tab:growthbyregulatorclustercallus) shows that IBA at both concentrations seem to have a significant effect on callus production for individuals belonging to the blue cluster (Figure \@ref(fig:clusterTrees)). The R code is available in section \@ref(Rclustroot).
 
 ```{r growthbyregulatorclustercallus, echo=F, eval=T}
 ###~~~
@@ -1578,7 +1588,7 @@ for(i in 1:nrow(RootingStatbyTreatCal)){
 knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of growth regulators on in vitro calli production on shoot tips of diploid Artemisia tridentata subsp. tridentata sorted by rooting clusters. Response: mean of the three replicates.")
 ```
 
-# Step 4: *In vitro* survival and growth of plantules {#step4}
+# Step 4: *In vitro* survival and growth of plantlets {#step4}
 
 ## Sampling and preliminary analyses {.tabset .tabset-pills}
 
