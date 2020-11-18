@@ -96,6 +96,22 @@ The raw data used for this study are available in the [Sagebrush_rooting_in_vitr
 
 We are providing more information on these data below.
 
+### Coding of individual lines {#codingind}
+
+Figure \@ref(fig:mother) allows to better grasp the coding approach applied to identify individual lines in this study. Our coding protocol is as follows:
+
+- Genotype (`G1`: drought-tolerant or `G2`: drought-sensitive). `G1` was collected in Idaho, whereas `G2` came from Utah (see [Map](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html) for more details.).
+- Magenta box ID (`b`). Multiple seeds from the same mother plant/individual were sown per Magenta box.
+- Individual in box. Because more than one plants were grown per magenta box, we have provided a unique ID for each plant.
+
+For instance, `G2_b27_1` corresponds to an individual line representing the drought-sensitive genotype (`G2`) grown in the Magenta box #27 (`b27`) and it was the first sampled plant in this box (`1`).
+
+Overall, the combination of these three items allows providing a unique ID to each individual line included in this study.
+
+```{r mother, echo=F, eval=T, out.width="50%", fig.align='center', fig.cap= "Example of a Magenta box containing individuals of diploid sagebrush used for the rooting experiment."}
+knitr::include_graphics("03_Figures_report/MotherPlant_low_res.jpg")
+```
+
 ### Tissue culture data {.tabset .tabset-pills}
 
 #### Import and tidy data
@@ -226,11 +242,9 @@ The final dataset (`MERGE`) contains the following columns (see Table \@ref(tab:
 - `Treatment`: `Control` (= no growth regulator), `IBA_1` (IBA 1 mg/l), `IBA_05` (IBA 0.5 mg/l), `NAA_1` (NAA 1 mg/l), `NAA_05` (NAA 0.5 mg/l).
 - `Replicate`: 1 to 3. Each individual line had 3 shoot tips randomly allocated per treatment.
 - `Genotype`: `G1` (drought-tolerant genotype from ID3 population) and `G2` (drought-sensitive population from UT2 population). See distribution [map](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html).
-- Individual line: `Individual` and `IndGeno`. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.
+- Individual line: `Individual` and `IndGeno`. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable (see section \@ref(codingind) for more details).
 - `Callus`: Binary (1 = present; 0 = absent).
 - `Root`: Count of number of roots per shoot tip.
-
-The coding rational used to discriminate individual lines is as follows: `Genotype`_`box`_`Individual in box`. Indeed, multiple seedlings were grown per Magenta box and we wanted to keep track of their provenance. 
 
 The `MERGE` dataset is available in [Appendix 3] and can be directly there. Individual and merged processed files are available in the `02_Processed_data` folder (see file `Processed_blocks_rooting.csv` for merged data or click [here](https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv)).
 
@@ -1071,7 +1085,7 @@ In this section, we are applying a clustering approach on callus (binary) and ro
 
 Clustering analyses were performed between individual lines based on the euclidean distance and the hierarchical clustering method implemented in the R *stats* package (using the `Callus` binary and `Root` count data; see section \@ref(Rclustroot) for R code). See Figure \@ref(fig:clusterTrees) for results and those are discussed below (by variable).
 
-```{r clusterTrees, echo = F, eval = T, , warning = F, out.width = "100%", fig.cap="Clustering analyses based on callus (a) and root (b) data. For each variable, clusters are represented by shaded polygons, whereas the circles represent the assignment of the individual lines in the other analysis."}
+```{r clusterTrees, cache = F, echo = F, eval = T, , warning = F, out.width = "100%", fig.cap="Clustering analyses based on callus (a) and root (b) data. For each variable, clusters are represented by shaded polygons, whereas the circles represent the assignment of the individual lines in the other analysis."}
 ####~~~~
 #Clustering analyses
 ####~~~~
@@ -1097,7 +1111,6 @@ RedNode <- getMRCA(trCal, c("G2_b5_1", "G1_b7_1"))
 GreenNode <- getMRCA(trCal, c("G2_b16_1", "G2_b17_1"))
 #Orange node
 OrangeNode <- getMRCA(trCal, c("G1_b10_1", "G2_b7_1"))
-
 
 ###
 # Root data
@@ -1130,10 +1143,10 @@ MatClustInd <- read.csv("02_Processed_data/Rooting_clusters_individuals.csv")
 
 #Callus tree
 #Add top performers
-trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))] <- c(paste(trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))][1], " P1", sep=""), paste(trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))][2], " P2", sep=""))
+#trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))] <- c(paste(trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))][1], " P1", sep=""), paste(trCal$tip.label[which(trCal$tip.label %in% rownames(TopInd))][2], " P2", sep=""))
 
 trCalplot <- ggtree(trCal, layout="circular", branch.length="none", color="black") + 
-  geom_tiplab(aes(angle=angle), color='black', offset=.7, size = 2) +
+  geom_tiplab(aes(angle=angle), color='black', offset=.7, size = 2.2) +
   geom_hilight(node=RedNode, fill="red", alpha=.6) +
   geom_hilight(node=GreenNode, fill="green", alpha=.6) +
   geom_hilight(node=OrangeNode, fill="orange", alpha=.6) +
@@ -1143,10 +1156,10 @@ trCalplot <- ggtree(trCal, layout="circular", branch.length="none", color="black
 
 #Root tree
 #Add top performers
-trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))] <- c(paste(trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))][1], "P1", sep=""), paste(trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))][2], " P2", sep=""))
+#trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))] <- c(paste(trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))][1], "P1", sep=""), paste(trRt$tip.label[which(trRt$tip.label %in% rownames(TopInd))][2], " P2", sep=""))
 
 trRtplot <- ggtree(trRt, layout="circular", branch.length="none", color="black") + 
-  geom_tiplab(aes(angle=angle), color='black', offset=.4, size = 2) +
+  geom_tiplab(aes(angle=angle), color='black', offset=.4, size = 2.2) +
   geom_hilight(node=blackNode, fill="black", alpha=.6) +
   geom_hilight(node=pinkNode, fill="pink", alpha=.6) +
   geom_hilight(node=blueNode, fill="blue", alpha=.6) +
@@ -1159,7 +1172,7 @@ ggarrange(trCalplot, trRtplot,ncol = 2, nrow = 1, labels="auto")
 
 To further compare the clusters identified in Figure \@ref(fig:clusterTrees) ridgeline plots (or density plots; more on this topic [here](https://www.data-to-viz.com/graph/ridgeline.html)) were inferred for each variable using the R package *ggridges*. See Figure \@ref(fig:RidgelinesClusterTrees) for the results. 
 
-```{r RidgelinesClusterTrees, echo=F, eval=T, out.width = "100%", fig.cap="Ridgeline plots based on callus (a) and root (b) data. For each variable, individual lines are sorted based on the clustering analysis and ridgeline plots are colored based on clusters."}
+```{r RidgelinesClusterTrees, cache=F, echo=F, eval=T, out.width = "100%", fig.cap="Ridgeline plots based on callus (a) and root (b) data. For each variable, individual lines are sorted based on the clustering analysis and ridgeline plots are colored based on clusters."}
 
 ###~~~~
 # Ridgeline plots

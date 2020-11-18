@@ -387,7 +387,7 @@ div.tocify {
   <a href="Gallery.html">Gallery</a>
 </li>
 <li>
-  <a href="location_pop.html">Map of sampling</a>
+  <a href="location_pop.html">Map</a>
 </li>
 <li>
   <a href="citation.html">How to cite</a>
@@ -449,11 +449,28 @@ div.tocify {
 <li><em>In vitro</em> survival and growth of plantlets: These data are related to the survival and growth experiment of rooted shoot tips into growth media.</li>
 </ol>
 <p>We are providing more information on these data below.</p>
+<div id="codingind" class="section level3">
+<h3><span class="header-section-number">3.1.1</span> Coding of individual lines</h3>
+<p>Figure <a href="#fig:mother">3.1</a> allows to better grasp the coding approach applied to identify individual lines in this study. Our coding protocol is as follows:</p>
+<ul>
+<li>Genotype (<code>G1</code>: drought-tolerant or <code>G2</code>: drought-sensitive). <code>G1</code> was collected in Idaho, whereas <code>G2</code> came from Utah (see <a href="https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html">Map</a> for more details.).</li>
+<li>Magenta box ID (<code>b</code>). Multiple seeds from the same mother plant/individual were sown per Magenta box.</li>
+<li>Individual in box. Because more than one plants were grown per magenta box, we have provided a unique ID for each plant.</li>
+</ul>
+<p>For instance, <code>G2_b27_1</code> corresponds to an individual line representing the drought-sensitive genotype (<code>G2</code>) grown in the Magenta box #27 (<code>b27</code>) and it was the first sampled plant in this box (<code>1</code>).</p>
+<p>Overall, the combination of these three items allows providing a unique ID to each individual line included in this study.</p>
+<div class="figure" style="text-align: center"><span id="fig:mother"></span>
+<img src="03_Figures_report/MotherPlant_low_res.jpg" alt="Example of a Magenta box containing individuals of diploid sagebrush used for the rooting experiment." width="50%" />
+<p class="caption">
+Figure 3.1: Example of a Magenta box containing individuals of diploid sagebrush used for the rooting experiment.
+</p>
+</div>
+</div>
 <div id="tissue-culture-data" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">3.1.1</span> Tissue culture data</h3>
+<h3><span class="header-section-number">3.1.2</span> Tissue culture data</h3>
 <div id="import-and-tidy-data" class="section level4">
-<h4><span class="header-section-number">3.1.1.1</span> Import and tidy data</h4>
-<p>The objective of this section is to merge data on rooting and callus stored in spreadsheets (in <code>csv</code> format). Each spreadsheet corresponds to a block and the code provided in section <a href="#tidy">3.1.1.2</a> collates these data into one <code>data.frame</code> for downstream analyses.</p>
+<h4><span class="header-section-number">3.1.2.1</span> Import and tidy data</h4>
+<p>The objective of this section is to merge data on rooting and callus stored in spreadsheets (in <code>csv</code> format). Each spreadsheet corresponds to a block and the code provided in section <a href="#tidy">3.1.2.2</a> collates these data into one <code>data.frame</code> for downstream analyses.</p>
 <pre><code>## [1] &quot;List of csv files with block data:&quot;</code></pre>
 <pre><code>## [1] &quot;01_Raw_Data/1_block_8_12_2020 - 1_block.csv&quot;
 ## [2] &quot;01_Raw_Data/2_block_8_15_2020 - 2_block.csv&quot;
@@ -474,15 +491,14 @@ div.tocify {
 <li><code>Treatment</code>: <code>Control</code> (= no growth regulator), <code>IBA_1</code> (IBA 1 mg/l), <code>IBA_05</code> (IBA 0.5 mg/l), <code>NAA_1</code> (NAA 1 mg/l), <code>NAA_05</code> (NAA 0.5 mg/l).</li>
 <li><code>Replicate</code>: 1 to 3. Each individual line had 3 shoot tips randomly allocated per treatment.</li>
 <li><code>Genotype</code>: <code>G1</code> (drought-tolerant genotype from ID3 population) and <code>G2</code> (drought-sensitive population from UT2 population). See distribution <a href="https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html">map</a>.</li>
-<li>Individual line: <code>Individual</code> and <code>IndGeno</code>. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable.</li>
+<li>Individual line: <code>Individual</code> and <code>IndGeno</code>. The latter variable combines data on genotype and individual and it will be used throughout the document to represent the individual variable (see section <a href="#codingind">3.1.1</a> for more details).</li>
 <li><code>Callus</code>: Binary (1 = present; 0 = absent).</li>
 <li><code>Root</code>: Count of number of roots per shoot tip.</li>
 </ul>
-<p>The coding rational used to discriminate individual lines is as follows: <code>Genotype</code><em><code>box</code></em><code>Individual in box</code>. Indeed, multiple seedlings were grown per Magenta box and we wanted to keep track of their provenance.</p>
 <p>The <code>MERGE</code> dataset is available in <a href="#appendix-3">Appendix 3</a> and can be directly there. Individual and merged processed files are available in the <code>02_Processed_data</code> folder (see file <code>Processed_blocks_rooting.csv</code> for merged data or click <a href="https://github.com/svenbuerki/Sagebrush_rooting_in_vitro_prop/blob/master/02_Processed_data/Processed_blocks_rooting.csv">here</a>).</p>
 </div>
 <div id="tidy" class="section level4">
-<h4><span class="header-section-number">3.1.1.2</span> R code</h4>
+<h4><span class="header-section-number">3.1.2.2</span> R code</h4>
 <p>Raw data in <code>csv</code> format are stored in the <code>01_Raw_data</code> folder. The processed/tidy data are saved in <code>csv</code> format in the <code>02_Processed_data</code> folder. The <code>MERGE</code> object (in class <code>data.frame</code>) will be used for downstream analyses.</p>
 <pre class="r"><code>###~~
 #List all csv files (raw data from blocks)
@@ -600,7 +616,7 @@ head(MERGE)</code></pre>
 </div>
 </div>
 <div id="in-vitro-survival-and-growth-of-plantlets" class="section level3 tabset tabset-pills">
-<h3><span class="header-section-number">3.1.2</span> <em>In vitro</em> survival and growth of plantlets</h3>
+<h3><span class="header-section-number">3.1.3</span> <em>In vitro</em> survival and growth of plantlets</h3>
 <p>Data on survival and plantlets heights at 3 and 5 weeks are stored in the <code>01_Raw_Data</code> folder in <code>Survival_height_clones.csv</code>. The dataset is available in <a href="#appendix-4">Appendix 4</a> and can be directly downloaded there. Please find below the description of the variables:</p>
 <ul>
 <li><code>SeedID</code>: This is equal to <code>IndGeno</code> in <code>MERGE</code> and therefore refers to the rooted shoot tip that was transferred.</li>

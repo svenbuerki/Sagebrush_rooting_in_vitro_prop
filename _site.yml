@@ -11,7 +11,7 @@ navbar:
       href: Analyses_rooting.html
     - text: "Gallery"
       href: Gallery.html  
-    - text: "Map of sampling"
+    - text: "Map"
       href: location_pop.html
     - text: "How to cite"
       href: citation.html

@@ -26,18 +26,6 @@ Figure \@ref(fig:mother) is an example of grown seedlings used as mother plants 
 knitr::include_graphics("03_Figures_report/MotherPlant_low_res.jpg")
 ```
 
-## Coding of individual lines
-
-Figure \@ref(fig:mother) allows better understanding the coding approach applied to identify individual lines in this study. Our coding protocol is as follows:
-
-- Genotype (`G1`: drought-tolerant or `G2`: drought-sensitive). `G1` was collected in Idaho, whereas `G2` came from Utah (see [Map](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html) for more details.).
-- Magenta box ID (`b`). 30 seeds from the same mother plant/individual were sown per Magenta box.
-- Individual in box. Because more than one plants were grown per magenta box, we have provided a unique ID for each plant.
-
-For instance, our top performer, `G2_b27_1`, corresponds to an individual line representing the drought-sensitive genotype (`G2`) grown in the Magenta box #27 (`b27`) and it was the first sampled plant in this box (`1`).
-
-Overall, the combination of these three items allows providing a unique ID to each individual line included in this study.
-
 # Rooting experiment
 
 Figure \@ref(fig:rootexp) provides a more visual understanding of the scoring method used for counting roots (arrows) and identifying callus (see zoomed area). We can also compare treatment effects on rooting.  
