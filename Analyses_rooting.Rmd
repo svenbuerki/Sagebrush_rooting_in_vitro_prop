@@ -2211,7 +2211,7 @@ text(x=top, y=1.8, c("P1", "P2"))
 
 Citations of all R packages used to generate this report. 
 
-```{r generateBibliography, results="asis", echo=FALSE, warning = FALSE, message=FALSE}
+```{r generateBibliography, eval = T, results="asis", cache = F, echo=F, warning = FALSE, message=FALSE}
 library("knitcitations")
 cleanbib()
 options("citation_format" = "pandoc")

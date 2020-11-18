@@ -1,7 +1,7 @@
 name: "Sagebrush research"
 output_dir: "."
 navbar:
-  title: "In vitro propagation of Basin Big sagebrush"
+  title: "In vitro propagation of sagebrush"
   left:
     - text: "Home"
       href: index.html
@@ -9,6 +9,8 @@ navbar:
       href: protocols.html
     - text: "Reproducible workflow"
       href: Analyses_rooting.html
+    - text: "Gallery"
+      href: Gallery.html  
     - text: "Map of sampling"
       href: location_pop.html
     - text: "How to cite"

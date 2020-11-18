@@ -1,0 +1,47 @@
+---
+title: "Gallery"
+output:
+  bookdown::html_document2: 
+    toc: TRUE
+    toc_float: TRUE
+link-citations: yes
+fontsize: 12pt
+---
+
+```{r packages, echo=FALSE, warning=FALSE, include=FALSE}
+library(knitr)
+library(rmarkdown)
+library(bookdown)
+```
+
+# Overview
+
+We are providing here a set of images supporting data presented in this study.
+
+# Individual lines
+
+Figure \@ref(fig:mother) is an example of grown seedlings used as mother plants to initiate individual lines for the rooting experiment. Click [here](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html) to know more about the locations where seeds were collected. We have used seeds from one mother plant (or individual) per population. 
+
+```{r mother, echo=F, eval=T, out.width="50%", fig.align='center', fig.cap= "Example of a Magenta box containing individuals of diploid sagebrush used for the rooting experiment."}
+knitr::include_graphics("03_Figures_report/MotherPlant_low_res.jpg")
+```
+
+## Coding of individual lines
+
+Figure \@ref(fig:mother) allows better understanding the coding approach applied to identify individual lines in this study. Our coding protocol is as follows:
+
+- Genotype (`G1`: drought-tolerant or `G2`: drought-sensitive). `G1` was collected in Idaho, whereas `G2` came from Utah (see [Map](https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html) for more details.).
+- Magenta box ID (`b`). 30 seeds from the same mother plant/individual were sown per Magenta box.
+- Individual in box. Because more than one plants were grown per magenta box, we have provided a unique ID for each plant.
+
+For instance, our top performer, `G2_b27_1`, corresponds to an individual line representing the drought-sensitive genotype (`G2`) grown in the Magenta box #27 (`b27`) and it was the first sampled plant in this box (`1`).
+
+Overall, the combination of these three items allows providing a unique ID to each individual line included in this study.
+
+# Rooting experiment
+
+Figure \@ref(fig:rootexp) provides a more visual understanding of the scoring method used for counting roots (arrows) and identifying callus (see zoomed area). We can also compare treatment effects on rooting.  
+
+```{r rootexp, echo=F, eval=T, out.width="100%", fig.cap= "Representative observations of root and callus development in shoot tips of Artemisia tridentata subsp. tridentata sorted by growth-regulator treatment after 15 days in culture."}
+knitr::include_graphics("03_Figures_report/Rooting_Experiment_Arrows_Magnifier_low_res.jpg")
+```
