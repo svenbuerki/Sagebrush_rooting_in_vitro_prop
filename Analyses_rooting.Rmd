@@ -1022,14 +1022,14 @@ pchisq(m2root$deviance, m2root$df.residual, lower.tail = FALSE)
 
 Here, we will start by testing for individual effects by conducting chi-square analyses on binary callus and root data stored respectively in `IndCallBin` and `IndRootBin`. These analyses will be further investigated by conducting clustering analyses (see section \@ref(clustAnalyses)). 
 
-To identify top performers, we will then apply the Kruskal-Wallis rank sum test on root count data followed by pairwise Wilcox tests based on the `MERGE` dataset. We use a non-parametric test since the data are not normaly distributed:
+To identify top performers, we will then apply the Kruskal-Wallis rank sum test on root count data followed by pairwise Wilcoxon tests based on the `MERGE` dataset. We use a non-parametric test since the data are not normaly distributed:
 
 ```{r norm, echo=T, eval=T}
 # Shapiro-Wilk normality test on Root count data in MERGE
 shapiro.test(MERGE$Root)
 ```
 
-To qualify as a top performer, an individual will have to outperform >= 20% of individuals (based on pairwise Wilcox tests with a *p*-value <= 0.01).
+To qualify as a top performer, an individual will have to outperform >= 20% of individuals (based on pairwise Wilcoxon tests with a *p*-value <= 0.01).
 
 ### Callus and Root binary data
 
@@ -1051,7 +1051,7 @@ Both analyses strongly suggest individual effects, which will be further investi
 
 #### Analyses
 
-Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a *p*-value of <= 0.01) on `MERGE` data. Results of these analyses are presented below and the R code is available in section \@ref(RInd). To qualify as a top performer, an individual has to outperform >= 20% of individuals (based on pairwise Wilcox tests with a *p*-value <= 0.01).
+Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcoxon tests to assess individual effects and rank those (with a *p*-value of <= 0.01) on `MERGE` data. Results of these analyses are presented below and the R code is available in section \@ref(RInd). To qualify as a top performer, an individual has to outperform >= 20% of individuals (based on pairwise Wilcoxon tests with a *p*-value <= 0.01).
 
 ```{r kruskalInd, echo=F, eval=T, message=FALSE, warning=FALSE}
 ###~~~
@@ -1063,10 +1063,10 @@ K1 <- kruskal.test(Root ~ IndGeno, data = MERGE)
 print(K1)
 
 ###~~~
-# Run Wilcox test on Root ~ IndGeno
+# Run Wilcoxon test on Root ~ IndGeno
 ###~~~
 
-print("Perform Wilcox test on Root ~ Individual")
+print("Perform Wilcoxon test on Root ~ Individual")
 wilcoxRootInd <- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
                  p.adjust.method = "BH")
 
@@ -1125,10 +1125,10 @@ K1 <- kruskal.test(Root ~ IndGeno, data = MERGE)
 print(K1)
 
 ###~~~
-# Run Wilcox test on Root ~ IndGeno
+# Run Wilcoxon test on Root ~ IndGeno
 ###~~~
 
-print("Perform Wilcox test on Root ~ Individual")
+print("Perform Wilcoxon test on Root ~ Individual")
 wilcoxRootInd <- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
                  p.adjust.method = "BH")
 

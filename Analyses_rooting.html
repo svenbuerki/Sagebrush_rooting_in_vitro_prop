@@ -1508,7 +1508,7 @@ pchisq(m2root$deviance, m2root$df.residual, lower.tail = FALSE)</code></pre>
 <div id="testing-for-individual-effect" class="section level2">
 <h2><span class="header-section-number">5.4</span> Testing for individual effect</h2>
 <p>Here, we will start by testing for individual effects by conducting chi-square analyses on binary callus and root data stored respectively in <code>IndCallBin</code> and <code>IndRootBin</code>. These analyses will be further investigated by conducting clustering analyses (see section <a href="#clustAnalyses">5.5.1</a>).</p>
-<p>To identify top performers, we will then apply the Kruskal-Wallis rank sum test on root count data followed by pairwise Wilcox tests based on the <code>MERGE</code> dataset. We use a non-parametric test since the data are not normaly distributed:</p>
+<p>To identify top performers, we will then apply the Kruskal-Wallis rank sum test on root count data followed by pairwise Wilcoxon tests based on the <code>MERGE</code> dataset. We use a non-parametric test since the data are not normaly distributed:</p>
 <pre class="r"><code># Shapiro-Wilk normality test on Root count data in MERGE
 shapiro.test(MERGE$Root)</code></pre>
 <pre><code>## 
@@ -1516,7 +1516,7 @@ shapiro.test(MERGE$Root)</code></pre>
 ## 
 ## data:  MERGE$Root
 ## W = 0.62681, p-value &lt; 2.2e-16</code></pre>
-<p>To qualify as a top performer, an individual will have to outperform &gt;= 20% of individuals (based on pairwise Wilcox tests with a <em>p</em>-value &lt;= 0.01).</p>
+<p>To qualify as a top performer, an individual will have to outperform &gt;= 20% of individuals (based on pairwise Wilcoxon tests with a <em>p</em>-value &lt;= 0.01).</p>
 <div id="callus-and-root-binary-data" class="section level3">
 <h3><span class="header-section-number">5.4.1</span> Callus and Root binary data</h3>
 <pre class="r"><code>###~~~
@@ -1543,14 +1543,14 @@ chisq.test(t(IndRootBin))</code></pre>
 <h3><span class="header-section-number">5.4.2</span> Root count data</h3>
 <div id="analyses-6" class="section level4">
 <h4><span class="header-section-number">5.4.2.1</span> Analyses</h4>
-<p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a <em>p</em>-value of &lt;= 0.01) on <code>MERGE</code> data. Results of these analyses are presented below and the R code is available in section <a href="#RInd">5.4.2.2</a>. To qualify as a top performer, an individual has to outperform &gt;= 20% of individuals (based on pairwise Wilcox tests with a <em>p</em>-value &lt;= 0.01).</p>
+<p>Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcoxon tests to assess individual effects and rank those (with a <em>p</em>-value of &lt;= 0.01) on <code>MERGE</code> data. Results of these analyses are presented below and the R code is available in section <a href="#RInd">5.4.2.2</a>. To qualify as a top performer, an individual has to outperform &gt;= 20% of individuals (based on pairwise Wilcoxon tests with a <em>p</em>-value &lt;= 0.01).</p>
 <pre><code>## [1] &quot;Perform Kruskal-Wallis Rank Sum Test: Root ~ Individual&quot;</code></pre>
 <pre><code>## 
 ##  Kruskal-Wallis rank sum test
 ## 
 ## data:  Root by IndGeno
 ## Kruskal-Wallis chi-squared = 184.14, df = 44, p-value &lt; 2.2e-16</code></pre>
-<pre><code>## [1] &quot;Perform Wilcox test on Root ~ Individual&quot;</code></pre>
+<pre><code>## [1] &quot;Perform Wilcoxon test on Root ~ Individual&quot;</code></pre>
 <table>
 <caption><span id="tab:kruskalInd">Table 5.4: </span>List of individual that are outperforming at least 20% of individuals (based on Wilcoxon rank sum tests on Individual variable with a pval &lt;= 0.01).</caption>
 <thead>
@@ -1583,10 +1583,10 @@ K1 &lt;- kruskal.test(Root ~ IndGeno, data = MERGE)
 print(K1)
 
 ###~~~
-# Run Wilcox test on Root ~ IndGeno
+# Run Wilcoxon test on Root ~ IndGeno
 ###~~~
 
-print(&quot;Perform Wilcox test on Root ~ Individual&quot;)
+print(&quot;Perform Wilcoxon test on Root ~ Individual&quot;)
 wilcoxRootInd &lt;- pairwise.wilcox.test(MERGE$Root, MERGE$IndGeno,
                  p.adjust.method = &quot;BH&quot;)
 
