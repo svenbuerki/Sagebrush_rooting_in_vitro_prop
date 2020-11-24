@@ -2607,28 +2607,30 @@ Figure 6.1: Barplot of survival of plantlets after 5 weeks of growth.
 </div>
 <div id="treatment-and-cluster-effects-on-survival" class="section level4">
 <h4><span class="header-section-number">6.2.1.1</span> Treatment and cluster effects on survival</h4>
-<p>We are using Fisher tests to test whether treatments and rooting clusters had an effect on plantlets survival.</p>
-<pre><code>##    
-##     Control IBA_05 IBA_1 NAA_05 NAA_1
-##   0       6     29    34     30    28
-##   1       7     32    46     22    39</code></pre>
+<p>We are using Fisher tests to test whether treatments and rooting clusters had an effect on survivals of individual lines.</p>
+<pre><code>##         Dead Alive
+## Control    3     6
+## NAA_05    12    17
+## NAA_1     12    25
+## IBA_05    12    20
+## IBA_1     10    25</code></pre>
 <pre><code>## 
 ##  Fisher&#39;s Exact Test for Count Data
 ## 
-## data:  survTreat
-## p-value = 0.4411
+## data:  t(IndTreatSurv)
+## p-value = 0.8545
 ## alternative hypothesis: two.sided</code></pre>
-<pre><code>##    
-##     black blue pink
-##   0    16   54   52
-##   1    12   80   52</code></pre>
+<pre><code>##       Dead Alive
+## black    5     7
+## pink     1    15
+## blue     0    13</code></pre>
 <pre><code>## 
 ##  Fisher&#39;s Exact Test for Count Data
 ## 
-## data:  survClust
-## p-value = 0.1449
+## data:  t(IndClusterSurv)
+## p-value = 0.007476
 ## alternative hypothesis: two.sided</code></pre>
-<p>We are not pursuing our investigations any further since the analyses suggest that there are no significant treatment and cluster effects on survival. This means that if shoot tips were producing roots then they had equal probabilities of survival independently of treatment and/or cluster.</p>
+<p>These analyses showed that there is no treatment effect on survival, however there is a significant rooting cluster effect.</p>
 </div>
 </div>
 <div id="survcodeR" class="section level3">
@@ -2652,18 +2654,66 @@ barplot(table(survheig$X5_w_survival), xlab=&quot;Binary data on survival&quot;,
 ###~~~
 #Treatment effect on survival
 ##~~~
-survTreat &lt;- t(table(survheig$Treat, survheig$X5_w_survival))
+
+###
+#At individual level (binary) by treatment 
+#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
+###
+Treat &lt;- unique(survheig$Treat)[c(4,2,1,5,3)]
+
+IndTreatSurv &lt;- matrix(ncol=2, nrow = length(Treat))
+rownames(IndTreatSurv) &lt;- Treat
+colnames(IndTreatSurv) &lt;- c(&quot;Dead&quot;, &quot;Alive&quot;)
+for(i in 1:nrow(IndTreatSurv)){
+  tmp &lt;- subset(survheig, survheig$Treat == rownames(IndTreatSurv)[i])
+  #Look at individual survival of plantlets
+  survInd &lt;- table(tmp$SeedID, tmp$X5_w_survival)
+  #Turn matrix into binary
+  survInd[survInd &gt; 1] &lt;- 1
+  #If individual has both dead and alive plantlets say it is alive
+  todo &lt;- which(rowSums(survInd) == 2)
+  if(length(todo) != 0){
+    survInd[as.vector(todo),1] &lt;- 0
+  }
+    #Upadte matrix
+  IndTreatSurv[i,] &lt;- as.vector(colSums(survInd))
+}
+print(IndTreatSurv)
 
 #Conduct Fisher test
-fisher.test(survTreat)
+fisher.test(t(IndTreatSurv))
 
 ###~~~
 #Cluster effect on survival
 ##~~~
-survClust &lt;- t(table(survheig$Cluster, survheig$X5_w_survival))
+
+###
+#At individual level (binary) by cluster 
+#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
+###
+Cluster &lt;- unique(survheig$Cluster)[c(3,1,2)]
+
+IndClusterSurv &lt;- matrix(ncol=2, nrow = length(Cluster))
+rownames(IndClusterSurv) &lt;- Cluster
+colnames(IndClusterSurv) &lt;- c(&quot;Dead&quot;, &quot;Alive&quot;)
+for(i in 1:nrow(IndClusterSurv)){
+  tmp &lt;- subset(survheig, survheig$Cluster == rownames(IndClusterSurv)[i])
+  #Look at individual survival of plantlets
+  survInd &lt;- table(tmp$SeedID, tmp$X5_w_survival)
+  #Turn matrix into binary
+  survInd[survInd &gt; 1] &lt;- 1
+  #If individual has both dead and alive plantlets say it is alive
+  todo &lt;- which(rowSums(survInd) == 2)
+  if(length(todo) != 0){
+    survInd[as.vector(todo),1] &lt;- 0
+  }
+    #Upadte matrix
+  IndClusterSurv[i,] &lt;- as.vector(colSums(survInd))
+}
+print(IndClusterSurv)
 
 #Conduct Fisher test
-fisher.test(survClust)</code></pre>
+fisher.test(t(IndClusterSurv))</code></pre>
 </div>
 </div>
 <div id="statistical-analyses-on-growth-data" class="section level2 tabset tabset-pills">
