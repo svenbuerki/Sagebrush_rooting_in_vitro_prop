@@ -2061,7 +2061,7 @@ colnames(IndTreatSurv) <- c("Dead", "Alive")
 for(i in 1:nrow(IndTreatSurv)){
   tmp <- subset(survheig, survheig$Treat == rownames(IndTreatSurv)[i])
   #Look at individual survival of plantlets
-  survInd <- table(tmp$SeedID, tmp$X5_w_survival)
+  survInd <- table(as.vector(tmp$SeedID), as.vector(tmp$X5_w_survival))
   #Turn matrix into binary
   survInd[survInd > 1] <- 1
   #If individual has both dead and alive plantlets say it is alive
@@ -2093,7 +2093,7 @@ colnames(IndClusterSurv) <- c("Dead", "Alive")
 for(i in 1:nrow(IndClusterSurv)){
   tmp <- subset(survheig, survheig$Cluster == rownames(IndClusterSurv)[i])
   #Look at individual survival of plantlets
-  survInd <- table(tmp$SeedID, tmp$X5_w_survival)
+  survInd <- table(as.vector(tmp$SeedID), as.vector(tmp$X5_w_survival))
   #Turn matrix into binary
   survInd[survInd > 1] <- 1
   #If individual has both dead and alive plantlets say it is alive
