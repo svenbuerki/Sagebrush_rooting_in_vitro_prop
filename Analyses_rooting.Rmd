@@ -4,6 +4,7 @@ author: "Rachael Barron, Peggy Martinez, Marcelo Serpe, Sven Buerki"
 output:
   bookdown::html_document2: 
     toc: TRUE
+    toc_depth: 4
     toc_float: TRUE
 link-citations: yes
 fontsize: 12pt
@@ -35,6 +36,7 @@ library(ggridges)
 library(ggplot2)
 library(TreeTools)
 library(forcats)
+library(MASS)
 
 #Generate BibTex citation file for all R packages used to produce report
 knitr::write_bib(.packages(), file = 'packages.bib')
@@ -79,8 +81,9 @@ The analyses were conducted in four steps:
 
 - **Step 1:** Present, import and tidy data (see section \@ref(step1)).
 - **Step 2:** Preliminary analyses on rooting experiment (see section \@ref(step2)).
-- **Step 3:** Comparative analyses on rooting data (see section \@ref(step3)). This was done following a two-tier approach:
-  + Statistical analyses (test for normality and conduct parametric or non-parametric statistics and multiple pairwise-comparison tests with *p*-value <= 0.01).
+- **Step 3:** Comparative analyses on rooting data (see section \@ref(step3)). This was done following a three-tier approach:
+  + Prepare response variables.
+  + Statistical analyses (*p*-value <= 0.01).
   + Clustering analyses.
 - **Step 4:** *In vitro* survival and growth of plantlets (see section \@ref(step4)). 
   + Assessing the effect of growth regulators and rooting clusters on plantlet survival and growth rates.
@@ -482,12 +485,11 @@ CallusStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(Call
 #Infer Response and mean no roots
 for(i in 1:nrow(CallusStatbyTreat)){
   foo <- subset(MERGE, MERGE$Treatment == rownames(CallusStatbyTreat)[i])
-  CallusStatbyTreat$`Response (%)`[i] <- paste(round(100*mean(foo$Callus),2), "+/-", round(sd(foo$Callus),2), sep = " ") 
+  CallusStatbyTreat$`Response (%)`[i] <- round(100*mean(foo$Callus),2)
 }
 
-
 #Plot table
-knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates (+/- standard deviation).")
+knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.")
 ```
 
 ### R code {#growthbyregulatorcallus}
@@ -508,12 +510,12 @@ CallusStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(Call
 #Infer Response and mean no roots
 for(i in 1:nrow(CallusStatbyTreat)){
   foo <- subset(MERGE, MERGE$Treatment == rownames(CallusStatbyTreat)[i])
-  CallusStatbyTreat$`Response (%)`[i] <- paste(round(100*mean(foo$Callus),2), "+/-", round(sd(foo$Callus),2), sep = " ") 
+  CallusStatbyTreat$`Response (%)`[i] <- round(100*mean(foo$Callus),2) 
 }
 
 
 #Plot table
-knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates (+/- standard deviation).")
+knitr::kable(CallusStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro calli development on shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates.")
 ```
 
 ## Effect of growth regulators on *in vitro* rooting of *Artemisia tridentata* {.tabset .tabset-pills}
@@ -538,13 +540,13 @@ RootingStatbyTreat$`Concentration (mg/l)` <- c("-", sapply(strsplit(rownames(Roo
 #Infer Response and mean no roots
 for(i in 1:nrow(RootingStatbyTreat)){
   foo <- subset(MERGE, MERGE$Treatment == rownames(RootingStatbyTreat)[i])
-  RootingStatbyTreat$`Response (%)`[i] <- paste(round(100*(mean(foo$RootBin)),2), "+/-", round(sd(foo$RootBin),2), sep=" ")
-  RootingStatbyTreat$`Av. No. of roots`[i] <- paste(round(mean(foo$Root),2), "+/-", round(sd(foo$Root),2), sep=" ")
+  RootingStatbyTreat$`Response (%)`[i] <- round(100*(mean(foo$RootBin)),2)
+  RootingStatbyTreat$`Av. No. of roots`[i] <- round(mean(foo$Root),2)
 }
 
 
 #Plot table
-knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates +/- standard deviation; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
+knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates; Av. No. of roots (Average number of roots per shoot tip): means.")
 ```
 
 ### R code {#growthbyregulatorcode}
@@ -574,388 +576,458 @@ for(i in 1:nrow(RootingStatbyTreat)){
 knitr::kable(RootingStatbyTreat, row.names=F, caption = "Effect of growth regulators on in vitro rooting for shoot tips of diploid Artemisia tridentata subsp. tridentata. Response: mean of the three replicates +/- standard deviation; Av. No. of roots (Average number of roots per shoot tip): mean +/- standard deviation.")
 ```
 
-# Step 3: Comparative analyses on rooting data {#step3}
+# Step 3: Comparative analyses {#step3}
 
-The input variables for these analyses are stored in `MERGE`.
+The input data for these analyses are stored in `MERGE`, but we will transform the data to test for treatment, genotype and individual effects. 
 
-## Statistical analyses on callus data 
+## Prepare the response variables
 
-### Selecting the best method
+### Treatment {.tabset .tabset-pills}
 
-Table \@ref(tab:growthbyregulatorcallus) demonstrated that >70% of shoot tips undergoing growth regulator treatments developed calli, whereas those in the control treatment had very limited calli development (< 3%). This preliminary result strongly suggested that calli were induced by growth regulators and we will be testing this hypothesis using statistical analyses.
-
-The callus data were scored as binary (0 = absent; 1 = present) and the distribution of that data is in Figure \@ref(fig:distrCall).
-
-```{r distrCall, echo=T, eval=T, fig.cap="Barplot of callus production during the rooting experiment."}
-barplot(table(MERGE$Callus), xlab="Binary data on callus", ylab="Occurrence")
-```
-
-This type of data calls for the use of non-parametric analyses as done for the root (count) data. In this context, we will use GLM models to assess treatment and individual effects on callus production.
-
-### Investigate treatment and individual effects {.tabset .tabset-pills}
+The effect of growth regulators (= treatment) will be assessed based on three response variables: the number of shoot tips per plate that formed callus, those that developed roots (presence/absence), and the total number of roots. The analyses and associated R code (see section \@ref(codeTreatdata)) to produce these variables based on `MERGE` is found below. 
 
 #### Analyses
 
-We start by comparing GLM models investigating the effects of treatment and individual on callus production. The R code is available in section \@ref(RcodeCallus).
+We are displaying callus and rooting responses by plate unit to test for treatment effect. Here, a plate corresponds to an experimental unit, which is equal to a treatment by block by replicate (basically each row in the table is a plate). In a nutshell, the R code subset `MERGE` by plate and counts the number of callus (binary), root (binary) and root (count) (see section \@ref(codeTreatdata) for more details).    
 
-```{r callusmodels, echo=F, eval=T}
-# GLM to investigate treatment effect on callus production
-M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
+```{r prepTreat, echo=F, eval=T, }
+#Prepare an empty matrix to be populated 
 
-# GLM to investigate treatment and individual effects on callus production
-M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
+#How many rows? 5 treatments * 5 blocks * 3 replicates
+NrowTreat <- length(unique(MERGE$Treatment))*length(unique(MERGE$Block))*length(unique(MERGE$Replicate))
 
-# Which model best fit the data?
-anova(M1cal, M2cal, test = "Chisq")
+#Create empty matrix
+TreatMat <- matrix(ncol=6, nrow = NrowTreat)
+colnames(TreatMat) <- c("Treatment", "Block", "Replicate","Callus","RootBin","RootCount")
 
-# M2 better fits the data, but is it not over fitting it?
-pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
+#Add treatment, block and replicate
+TreatMat[,1] <- sort(rep(unique(MERGE$Treatment), length(unique(MERGE$Block))*length(unique(MERGE$Replicate))))
+TreatMat[,2] <- sort(rep(unique(MERGE$Block), length(unique(MERGE$Replicate))))
+TreatMat[,3] <- rep(seq(from=1, to = length(unique(MERGE$Replicate)), by = 1), nrow(TreatMat)/3)
 
-# Summary M2
-print(summary(M2cal))
+#TreatMat <- as.data.frame(TreatMat)
+
+#Get Callus Bin, Root Bin and Root Cout
+for(i in 1:nrow(TreatMat)){
+  tmp <- subset(MERGE, MERGE$Treatment == TreatMat[i,1] & MERGE$Block == TreatMat[i,2] & MERGE$Replicate == TreatMat[i,3])
+  #Callus Binary
+  TreatMat[i,4] <- sum(as.numeric(tmp$Callus))
+  #Root Binary
+  TreatMat[i,5] <- sum(as.numeric(tmp$RootBin))
+  #Root Count
+  TreatMat[i,6] <- sum(as.numeric(tmp$Root))
+}
+#Convert into data.frame
+TreatMat <- as.data.frame(TreatMat)
+
+#Change class of response variables to numerical
+i <- c(4, 5, 6) 
+TreatMat[ , i] <- apply(TreatMat[ , i], 2, function(x) as.numeric(as.character(x)))
+
+#Plot table
+DT::datatable(TreatMat, caption = "Data for treatment analyses sorted by plates.")
 ```
 
-The analyses demonstrate that there is significant treatment and individual effects.
+#### R code {#codeTreatdata}
 
-##### Ranking treatments
+```{r prepTreatCode, echo=F, eval=T, }
+#Prepare an empty matrix to be populated 
 
-The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01; the R code is available in section \@ref(RcodeCallus)):
+#How many rows? 5 treatments * 5 blocks * 3 replicates
+NrowTreat <- length(unique(MERGE$Treatment))*length(unique(MERGE$Block))*length(unique(MERGE$Replicate))
 
-```{r emmeansCal, eval=T, echo=F}
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
+#Create empty matrix
+TreatMat <- matrix(ncol=6, nrow = NrowTreat)
+colnames(TreatMat) <- c("Treatment", "Block", "Replicate","Callus","RootBin","RootCount")
+
+#Add treatment, block and replicate
+TreatMat[,1] <- sort(rep(unique(MERGE$Treatment), length(unique(MERGE$Block))*length(unique(MERGE$Replicate))))
+TreatMat[,2] <- sort(rep(unique(MERGE$Block), length(unique(MERGE$Replicate))))
+TreatMat[,3] <- rep(seq(from=1, to = length(unique(MERGE$Replicate)), by = 1), nrow(TreatMat)/3)
+
+#TreatMat <- as.data.frame(TreatMat)
+
+#Get Callus Bin, Root Bin and Root Cout
+for(i in 1:nrow(TreatMat)){
+  tmp <- subset(MERGE, MERGE$Treatment == TreatMat[i,1] & MERGE$Block == TreatMat[i,2] & MERGE$Replicate == TreatMat[i,3])
+  #Callus Binary
+  TreatMat[i,4] <- sum(as.numeric(tmp$Callus))
+  #Root Binary
+  TreatMat[i,5] <- sum(as.numeric(tmp$RootBin))
+  #Root Count
+  TreatMat[i,6] <- sum(as.numeric(tmp$Root))
+}
+#Convert into data.frame
+TreatMat <- as.data.frame(TreatMat)
+
+#Change class of response variables to numerical
+i <- c(4, 5, 6) 
+TreatMat[ , i] <- apply(TreatMat[ , i], 2, function(x) as.numeric(as.character(x)))
+
+#Plot table
+DT::datatable(TreatMat, caption = "Data for treatment analyses sorted by plates.")
+```
+
+### Genotype {.tabset .tabset-pills}
+
+The effect of genotypes will be assessed based on three response variables: the number of shoot tips per plate that formed callus, those that developed roots (presence/absence), and the total number of roots. The analyses and associated R code (see section \@ref(codeGenodata)) to produce these variables based on `MERGE` is found below.
+
+#### Analyses
+
+We are displaying callus and rooting responses by individual to test for treatment effect. See section \@ref(codeGenodata) for more details on R code.
+
+```{r PrepGeno, echo=F, eval=T}
+#Prepare an empty matrix to be populated 
+
+#How many rows? This is equal to number of individual lines
+NrowGen <- length(unique(MERGE$IndGeno))
+
+#Create empty matrix
+TreatGeno <- matrix(ncol=5, nrow = NrowGen)
+colnames(TreatGeno) <- c("Genotype", "IndGeno", "Callus","RootBin","RootCount")
+
+#Populate with Genotype, Individual
+TreatGeno[,2] <- unique(MERGE$IndGeno)
+TreatGeno[,1] <- sapply(strsplit(unique(MERGE$IndGeno), split="_"), "[[", 1)
+
+#Get Callus Bina, Root Bin and Root Cout
+for(i in 1:nrow(TreatGeno)){
+  tmp <- subset(MERGE, MERGE$Genotype == TreatGeno[i,1] & MERGE$IndGeno == TreatGeno[i,2])
+  #Callus Binary
+  TreatGeno[i,3] <- sum(as.numeric(tmp$Callus))
+  #Root Binary
+  TreatGeno[i,4] <- sum(as.numeric(tmp$RootBin))
+  #Root Count
+  TreatGeno[i,5] <- sum(as.numeric(tmp$Root))
+}
+#Convert into data.frame
+TreatGeno <- as.data.frame(TreatGeno)
+
+#Order by genotype
+TreatGeno <- TreatGeno[order(TreatGeno$Genotype),]
+
+#Change class of response variables to numerical
+i <- c(3, 4, 5) 
+TreatGeno[ , i] <- apply(TreatGeno[ , i], 2, function(x) as.numeric(as.character(x)))
+
+#Plot table
+DT::datatable(TreatGeno, caption = "Data for genotype analyses sorted by individuals.")
+```
+
+#### R code {#codeGenodata}
+
+```{r PrepGenoCode, echo=F, eval=T}
+#Prepare an empty matrix to be populated 
+
+#How many rows? This is equal to number of individual lines
+NrowGen <- length(unique(MERGE$IndGeno))
+
+#Create empty matrix
+TreatGeno <- matrix(ncol=5, nrow = NrowGen)
+colnames(TreatGeno) <- c("Genotype", "IndGeno", "Callus","RootBin","RootCount")
+
+#Populate with Genotype, Individual
+TreatGeno[,2] <- unique(MERGE$IndGeno)
+TreatGeno[,1] <- sapply(strsplit(unique(MERGE$IndGeno), split="_"), "[[", 1)
+
+#Get Callus Bina, Root Bin and Root Cout
+for(i in 1:nrow(TreatGeno)){
+  tmp <- subset(MERGE, MERGE$Genotype == TreatGeno[i,1] & MERGE$IndGeno == TreatGeno[i,2])
+  #Callus Binary
+  TreatGeno[i,3] <- sum(as.numeric(tmp$Callus))
+  #Root Binary
+  TreatGeno[i,4] <- sum(as.numeric(tmp$RootBin))
+  #Root Count
+  TreatGeno[i,5] <- sum(as.numeric(tmp$Root))
+}
+#Convert into data.frame
+TreatGeno <- as.data.frame(TreatGeno)
+
+#Order by genotype
+TreatGeno <- TreatGeno[order(TreatGeno$Genotype),]
+
+#Change class of response variables to numerical
+i <- c(3, 4, 5) 
+TreatGeno[ , i] <- apply(TreatGeno[ , i], 2, function(x) as.numeric(as.character(x)))
+
+#Plot table
+DT::datatable(TreatGeno, caption = "Data for genotype analyses sorted by individuals.")
+```
+
+### Individual
+
+Here, we are preparing contingency tables for callus (binary) and root (binary) data to test for individual effect. Analyses on root (count) data will be directly performed on the `MERGE` dataset.
+
+```{r IndCallBin, echo=T, eval=T}
+###~~~
+#Callus
+###~~~
+#Binary for each individual line
+IndCallBin <- table(MERGE$IndGeno, MERGE$Callus)
+
+#Plot table
+DT::datatable(as.data.frame.matrix(IndCallBin), caption = "Callus data for individual analyses (0 = absence; 1 = presence).")
+```
+
+```{r IndRootBin, eco=T, eval=T}
+###~~~
+#Root
+###~~~
+#Binary for each individual line
+IndRootBin <- table(MERGE$IndGeno, MERGE$RootBin)
+
+#Plot table
+DT::datatable(as.data.frame.matrix(IndRootBin), caption = "Root data for individual analyses (0 = absence; 1 = presence).")
+```
+
+## Testing for treatment effect
+
+The effect of growth regulators (= treatments) is assessed on three response variables stored in `TreatMat`: the number of shoot tips per plate that formed callus (`Callus`), those that developed roots (presence/absence; `RootBin`), and the total number of roots (`RootCount`). The latter served as a proxy for the number of roots per shoot tip. The presence/absence of callus and roots was evaluated using a generalized linear model (GLM) with Poisson distributed errors. The goodness of fit of the model was verified with a chi-square test. The treatments' impact on the total number of roots was analyzed using a negative binomial generalized linear model (GLMNB). The deviance goodness of fit test ascertained models' fitness, as judged by *p*-values above 0.05. Post-hoc multiple comparisons were analyzed with Tukey's significant difference test. The GLM, GLMNB, and post-hoc analyses were conducted in R using the *glm*, *glm.nb*, and *emmeans* functions, respectively.
+
+### Callus
+
+#### GLM model
+
+```{r callusGLMbin, echo=T, eval=T}
+###~~~
+#GLM poisson model on Callus data
+###~~~
+m1 <- glm(Callus ~ Treatment, family = poisson(link = "log"), data=TreatMat)
+summary (m1)
+
+###~~~
+#Test for goodness of fit of deviance
+###~~~
+pchisq(m1$deviance, m1$df.residual, lower.tail = FALSE)
+```
+
+#### Post-hoc: Tukey's significant difference test
+
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
+
+```{r emmeansCalBin, eval=T, echo=T, warning=F}
+# Estimated marginal means (Least-squares means) for treatments using m1
+posthocCallus <- emmeans(m1, specs = pairwise ~ Treatment, type = "response")
 
 # Identify significant pairwise comparisons
-signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
+signCalTreat <- as.data.frame(posthocCallus$contrasts)
 signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
 
 #Print table
-knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons based on callus binary data.")
 ```
 
-Table \@ref(tab:emmeansCal) summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
+Table \@ref(tab:emmeansCalBin) summarizes statistical comparisons of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
 
 - (a) Control is significantly different than the other treatments (`***`). Here, very limited calli production was observed in shoot tips included in the control treatment.
 - (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05.
 
-##### Ranking individuals
+### Root
 
-We are using the same approach as with the treatment to perform pairwise comparisons to identify individuals that are significantly producing callus independently of treatment. The tests concluded that although the GLM supported some individual effect, none of the individuals are significantly different based on the post hoc tests. The R code is available in section \@ref(RcodeCallus).
+Here, we will analyze treatment effect on rooting using the binary (`RootBin`) and count (`Root`) data.
 
-```{r emmeansCalInd, eval=T, echo=F}
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
+#### Binary data
 
-# Identify significant pairwise comparisons
-signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
-signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
+##### GLM model
 
-#Print table
-knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+```{r rootGLMbin, echo=T, eval=T}
+###~~~
+#GLM poisson model on Root binary data
+###~~~
+m1root <- glm(RootBin ~ TreatMat$Treatment, family = poisson(link = "log"), data=TreatMat)
+summary (m1root)
+
+###~~~
+#Test for goodness of fit of deviance
+###~~~
+pchisq(m1root$deviance, m1root$df.residual, lower.tail = FALSE)
 ```
 
-#### R code {#RcodeCallus}
+##### Post-hoc: Tukey's significant difference test
 
-```{r callusGLMR, echo=T, eval=F}
-###~~~
-#GLMs
-###~~~
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
 
-# GLM to investigate treatment effect on callus production
-M1cal <- glm(Callus ~ Treatment, family = binomial(link="logit"), data = MERGE)
-
-# GLM to investigate treatment and individual effects on callus production
-M2cal <- glm(Callus ~ Treatment + IndGeno, family = binomial(link="logit"), data = MERGE)
-
-# Which model best fit the data?
-anova(M1cal, M2cal, test = "Chisq")
-
-# M2 better fits the data, but is it not over fitting it?
-pchisq(M2cal$deviance, M2cal$df.residual, lower.tail = F)
-
-# Summary M2
-print(summary(M2cal))
-
-###~~~
-#Ranking treatments
-###~~~
-
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallus <- emmeans(M2cal, list(pairwise ~ Treatment))
+```{r emmeansRootBin, eval=T, echo=T, warning=F}
+# Estimated marginal means (Least-squares means) for treatments using m1root
+posthocRootBin <- emmeans(m1root, specs = pairwise ~ Treatment, type = "response")
 
 # Identify significant pairwise comparisons
-signCalTreat <- as.data.frame(posthocCallus$`pairwise differences of Treatment`)
-signCalTreat <- signCalTreat[which(signCalTreat$p.value <= 0.01),c(1:3,5,6)]
+signRtTreat <- as.data.frame(posthocRootBin$contrasts)
+signRtTreat <- signRtTreat[which(signRtTreat$p.value <= 0.01),c(1:3,5,6)]
 
 #Print table
-knitr::kable(signCalTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
-
-###~~~
-#Ranking individuals
-###~~~
-
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocCallusInd <- emmeans(M2cal, list(pairwise ~ IndGeno))
-
-# Identify significant pairwise comparisons
-signCalTreatInd <- as.data.frame(posthocCallusInd$`pairwise differences of IndGeno`)
-signCalTreatInd <- signCalTreatInd[which(signCalTreatInd$p.value <= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signCalTreatInd, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
+knitr::kable(signRtTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons based on root binary data.")
 ```
 
-## Statistical analyses on root data
+Table \@ref(tab:emmeansRootBin) summarizes statistical comparison of treatments focusing on significant effects. These analyses are not entirely conclusive, but they demonstrate that:
 
-Please find below the analyses conducted on root (count data) and callus (binary) data.
+- (a) Control is significantly different than the other treatments (`***`).
+- (b) No significant differences between IBA_1, IBA_05, NAA_01 and NAA_05. 
 
-### Testing for normality {.tabset .tabset-pills}
+#### Count data
 
-#### Analyses
+##### GLM negative binomial model
 
-Before conducting statistical analyses, we have to test for normality of the rooting data (count) by using the Shapiro-Wilk normality test implemented in the R base function `shapiro.test()`. A *p*-value <= 0.01 is will be used for significance.
+The *glm.nb* function is implemented in the `MASS` R package. 
 
-```{r normalitytest, eval=T, echo=F}
+```{r rootGLMcount, echo=T, eval=T}
 ###~~~
-#Conducting Shapiro-Wilk normality test on root data
+#GLM negative binomial poisson model on Root count data
 ###~~~
+m2root <- glm.nb(RootCount ~ Treatment, data= TreatMat)
+summary (m2root)
 
-#Rooting data
+m3root <- glm.nb(RootCount ~ Treatment + Block, data= TreatMat)
+summary (m3root)
+
+###~~~
+#Test for goodness of fit of deviance
+###~~~
+print("M3 better fits data compared to M2. M3 will be used for Tukey's tests.")
+#M2
+pchisq(m2root$deviance, m2root$df.residual, lower.tail = FALSE)
+#M3
+pchisq(m3root$deviance, m2root$df.residual, lower.tail = FALSE)
+```
+
+##### Post-hoc: Tukey's significant difference test
+
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
+
+```{r emmeansRootcount, eval=T, echo=T, warning=F}
+# Estimated marginal means (Least-squares means) for treatments using m2root
+posthocRootCout <- emmeans(m3root, specs = pairwise ~ Treatment, type = "response")
+
+# Identify significant pairwise comparisons
+signRtCtTreat <- as.data.frame(posthocRootCout$contrasts)
+signRtCtTreat <- signRtCtTreat[which(round(signRtCtTreat$p.value,3) <= 0.015),c(1:3,5,6)]
+
+#Print table
+knitr::kable(signRtCtTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons based on root count data.")
+```
+
+Table \@ref(tab:emmeansRootcount) summarizes statistical comparison of treatments focusing on significant effects. The ranking of treatments is as follows:
+
+- (a): `IBA1`
+- (ab): `IBA_05`
+- (b): `NAA_1` and `NAA_05`
+- (c): `Control`
+
+## Testing for genotype effect
+
+The effect of genotypes is assessed on three response variables stored in `TreatGeno`: the number of shoot tips per plate that formed callus (`Callus`), those that developed roots (presence/absence; `RootBin`), and the total number of roots (`RootCount`). The latter served as a proxy for the number of roots per shoot tip. The presence/absence of callus and roots was evaluated using a generalized linear model (GLM) with Poisson distributed errors. The goodness of fit of the model was verified with a chi-square test. The treatments' impact on the total number of roots was analyzed using a negative binomial generalized linear model (GLMNB). The deviance goodness of fit test ascertained models' fitness, as judged by *p*-values above 0.05. Post-hoc multiple comparisons were analyzed with Tukey's significant difference test. The GLM, GLMNB, and post-hoc analyses were conducted in R using the *glm*, *glm.nb*, and *emmeans* functions, respectively.
+
+### Callus
+
+#### GLM model
+
+```{r callusGLMbinGen, echo=T, eval=T}
+###~~~
+#GLM poisson model on Callus data
+###~~~
+m1CalGeno <- glm(Callus ~ Genotype, family = poisson(link = "log"), data=TreatGeno)
+summary (m1CalGeno)
+
+###~~~
+#Test for goodness of fit of deviance
+###~~~
+pchisq(m1CalGeno$deviance, m1CalGeno$df.residual, lower.tail = FALSE)
+```
+
+#### Post-hoc: Tukey's significant difference test
+
+The *emmeans* function implemented in the `emmeans` R package [@R-emmeans] was used to compare treatments (with a *p*-value <= 0.01):
+
+```{r emmeansCalBinGeno, eval=T, echo=T, warning=F}
+# Estimated marginal means (Least-squares means) for treatments using m1CalGeno
+posthocCallusGeno <- emmeans(m1CalGeno, specs = pairwise ~ Genotype, type = "response")
+
+# Identify significant pairwise comparisons
+signCalGeno <- as.data.frame(posthocCallusGeno$contrasts)
+signCalGeno <- signCalGeno[which(signCalGeno$p.value <= 0.01),c(1:3,5,6)]
+
+#Print table
+print("No significant difference between genotypes!")
+```
+
+### Root
+
+Here, we will analyze treatment effect on rooting using the binary (`RootBin`) and count (`Root`) data. Both variables will be analyzed with the negative binomical model implemented in *glm.nb* function.
+
+#### Binary data
+
+##### GLM negative binomial model
+
+```{r rootGLMbinGeno, echo=T, eval=T}
+###~~~
+#GLM negative binomial poisson model on Root binary data
+###~~~
+m1root <- glm.nb(RootBin ~ Genotype, data= TreatGeno)
+summary (m1root)
+
+#Print table
+print(paste("No significant difference between genotypes!", "No need to pursue analyses", sep="\n"))
+
+###~~~
+#Test for goodness of fit of deviance
+###~~~
+pchisq(m1root$deviance, m1root$df.residual, lower.tail = FALSE)
+```
+
+#### Count data
+
+##### GLM negative binomial model
+
+```{r rootGLMCtGeno, echo=T, eval=T}
+###~~~
+#GLM negative binomial poisson model on Root count data
+###~~~
+m2root <- glm.nb(RootCount ~ Genotype, data= TreatGeno)
+summary(m2root)
+
+#Print table
+print(paste("No significant difference between genotypes!", "No need to pursue analyses", sep="\n"))
+
+###~~~
+#Test for goodness of fit of deviance
+###~~~
+pchisq(m2root$deviance, m2root$df.residual, lower.tail = FALSE)
+```
+
+## Testing for individual effect
+
+Here, we will start by testing for individual effects by conducting chi-square analyses on binary callus and root data stored respectively in `IndCallBin` and `IndRootBin`. These analyses will be further investigated by conducting clustering analyses (see section \@ref(clustAnalyses)). 
+
+To identify top performers, we will then apply the Kruskal-Wallis rank sum test on root count data followed by pairwise Wilcox tests based on the `MERGE` dataset. We use a non-parametric test since the data are not normaly distributed:
+
+```{r norm, echo=T, eval=T}
+# Shapiro-Wilk normality test on Root count data in MERGE
 shapiro.test(MERGE$Root)
 ```
 
-This test strongly rejects normality. The visualization of the data (Figure \@ref(fig:distrRoot)) together with the low mean (`r round(mean(MERGE$Root),2)`) confirm that the root count data does not approximate a normal distribution. This is often because these type of data are truncated at zero, that is, negative values are impossible and the distribution is therefore skewed to the right. This is confirmed by the skewness coefficient of `r round(skewness(MERGE$Root, na.rm = TRUE),2)`, which demonstrates that the data has a positively skewed distribution (see Figure \@ref(fig:distrRoot)). Square-root or log transformation methods could be applied to normalize the data, but those are not applicable with zero values. In this context, we are opting to conduct non-parametric analyses.
+To qualify as a top performer, an individual will have to outperform >= 20% of individuals (based on pairwise Wilcox tests with a *p*-value <= 0.01).
 
-```{r distrRoot, echo=F, eval=T, fig.cap="Distribution of number of roots per shoot tips"}
-hist(MERGE$Root, xlab="Number of roots per shoot tip", main="")
+### Callus and Root binary data
+
+```{r}
+###~~~
+#Callus binary data
+###~~~
+chisq.test(t(IndCallBin))
+
+###~~~
+#Root binary data
+###~~~
+chisq.test(t(IndRootBin))
 ```
 
-#### R code
+Both analyses strongly suggest individual effects, which will be further investigated in the clustering analyses (see section \@ref(clustAnalyses)). 
 
-```{r normalitytestcode, eval=F, echo=T}
-###~~~
-#Conducting Shapiro-Wilk normality test on root data
-###~~~
-
-#Rooting data
-shapiro.test(MERGE$Root)
-
-###~~~
-#Visualize root (count) data
-###~~~
-hist(MERGE$Root, xlab="Number of roots per shoot tip", main="")
-
-###~~~
-#Mean of root (count) data
-###~~~
-
-###~~~
-#Skewness coefficient of root (count) data
-###~~~
-skewness(MERGE$Root, na.rm = TRUE)
-```
-
-### Selecting the best method {.tabset .tabset-pills}
-
-#### Rationale
-
-A shown above, non-parametric analyses have to be conducted on the root (count) data. In this context, we can analyze our data using either general linear models (GLMs) or the Kruskal-Wallis rank sum test. In this study, we aim at:
-
-1. Testing whether a treatment is better suited to promote rooting of shoot tips.
-2. Testing whether some individuals have higher rooting rates independently to treatment (those would be used as candidate for genome sequencing and/or GxE research).
-
-Both of these aims require ranking variables. Figure \@ref(fig:distrRoot) suggests that the Poisson model would best fit the data for the GLM analyses; however it is skewed towards zero (with the highest frequency), which is problematic with classic GLM models. In this context, we are advocating for using the zero-inflated count data regression approach as implemented in the `pscl` R package [@R-pscl] to analyze the rooting data. This approach fits zero-inflated regression models for count data via maximum likelihood (using either Poisson or Negative binomial distributions). It is not recommended that zero-inflated models be applied to small samples (see [here](https://stats.idre.ucla.edu/r/dae/zip/)). Analyses presented in section \@ref(glm) demonstrated that zero-inflated models (even with Negative binomial distribution) failed to assess individual effect on rooting most likely due to the small sample size at individual level (n=15 samples per individual). In this context, **we are opting for analyzing our data using the Kruskal-Wallis tests to test for treatment and individual effects**.
-
-#### Zero-inflated GLM models {#glm}
-
-As shown in Figure \@ref(fig:distrRoot) we still need to test what model best fit the data. Here, we will be investigating whether treatment and individual affect rooting using both the Poisson and Negative binary count model families. A likelihood ratio test together with dispersion statistics will be used to identify the best-fit model. Due to the inability of zero-inflated GLM models to analyze individual effects, we are opting for analyzing our data using the approach implemented in the Kruskal-Wallis test. 
-
-```{r zeroinflRoot, echo=T, eval=T}
-###~~~
-#Treatment effect
-###~~~
-# Zero-Inflated Poisson GLM
-M1 <- zeroinfl(Root ~ Treatment, dist = 'poisson', data = MERGE)
-
-# Dispersion statistic for M1
-E2 <- resid(M1, type = "pearson")
-N  <- nrow(MERGE)
-p  <- length(coef(M1))  
-sum(E2^2) / (N - p)
-
-# Zero-Inflated Negative Binomial GLM
-M2 <- zeroinfl(Root ~ Treatment, dist = 'negbin', data = MERGE) 
-
-# Dispersion statistic for M2
-E2 <- resid(M2, type = "pearson")
-N  <- nrow(MERGE)
-p  <- length(coef(M2))  
-sum(E2^2) / (N - p)
-
-# Likelihood ratio test (can't apply anova on zeroinfl models)
-lrtest(M1, M2)
-
-# Summary of M2
-summary(M2)
-
-
-###~~~
-#Ranking treatments
-###~~~
-# Estimated marginal means (Least-squares means) for treatments using M2
-posthocRoot <- emmeans(M2, list(pairwise ~ Treatment))
-
-# Identify significant pairwise comparisons
-signRootTreat <- as.data.frame(posthocRoot$`pairwise differences of Treatment`)
-signRootTreat <- signRootTreat[which(signRootTreat$p.value <= 0.01),c(1:3,5,6)]
-
-#Print table
-knitr::kable(signRootTreat, row.names=F, caption = "Significant (p-value <= 0.01) treatment pairwise comparisons.")
-
-###~~~
-#Individual effect
-###~~~
-
-# Zero-Inflated Negative Binomial GLM
-M1 <- zeroinfl(Root ~ IndGeno, dist = 'negbin', data = MERGE) 
-
-# Summary of M1
-summary(M1)
-```
-
-### Investigating treatment effect {.tabset .tabset-pills}
+### Root count data {.tabset .tabset-pills}
 
 #### Analyses
 
-Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess treatment effects and rank those (with a *p*-value of <= 0.01). Results of these analyses are presented below and the R code is available in section \@ref(RTreat). 
-
-```{r kruskalTreat, echo=F, eval=T, message=FALSE, warning=FALSE}
-# Run Kruskal-Wallis Rank Sum Test
-print("Perform Kruskal-Wallis Rank Sum Test: Root ~ Treatment")
-K1Treat <- kruskal.test(Root ~ Treatment, data = MERGE)
-print(K1Treat)
-
-# Run Wilcox test on Root ~ Treatment
-print("Perform Wilcox test on Root ~ Treatment")
-wilcoxRootTreat <- pairwise.wilcox.test(MERGE$Root, MERGE$Treatment,
-                 p.adjust.method = "BH")
-
-# Only select data.frame (distance matrix)
-wilcoxRootTreat <- wilcoxRootTreat$p.value
-
-# Convert distance matrix into 3 cols: Treat1, Treat2, p-val
-OUT <- NULL
-for(i in 1:nrow(wilcoxRootTreat)){
-  tmp <- wilcoxRootTreat[i,]
-  tmp <- cbind(rep(rownames(wilcoxRootTreat)[i], length(tmp)), names(tmp), as.vector(tmp))
-  OUT <- rbind(OUT, tmp)
-}
-wilcoxSimp <- as.data.frame(OUT)
-colnames(wilcoxSimp) <- c("Treat1", "Treat2", "P-val")
-
-# Tidy data
-wilcoxSimp <- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
-
-# Treatment effect
-Treat <- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) <= 0.01),])
-
-# Infer mean rooting per treatment
-meanRoot <- aggregate(Root ~ Treatment, mean, data = MERGE)
-
-# Diff of means Treat1-Treat2
-Treat$Diff_mean <- round(meanRoot[match(Treat[,1], meanRoot[,1]),2]-meanRoot[match(Treat[,2], meanRoot[,1]),2],2)
-
-# Plot table
-knitr::kable(Treat, caption = "Results of Wilcox test on Root ~ Treatment (p-value <= 0.01).")
-```
-
-Table \@ref(tab:kruskalTreat) allows ranking treatments as follows (from best to worst):
-
-- `IBA_1`: a
-- `IBA_05`: ab
-- `NAA_1`: b
-- `NAA_05`: b
-- `Control`: c
-
-##### Boxplot of rooting by treatment
-
-To support further visual comparison of rooting by treatment, a boxplot was inferred based on the merged dataset (`MERGE`). Figure \@ref(fig:boxplot1) supports ranking from the statistical analysis (Table \@ref(tab:kruskalTreat) and would suggest that `IBA_1` is the most efficient treatment to initiate rooting in sagebrush with a median value of 1 root per tip (whereas other treatments have their median at 0).
-
-```{r boxplot1, echo=F, eval=T, fig.cap="Boxplot comparing number of roots per shoot tip of diploid Artemisia tridentata subsp. tridentata sorted by treatment. Rankings are based on the pairwise least-square means analysis.", out.width="100%"}
-###~~~
-#Boxplot comparing rooting per treatment
-###~~~
-
-# Draw boxplot
-boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per shoot tip", ylim=c(0,12.5), names = c("Control", "IBA 0.5 mg/l", "IBA 1 mg/l", "NAA 0.5 mg/l", "NAA 1 mg/l"))
-
-# Add ranking based on Tukey tests
-text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","ab","a",'b','b'))
-```
-
-#### R code {#RTreat}
-
-```{r kruskalTreatcode, echo=T, eval=F, message=FALSE, warning=FALSE}
-###~~~
-# Run Kruskal-Wallis Rank Sum Test
-###~~~
-
-print("Perform Kruskal-Wallis Rank Sum Test: Root ~ Treatment")
-K1Treat <- kruskal.test(Root ~ Treatment, data = MERGE)
-print(K1Treat)
-
-###~~~
-# Run Wilcox test on Root ~ Treatment
-###~~~
-
-print("Perform Wilcox test on Root ~ Treatment")
-wilcoxRootTreat <- pairwise.wilcox.test(MERGE$Root, MERGE$Treatment,
-                 p.adjust.method = "BH")
-
-# Only select data.frame (distance matrix)
-wilcoxRootTreat <- wilcoxRootTreat$p.value
-
-# Convert distance matrix into 3 cols: Treat1, Treat2, p-val
-OUT <- NULL
-for(i in 1:nrow(wilcoxRootTreat)){
-  tmp <- wilcoxRootTreat[i,]
-  tmp <- cbind(rep(rownames(wilcoxRootTreat)[i], length(tmp)), names(tmp), as.vector(tmp))
-  OUT <- rbind(OUT, tmp)
-}
-wilcoxSimp <- as.data.frame(OUT)
-colnames(wilcoxSimp) <- c("Treat1", "Treat2", "P-val")
-
-# Tidy data
-wilcoxSimp <- as.matrix(wilcoxSimp[-which(is.na(wilcoxSimp$`P-val`) == T),])
-
-# Treatment effect
-Treat <- as.data.frame(wilcoxSimp[which(as.numeric(wilcoxSimp[,3]) <= 0.01),])
-
-# Infer mean rooting per treatment
-meanRoot <- aggregate(Root ~ Treatment, mean, data = MERGE)
-
-# Diff of means Treat1-Treat2
-Treat$Diff_mean <- round(meanRoot[match(Treat[,1], meanRoot[,1]),2]-meanRoot[match(Treat[,2], meanRoot[,1]),2],2)
-
-# Plot table
-knitr::kable(Treat, caption = "Results of Wilcox test on Root ~ Treatment (p-value <= 0.01).")
-
-###~~~
-#Boxplot comparing rooting per treatment
-###~~~
-
-# Draw boxplot
-boxplot(MERGE$Root ~ MERGE$Treatment, xlab = "Treatment", ylab = "Number of roots per shoot tip", ylim=c(0,12.5), names = c("Control", "IBA 0.5 mg/l", "IBA 1 mg/l", "NAA 0.5 mg/l", "NAA 1 mg/l"))
-
-# Add ranking based on Tukey tests
-text(x=c(1,2,3,4,5), y=rep(12.5,5), c("c","ab","a",'b','b'))
-```
-
-### Investigate individual effect {.tabset .tabset-pills}
-
-#### Analyses
-
-Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a *p*-value of <= 0.01). Results of these analyses are presented below and the R code is available in section \@ref(RInd). To qualify as a top performer, an individual has to outperform >= 20% of individuals (based on pairwise Wilcox tests with a *p*-value <= 0.01).
+Here, we are applying the Kruskal-Wallis rank sum test followed by pairwise Wilcox tests to assess individual effects and rank those (with a *p*-value of <= 0.01) on `MERGE` data. Results of these analyses are presented below and the R code is available in section \@ref(RInd). To qualify as a top performer, an individual has to outperform >= 20% of individuals (based on pairwise Wilcox tests with a *p*-value <= 0.01).
 
 ```{r kruskalInd, echo=F, eval=T, message=FALSE, warning=FALSE}
 ###~~~
@@ -1081,7 +1153,7 @@ knitr::kable(TopInd, caption = "List of individual that are outperforming at lea
 
 In this section, we are applying a clustering approach on callus (binary) and root (count) data to further investigate individual effects independently to treatments. We first conduct independent clustering analyses on the two variables to sort individual lines based on their abilities to promote callus development and roots. These analyses will allow identifying callus and root clusters, which will then be compared by plotting those on the respective clustering analyses. To further characterize the clusters, ridgeline plots (or density plots) will be inferred for each variable and individual lines sorted by clusters.   
 
-### Analyses
+### Analyses {#clustAnalyses}
 
 Clustering analyses were performed between individual lines based on the euclidean distance and the hierarchical clustering method implemented in the R *stats* package (using the `Callus` binary and `Root` count data; see section \@ref(Rclustroot) for R code). See Figure \@ref(fig:clusterTrees) for results and those are discussed below (by variable).
 
@@ -1607,7 +1679,7 @@ knitr::kable(RootingStatbyTreatCal[,1:5], row.names=F, caption = "Effect of grow
 
 ### Analyses
 
-Data on survival and plantlets heights are stored in `01_Raw_Data/Survival_height_clones.csv`. The code below provides statistics on the number of individual and shoot tips included in this experiment. The R code for these analyses is available in section \@ref(codesurv).
+Data on survival and plantlets heights are stored in `01_Raw_Data/Survival_height_clones.csv`. The code below provides statistics on the number of individual lines and shoot tips included in this experiment. The R code for these analyses is available in section \@ref(codesurv).
 
 ```{r statgrowth, echo=F, eval=T}
 ###~~~
@@ -1968,21 +2040,31 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
 ```
 
-#### Comparing GLM models
+#### Treatment and cluster effects on survival
 
-We will be building and comparing three models as follows:
+We are using Fisher tests to test whether treatments and rooting clusters had an effect on plantlets survival.
 
-```{r survivalmodels, echo=F, eval=T}
-# GLM to investigate treatment effect on survival
-M1surv <- glm(X5_w_survival ~ Treat, family = binomial(link="logit"), data = survheig)
-summary(M1surv)
+```{r fishertreatsurv, echo=F, eval=T}
+###~~~
+#Treatment effect on survival
+##~~~
+survTreat <- t(table(survheig$Treat, survheig$X5_w_survival))
+print(survTreat)
 
-# GLM to investigate treatment and cluster effects on survival
-M2surv <- glm(X5_w_survival ~ Treat + SeedID, family = binomial(link="logit"), data = survheig)
-summary(M2surv)
+#Conduct Fisher test
+fisher.test(survTreat)
+
+###~~~
+#Cluster effect on survival
+##~~~
+survClust <- t(table(survheig$Cluster, survheig$X5_w_survival))
+print(survClust)
+
+#Conduct Fisher test
+fisher.test(survClust)
 ```
 
-We are not pursuing our investigations any further since both models suggest that there is no significant treatment effects on survival. This means that if the shoot tips were producing roots then they had equal probabilities of survival independently of treatment. 
+We are not pursuing our investigations any further since the analyses suggest that there are no significant treatment and cluster effects on survival. This means that if shoot tips were producing roots then they had equal probabilities of survival independently of treatment and/or cluster. 
 
 ### R code {#survcodeR}
 
@@ -2004,15 +2086,20 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
 
 ###~~~
-#GLM models
-###~~~
-# GLM to investigate treatment effect on survival
-M1surv <- glm(X5_w_survival ~ Treat, family = binomial(link="logit"), data = survheig)
-summary(M1surv)
+#Treatment effect on survival
+##~~~
+survTreat <- t(table(survheig$Treat, survheig$X5_w_survival))
 
-# GLM to investigate treatment and cluster effects on survival
-M2surv <- glm(X5_w_survival ~ Treat + SeedID, family = binomial(link="logit"), data = survheig)
-summary(M2surv)
+#Conduct Fisher test
+fisher.test(survTreat)
+
+###~~~
+#Cluster effect on survival
+##~~~
+survClust <- t(table(survheig$Cluster, survheig$X5_w_survival))
+
+#Conduct Fisher test
+fisher.test(survClust)
 ```
 
 
@@ -2055,7 +2142,7 @@ summary(anovaOUTRoot)
 
 The ANOVA show significant cluster and individual effects. The Tukey tests show that individuals in the blue rooting cluster are significantly taller than those in the pink cluster (black is not shown different than blue, but it could be due to small sampling size of this cluster). Finally, `G2_b27_1` is significantly taller than 13.88% of the individuals included in this experiment. This individual was identified as a top 3 performer!  
 
-#### Tukey tests
+#### Tukey's tests
 
 ```{r tukeyheight, echo=F, eval=T}
 ###~~~
