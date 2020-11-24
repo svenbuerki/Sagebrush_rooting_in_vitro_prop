@@ -716,7 +716,7 @@ DT::datatable(TreatGeno, caption = "Data for genotype analyses sorted by individ
 
 #### R code {#codeGenodata}
 
-```{r PrepGenoCode, echo=F, eval=T}
+```{r PrepGenoCode, echo=T, eval=F}
 #Prepare an empty matrix to be populated 
 
 #How many rows? This is equal to number of individual lines
@@ -754,11 +754,13 @@ TreatGeno[ , i] <- apply(TreatGeno[ , i], 2, function(x) as.numeric(as.character
 DT::datatable(TreatGeno, caption = "Data for genotype analyses sorted by individuals.")
 ```
 
-### Individual
+### Individual {.tabset .tabset-pills}
 
-Here, we are preparing contingency tables for callus (binary) and root (binary) data to test for individual effect. Analyses on root (count) data will be directly performed on the `MERGE` dataset.
+#### Analyses
 
-```{r IndCallBin, echo=T, eval=T}
+Here, we are preparing contingency tables for callus (binary) and root (binary) data to test for individual effect. Analyses on root (count) data will be directly performed on the `MERGE` dataset. See section \@ref(codeInddata) for associated R code.
+
+```{r IndCallBin, echo=F, eval=T}
 ###~~~
 #Callus
 ###~~~
@@ -769,7 +771,29 @@ IndCallBin <- table(MERGE$IndGeno, MERGE$Callus)
 DT::datatable(as.data.frame.matrix(IndCallBin), caption = "Callus data for individual analyses (0 = absence; 1 = presence).")
 ```
 
-```{r IndRootBin, eco=T, eval=T}
+```{r IndRootBin, echo=F, eval=T}
+###~~~
+#Root
+###~~~
+#Binary for each individual line
+IndRootBin <- table(MERGE$IndGeno, MERGE$RootBin)
+
+#Plot table
+DT::datatable(as.data.frame.matrix(IndRootBin), caption = "Root data for individual analyses (0 = absence; 1 = presence).")
+```
+
+#### R code {#codeInddata}
+
+```{r IndCallRtBincode, echo=T, eval=F}
+###~~~
+#Callus
+###~~~
+#Binary for each individual line
+IndCallBin <- table(MERGE$IndGeno, MERGE$Callus)
+
+#Plot table
+DT::datatable(as.data.frame.matrix(IndCallBin), caption = "Callus data for individual analyses (0 = absence; 1 = presence).")
+
 ###~~~
 #Root
 ###~~~
