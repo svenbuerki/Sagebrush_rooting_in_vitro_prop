@@ -1406,7 +1406,7 @@ print(&quot;No significant difference between genotypes!&quot;)</code></pre>
 </div>
 <div id="root-1" class="section level3">
 <h3><span class="header-section-number">5.3.2</span> Root</h3>
-<p>Here, we will analyze treatment effect on rooting using the binary (<code>RootBin</code>) and count (<code>Root</code>) data. Both variables will be analyzed with the negative binomical model implemented in <em>glm.nb</em> function.</p>
+<p>Here, we will analyze treatment effect on rooting using the binary (<code>RootBin</code>) and count (<code>Root</code>) data. Both variables will be analyzed with the negative binomial model implemented in <em>glm.nb</em> function.</p>
 <div id="binary-data-1" class="section level4">
 <h4><span class="header-section-number">5.3.2.1</span> Binary data</h4>
 <div id="glm-negative-binomial-model-1" class="section level5">
@@ -2645,32 +2645,19 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 Figure 6.1: Barplot of survival of plantlets after 5 weeks of growth.
 </p>
 </div>
-<div id="treatment-and-cluster-effects-on-survival" class="section level4">
-<h4><span class="header-section-number">6.2.1.1</span> Treatment and cluster effects on survival</h4>
-<p>We are using Fisher tests to test whether treatments and rooting clusters had an effect on survivals of individual lines.</p>
-<pre><code>##         Dead Alive
-## Control    3     6
-## NAA_05    12    17
-## NAA_1     12    25
-## IBA_05    12    20
-## IBA_1     10    25</code></pre>
+<div id="treatment-effect-on-survival" class="section level4">
+<h4><span class="header-section-number">6.2.1.1</span> Treatment effect on survival</h4>
+<p>We are using Fisher tests to test whether treatments had an effect on survivals of seedlings.</p>
+<pre><code>##      control IBA_05 IBA_1 NAA_05 NAA_1
+## live       6     29    45     19    38
+## dead       6     12    28     40    25</code></pre>
 <pre><code>## 
 ##  Fisher&#39;s Exact Test for Count Data
 ## 
-## data:  t(IndTreatSurv)
-## p-value = 0.8545
+## data:  survival
+## p-value = 0.0008326
 ## alternative hypothesis: two.sided</code></pre>
-<pre><code>##       Dead Alive
-## black    5     7
-## pink     1    15
-## blue     0    13</code></pre>
-<pre><code>## 
-##  Fisher&#39;s Exact Test for Count Data
-## 
-## data:  t(IndClusterSurv)
-## p-value = 0.007476
-## alternative hypothesis: two.sided</code></pre>
-<p>These analyses showed that there is no treatment effect on survival, however there is a significant rooting cluster effect.</p>
+<p>The analysis showed that there is a treatment effect on survival.</p>
 </div>
 </div>
 <div id="survcodeR" class="section level3">
@@ -2694,66 +2681,15 @@ barplot(table(survheig$X5_w_survival), xlab=&quot;Binary data on survival&quot;,
 ###~~~
 #Treatment effect on survival
 ##~~~
-
-###
-#At individual level (binary) by treatment 
-#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
-###
-Treat &lt;- unique(survheig$Treat)[c(4,2,1,5,3)]
-
-IndTreatSurv &lt;- matrix(ncol=2, nrow = length(Treat))
-rownames(IndTreatSurv) &lt;- Treat
-colnames(IndTreatSurv) &lt;- c(&quot;Dead&quot;, &quot;Alive&quot;)
-for(i in 1:nrow(IndTreatSurv)){
-  tmp &lt;- subset(survheig, survheig$Treat == rownames(IndTreatSurv)[i])
-  #Look at individual survival of plantlets
-  survInd &lt;- table(tmp$SeedID, tmp$X5_w_survival)
-  #Turn matrix into binary
-  survInd[survInd &gt; 1] &lt;- 1
-  #If individual has both dead and alive plantlets say it is alive
-  todo &lt;- which(rowSums(survInd) == 2)
-  if(length(todo) != 0){
-    survInd[as.vector(todo),1] &lt;- 0
-  }
-    #Upadte matrix
-  IndTreatSurv[i,] &lt;- as.vector(colSums(survInd))
-}
-print(IndTreatSurv)
-
-#Conduct Fisher test
-fisher.test(t(IndTreatSurv))
+survival &lt;- matrix(c(6, 6, 29, 12, 45, 28, 19, 40, 38, 25 ), nr=2)
+colnames(survival) = c(&quot;control&quot;, &quot;IBA_05&quot;,&quot;IBA_1&quot;,&quot;NAA_05&quot;,&quot;NAA_1&quot;)
+row.names(survival) = c(&quot;live&quot;, &quot;dead&quot;)
+print (survival)
 
 ###~~~
-#Cluster effect on survival
-##~~~
-
-###
-#At individual level (binary) by cluster 
-#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
-###
-Cluster &lt;- unique(survheig$Cluster)[c(3,1,2)]
-
-IndClusterSurv &lt;- matrix(ncol=2, nrow = length(Cluster))
-rownames(IndClusterSurv) &lt;- Cluster
-colnames(IndClusterSurv) &lt;- c(&quot;Dead&quot;, &quot;Alive&quot;)
-for(i in 1:nrow(IndClusterSurv)){
-  tmp &lt;- subset(survheig, survheig$Cluster == rownames(IndClusterSurv)[i])
-  #Look at individual survival of plantlets
-  survInd &lt;- table(tmp$SeedID, tmp$X5_w_survival)
-  #Turn matrix into binary
-  survInd[survInd &gt; 1] &lt;- 1
-  #If individual has both dead and alive plantlets say it is alive
-  todo &lt;- which(rowSums(survInd) == 2)
-  if(length(todo) != 0){
-    survInd[as.vector(todo),1] &lt;- 0
-  }
-    #Upadte matrix
-  IndClusterSurv[i,] &lt;- as.vector(colSums(survInd))
-}
-print(IndClusterSurv)
-
-#Conduct Fisher test
-fisher.test(t(IndClusterSurv))</code></pre>
+#Fisher test
+###~~~
+fisher.test(survival)</code></pre>
 </div>
 </div>
 <div id="statistical-analyses-on-growth-data" class="section level2 tabset tabset-pills">

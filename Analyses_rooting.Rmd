@@ -976,7 +976,7 @@ print("No significant difference between genotypes!")
 
 ### Root
 
-Here, we will analyze treatment effect on rooting using the binary (`RootBin`) and count (`Root`) data. Both variables will be analyzed with the negative binomical model implemented in *glm.nb* function.
+Here, we will analyze treatment effect on rooting using the binary (`RootBin`) and count (`Root`) data. Both variables will be analyzed with the negative binomial model implemented in *glm.nb* function.
 
 #### Binary data
 
@@ -2064,77 +2064,26 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
 ```
 
-#### Treatment and cluster effects on survival
+#### Treatment effect on survival
 
-We are using Fisher tests to test whether treatments and rooting clusters had an effect on survivals of individual lines.
+We are using Fisher tests to test whether treatments had an effect on survivals of seedlings.
 
 ```{r fishertreatsurv, echo=F, eval=T}
 ###~~~
 #Treatment effect on survival
 ##~~~
-
-###
-#At individual level (binary) by treatment 
-#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
-###
-Treat <- unique(survheig$Treat)[c(4,2,1,5,3)]
-
-IndTreatSurv <- matrix(ncol=2, nrow = length(Treat))
-rownames(IndTreatSurv) <- Treat
-colnames(IndTreatSurv) <- c("Dead", "Alive")
-for(i in 1:nrow(IndTreatSurv)){
-  tmp <- subset(survheig, survheig$Treat == rownames(IndTreatSurv)[i])
-  #Look at individual survival of plantlets
-  survInd <- table(as.vector(tmp$SeedID), as.vector(tmp$X5_w_survival))
-  #Turn matrix into binary
-  survInd[survInd > 1] <- 1
-  #If individual has both dead and alive plantlets say it is alive
-  todo <- which(rowSums(survInd) == 2)
-  if(length(todo) != 0){
-    survInd[as.vector(todo),1] <- 0
-  }
-    #Upadte matrix
-  IndTreatSurv[i,] <- as.vector(colSums(survInd))
-}
-print(IndTreatSurv)
-
-#Conduct Fisher test
-fisher.test(t(IndTreatSurv))
+survival <- matrix(c(6, 6, 29, 12, 45, 28, 19, 40, 38, 25 ), nr=2)
+colnames(survival) = c("control", "IBA_05","IBA_1","NAA_05","NAA_1")
+row.names(survival) = c("live", "dead")
+print (survival)
 
 ###~~~
-#Cluster effect on survival
-##~~~
-
-###
-#At individual level (binary) by cluster 
-#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
-###
-Cluster <- unique(survheig$Cluster)[c(3,1,2)]
-
-IndClusterSurv <- matrix(ncol=2, nrow = length(Cluster))
-rownames(IndClusterSurv) <- Cluster
-colnames(IndClusterSurv) <- c("Dead", "Alive")
-for(i in 1:nrow(IndClusterSurv)){
-  tmp <- subset(survheig, survheig$Cluster == rownames(IndClusterSurv)[i])
-  #Look at individual survival of plantlets
-  survInd <- table(as.vector(tmp$SeedID), as.vector(tmp$X5_w_survival))
-  #Turn matrix into binary
-  survInd[survInd > 1] <- 1
-  #If individual has both dead and alive plantlets say it is alive
-  todo <- which(rowSums(survInd) == 2)
-  if(length(todo) != 0){
-    survInd[as.vector(todo),1] <- 0
-  }
-    #Upadte matrix
-  IndClusterSurv[i,] <- as.vector(colSums(survInd))
-}
-print(IndClusterSurv)
-
-#Conduct Fisher test
-fisher.test(t(IndClusterSurv))
+#Fisher test
+###~~~
+fisher.test(survival)
 ```
 
-These analyses showed that there is no treatment effect on survival, however there is a significant rooting cluster effect.
+The analysis showed that there is a treatment effect on survival.
 
 ### R code {#survcodeR}
 
@@ -2158,66 +2107,15 @@ barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occ
 ###~~~
 #Treatment effect on survival
 ##~~~
-
-###
-#At individual level (binary) by treatment 
-#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
-###
-Treat <- unique(survheig$Treat)[c(4,2,1,5,3)]
-
-IndTreatSurv <- matrix(ncol=2, nrow = length(Treat))
-rownames(IndTreatSurv) <- Treat
-colnames(IndTreatSurv) <- c("Dead", "Alive")
-for(i in 1:nrow(IndTreatSurv)){
-  tmp <- subset(survheig, survheig$Treat == rownames(IndTreatSurv)[i])
-  #Look at individual survival of plantlets
-  survInd <- table(tmp$SeedID, tmp$X5_w_survival)
-  #Turn matrix into binary
-  survInd[survInd > 1] <- 1
-  #If individual has both dead and alive plantlets say it is alive
-  todo <- which(rowSums(survInd) == 2)
-  if(length(todo) != 0){
-    survInd[as.vector(todo),1] <- 0
-  }
-    #Upadte matrix
-  IndTreatSurv[i,] <- as.vector(colSums(survInd))
-}
-print(IndTreatSurv)
-
-#Conduct Fisher test
-fisher.test(t(IndTreatSurv))
+survival <- matrix(c(6, 6, 29, 12, 45, 28, 19, 40, 38, 25 ), nr=2)
+colnames(survival) = c("control", "IBA_05","IBA_1","NAA_05","NAA_1")
+row.names(survival) = c("live", "dead")
+print (survival)
 
 ###~~~
-#Cluster effect on survival
-##~~~
-
-###
-#At individual level (binary) by cluster 
-#Here, if some plantlets in ind. line are dead, but others are alive then individual scores 1
-###
-Cluster <- unique(survheig$Cluster)[c(3,1,2)]
-
-IndClusterSurv <- matrix(ncol=2, nrow = length(Cluster))
-rownames(IndClusterSurv) <- Cluster
-colnames(IndClusterSurv) <- c("Dead", "Alive")
-for(i in 1:nrow(IndClusterSurv)){
-  tmp <- subset(survheig, survheig$Cluster == rownames(IndClusterSurv)[i])
-  #Look at individual survival of plantlets
-  survInd <- table(tmp$SeedID, tmp$X5_w_survival)
-  #Turn matrix into binary
-  survInd[survInd > 1] <- 1
-  #If individual has both dead and alive plantlets say it is alive
-  todo <- which(rowSums(survInd) == 2)
-  if(length(todo) != 0){
-    survInd[as.vector(todo),1] <- 0
-  }
-    #Upadte matrix
-  IndClusterSurv[i,] <- as.vector(colSums(survInd))
-}
-print(IndClusterSurv)
-
-#Conduct Fisher test
-fisher.test(t(IndClusterSurv))
+#Fisher test
+###~~~
+fisher.test(survival)
 ```
 
 
