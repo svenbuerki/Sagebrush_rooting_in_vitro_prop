@@ -1,0 +1,15 @@
+Cluster,N. ind.,N. shoot tips,Growth regulator,Concentration (mg/l),Survival (%),Height (cm),Treatment,Live,Dead
+black,1,1,Control,-,0,0+/-NA,Control,0,1
+black,5,5,IBA,05,40,1.2+/-1.64,IBA_05,2,3
+black,4,6,IBA,1,33.33,0.9+/-1.59,IBA_1,2,4
+black,4,6,NAA,05,66.67,2.27+/-1.94,NAA_05,4,2
+black,8,10,NAA,1,40,1.32+/-1.71,NAA_1,4,6
+blue,8,12,Control,-,58.33,1.97+/-1.8,Control,7,5
+blue,13,32,IBA,05,65.62,2.27+/-1.7,IBA_05,21,11
+blue,13,34,IBA,1,64.71,1.95+/-1.54,IBA_1,22,12
+blue,12,27,NAA,05,37.04,1.21+/-1.64,NAA_05,10,17
+blue,13,29,NAA,1,68.97,2.29+/-1.64,NAA_1,20,9
+pink,14,24,IBA,05,37.5,1.04+/-1.39,IBA_05,9,15
+pink,16,35,IBA,1,60,1.82+/-1.59,IBA_1,21,14
+pink,13,19,NAA,05,42.11,1.28+/-1.59,NAA_05,8,11
+pink,15,26,NAA,1,53.85,1.56+/-1.57,NAA_1,14,12

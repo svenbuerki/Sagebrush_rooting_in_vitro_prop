@@ -2645,19 +2645,36 @@ knitr::kable(survheigTreat, row.names=F, caption = &quot;Survival and plantlets 
 Figure 6.1: Barplot of survival of plantlets after 5 weeks of growth.
 </p>
 </div>
-<div id="treatment-effect-on-survival" class="section level4">
-<h4><span class="header-section-number">6.2.1.1</span> Treatment effect on survival</h4>
-<p>We are using Fisher tests to test whether treatments had an effect on survivals of seedlings.</p>
-<pre><code>##      control IBA_05 IBA_1 NAA_05 NAA_1
-## live       6     29    45     19    38
-## dead       6     12    28     40    25</code></pre>
+<div id="treatment-and-cluster-effects-on-survival" class="section level4">
+<h4><span class="header-section-number">6.2.1.1</span> Treatment and cluster effects on survival</h4>
+<p>We are using Fisher tests to test whether treatments and/or clusters had an effect on survivals of plantlets. These analyses are based on data in <code>survheigh</code>.</p>
+<pre><code>## [1] &quot;Raw data for Fisher test: Treatment effect&quot;</code></pre>
+<pre><code>##         Dead Live N. shoot tips
+## Control    6    7            13
+## IBA_05    29   32            61
+## IBA_1     30   45            75
+## NAA_05    30   22            52
+## NAA_1     27   38            65</code></pre>
+<pre><code>## [1] &quot;Fisher test&quot;</code></pre>
 <pre><code>## 
 ##  Fisher&#39;s Exact Test for Count Data
 ## 
-## data:  survival
-## p-value = 0.0008326
+## data:  Fisher_treat[, c(1, 2)]
+## p-value = 0.3378
 ## alternative hypothesis: two.sided</code></pre>
-<p>The analysis showed that there is a treatment effect on survival.</p>
+<pre><code>## [1] &quot;Raw data for Fisher test: Cluster effect&quot;</code></pre>
+<pre><code>##       Dead Live N. shoot tips
+## black   16   12            28
+## blue    54   80           134
+## pink    52   52           104</code></pre>
+<pre><code>## [1] &quot;Fisher test&quot;</code></pre>
+<pre><code>## 
+##  Fisher&#39;s Exact Test for Count Data
+## 
+## data:  Fisher_cluster[, c(1, 2)]
+## p-value = 0.1449
+## alternative hypothesis: two.sided</code></pre>
+<p>The analysis showed that there is no significant treatment and cluster effects on survival of plantlets.</p>
 </div>
 </div>
 <div id="survcodeR" class="section level3">
@@ -2679,17 +2696,106 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] &lt;- 1
 barplot(table(survheig$X5_w_survival), xlab=&quot;Binary data on survival&quot;, ylab=&quot;Occurrence&quot;)
 
 ###~~~
-#Treatment effect on survival
-##~~~
-survival &lt;- matrix(c(6, 6, 29, 12, 45, 28, 19, 40, 38, 25 ), nr=2)
-colnames(survival) = c(&quot;control&quot;, &quot;IBA_05&quot;,&quot;IBA_1&quot;,&quot;NAA_05&quot;,&quot;NAA_1&quot;)
-row.names(survival) = c(&quot;live&quot;, &quot;dead&quot;)
-print (survival)
+#FISHER tests
+###~~~
 
 ###~~~
-#Fisher test
+#Treatment effect
 ###~~~
-fisher.test(survival)</code></pre>
+
+#Clean dataset
+survheig &lt;- survheig[-which(is.na(survheig$Cluster) == T),]
+
+#Gather data
+Treat &lt;- unique(survheig$TreatConc)[c(4,5,3,2,1)]
+
+###~~~
+#Build matrix for Fisher test: Dead, live and # shoot tips per treatment
+###~~~
+Fisher_treat &lt;- matrix(ncol=3, nrow=length(Treat))
+rownames(Fisher_treat) &lt;- Treat
+colnames(Fisher_treat) &lt;- c(&quot;Dead&quot;, &quot;Live&quot;, &quot;N. shoot tips&quot;)
+
+for(i in 1:nrow(Fisher_treat)){
+  #Subset matrix to include target treatment
+  tmp &lt;- subset(survheig, survheig$TreatConc == rownames(Fisher_treat)[i])
+  
+  #Pivot table
+  FiveWsurvAll &lt;- table(tmp$X5_w_survival)
+  
+  #Number of shoot tips
+  Fisher_treat[i,3] &lt;- sum(FiveWsurvAll)
+
+  #Dead
+  deadCol &lt;- which(names(FiveWsurvAll) == 0)
+  if(length(deadCol) &gt; 0){
+    Fisher_treat[i,1] &lt;- as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_treat[i,1] &lt;- 0
+  }
+  
+  #Live
+  if(length(deadCol) &gt; 0){
+    Fisher_treat[i,2] &lt;- sum(FiveWsurvAll) - as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_treat[i,2] &lt;- sum(FiveWsurvAll)
+  }
+}
+print(&quot;Raw data for Fisher test: Treatment effect&quot;)
+print(Fisher_treat)
+
+#Perform Fisher test
+print(&quot;Fisher test&quot;)
+fisher.test(Fisher_treat[,c(1,2)])
+
+
+###~~~
+#Cluster effect
+###~~~
+
+#Gather data
+Cluster &lt;- unique(survheigTreat$Cluster)
+
+###~~~
+#Build matrix for Fisher test: Dead, live and # shoot tips per treatment
+###~~~
+Fisher_cluster &lt;- matrix(ncol=3, nrow=length(Cluster))
+rownames(Fisher_cluster) &lt;- Cluster
+colnames(Fisher_cluster) &lt;- c(&quot;Dead&quot;, &quot;Live&quot;, &quot;N. shoot tips&quot;)
+
+for(i in 1:nrow(Fisher_cluster)){
+  #Subset matrix to include target treatment
+  tmp &lt;- subset(survheig, survheig$Cluster == rownames(Fisher_cluster)[i])
+  
+  #Pivot table
+  FiveWsurvAll &lt;- table(tmp$X5_w_survival)
+  
+  #Number of shoot tips
+  Fisher_cluster[i,3] &lt;- sum(FiveWsurvAll)
+  
+  #Dead
+  deadCol &lt;- which(names(FiveWsurvAll) == 0)
+  if(length(deadCol) &gt; 0){
+    Fisher_cluster[i,1] &lt;- as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_cluster[i,1] &lt;- 0
+  }
+  
+  #Live
+  if(length(deadCol) &gt; 0){
+    Fisher_cluster[i,2] &lt;- sum(FiveWsurvAll) - as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_cluster[i,2] &lt;- sum(FiveWsurvAll)
+  }
+}
+print(&quot;Raw data for Fisher test: Cluster effect&quot;)
+print(Fisher_cluster)
+
+#Perform Fisher test
+print(&quot;Fisher test&quot;)
+
+#Perform Fisher test
+fisher.test(Fisher_cluster[,c(1,2)])</code></pre>
 </div>
 </div>
 <div id="statistical-analyses-on-growth-data" class="section level2 tabset tabset-pills">

@@ -2064,26 +2064,115 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
 ```
 
-#### Treatment effect on survival
+#### Treatment and cluster effects on survival
 
-We are using Fisher tests to test whether treatments had an effect on survivals of seedlings.
+We are using Fisher tests to test whether treatments and/or clusters had an effect on survivals of plantlets. These analyses are based on data in `survheigh`. 
 
 ```{r fishertreatsurv, echo=F, eval=T}
 ###~~~
-#Treatment effect on survival
-##~~~
-survival <- matrix(c(6, 6, 29, 12, 45, 28, 19, 40, 38, 25 ), nr=2)
-colnames(survival) = c("control", "IBA_05","IBA_1","NAA_05","NAA_1")
-row.names(survival) = c("live", "dead")
-print (survival)
+#FISHER tests
+###~~~
 
 ###~~~
-#Fisher test
+#Treatment effect
 ###~~~
-fisher.test(survival)
+
+#Clean dataset
+survheig <- survheig[-which(is.na(survheig$Cluster) == T),]
+
+#Gather data
+Treat <- unique(survheig$TreatConc)[c(4,5,3,2,1)]
+
+###~~~
+#Build matrix for Fisher test: Dead, live and # shoot tips per treatment
+###~~~
+Fisher_treat <- matrix(ncol=3, nrow=length(Treat))
+rownames(Fisher_treat) <- Treat
+colnames(Fisher_treat) <- c("Dead", "Live", "N. shoot tips")
+
+for(i in 1:nrow(Fisher_treat)){
+  #Subset matrix to include target treatment
+  tmp <- subset(survheig, survheig$TreatConc == rownames(Fisher_treat)[i])
+  
+  #Pivot table
+  FiveWsurvAll <- table(tmp$X5_w_survival)
+  
+  #Number of shoot tips
+  Fisher_treat[i,3] <- sum(FiveWsurvAll)
+
+  #Dead
+  deadCol <- which(names(FiveWsurvAll) == 0)
+  if(length(deadCol) > 0){
+    Fisher_treat[i,1] <- as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_treat[i,1] <- 0
+  }
+  
+  #Live
+  if(length(deadCol) > 0){
+    Fisher_treat[i,2] <- sum(FiveWsurvAll) - as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_treat[i,2] <- sum(FiveWsurvAll)
+  }
+}
+print("Raw data for Fisher test: Treatment effect")
+print(Fisher_treat)
+
+#Perform Fisher test
+print("Fisher test")
+fisher.test(Fisher_treat[,c(1,2)])
+
+
+###~~~
+#Cluster effect
+###~~~
+
+#Gather data
+Cluster <- unique(survheigTreat$Cluster)
+
+###~~~
+#Build matrix for Fisher test: Dead, live and # shoot tips per treatment
+###~~~
+Fisher_cluster <- matrix(ncol=3, nrow=length(Cluster))
+rownames(Fisher_cluster) <- Cluster
+colnames(Fisher_cluster) <- c("Dead", "Live", "N. shoot tips")
+
+for(i in 1:nrow(Fisher_cluster)){
+  #Subset matrix to include target treatment
+  tmp <- subset(survheig, survheig$Cluster == rownames(Fisher_cluster)[i])
+  
+  #Pivot table
+  FiveWsurvAll <- table(tmp$X5_w_survival)
+  
+  #Number of shoot tips
+  Fisher_cluster[i,3] <- sum(FiveWsurvAll)
+  
+  #Dead
+  deadCol <- which(names(FiveWsurvAll) == 0)
+  if(length(deadCol) > 0){
+    Fisher_cluster[i,1] <- as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_cluster[i,1] <- 0
+  }
+  
+  #Live
+  if(length(deadCol) > 0){
+    Fisher_cluster[i,2] <- sum(FiveWsurvAll) - as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_cluster[i,2] <- sum(FiveWsurvAll)
+  }
+}
+print("Raw data for Fisher test: Cluster effect")
+print(Fisher_cluster)
+
+#Perform Fisher test
+print("Fisher test")
+
+#Perform Fisher test
+fisher.test(Fisher_cluster[,c(1,2)])
 ```
 
-The analysis showed that there is a treatment effect on survival.
+The analysis showed that there is no significant treatment and cluster effects on survival of plantlets.
 
 ### R code {#survcodeR}
 
@@ -2105,17 +2194,106 @@ survheig$X5_w_survival[which(survheig$X5_w_survival == 0.5)] <- 1
 barplot(table(survheig$X5_w_survival), xlab="Binary data on survival", ylab="Occurrence")
 
 ###~~~
-#Treatment effect on survival
-##~~~
-survival <- matrix(c(6, 6, 29, 12, 45, 28, 19, 40, 38, 25 ), nr=2)
-colnames(survival) = c("control", "IBA_05","IBA_1","NAA_05","NAA_1")
-row.names(survival) = c("live", "dead")
-print (survival)
+#FISHER tests
+###~~~
 
 ###~~~
-#Fisher test
+#Treatment effect
 ###~~~
-fisher.test(survival)
+
+#Clean dataset
+survheig <- survheig[-which(is.na(survheig$Cluster) == T),]
+
+#Gather data
+Treat <- unique(survheig$TreatConc)[c(4,5,3,2,1)]
+
+###~~~
+#Build matrix for Fisher test: Dead, live and # shoot tips per treatment
+###~~~
+Fisher_treat <- matrix(ncol=3, nrow=length(Treat))
+rownames(Fisher_treat) <- Treat
+colnames(Fisher_treat) <- c("Dead", "Live", "N. shoot tips")
+
+for(i in 1:nrow(Fisher_treat)){
+  #Subset matrix to include target treatment
+  tmp <- subset(survheig, survheig$TreatConc == rownames(Fisher_treat)[i])
+  
+  #Pivot table
+  FiveWsurvAll <- table(tmp$X5_w_survival)
+  
+  #Number of shoot tips
+  Fisher_treat[i,3] <- sum(FiveWsurvAll)
+
+  #Dead
+  deadCol <- which(names(FiveWsurvAll) == 0)
+  if(length(deadCol) > 0){
+    Fisher_treat[i,1] <- as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_treat[i,1] <- 0
+  }
+  
+  #Live
+  if(length(deadCol) > 0){
+    Fisher_treat[i,2] <- sum(FiveWsurvAll) - as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_treat[i,2] <- sum(FiveWsurvAll)
+  }
+}
+print("Raw data for Fisher test: Treatment effect")
+print(Fisher_treat)
+
+#Perform Fisher test
+print("Fisher test")
+fisher.test(Fisher_treat[,c(1,2)])
+
+
+###~~~
+#Cluster effect
+###~~~
+
+#Gather data
+Cluster <- unique(survheigTreat$Cluster)
+
+###~~~
+#Build matrix for Fisher test: Dead, live and # shoot tips per treatment
+###~~~
+Fisher_cluster <- matrix(ncol=3, nrow=length(Cluster))
+rownames(Fisher_cluster) <- Cluster
+colnames(Fisher_cluster) <- c("Dead", "Live", "N. shoot tips")
+
+for(i in 1:nrow(Fisher_cluster)){
+  #Subset matrix to include target treatment
+  tmp <- subset(survheig, survheig$Cluster == rownames(Fisher_cluster)[i])
+  
+  #Pivot table
+  FiveWsurvAll <- table(tmp$X5_w_survival)
+  
+  #Number of shoot tips
+  Fisher_cluster[i,3] <- sum(FiveWsurvAll)
+  
+  #Dead
+  deadCol <- which(names(FiveWsurvAll) == 0)
+  if(length(deadCol) > 0){
+    Fisher_cluster[i,1] <- as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_cluster[i,1] <- 0
+  }
+  
+  #Live
+  if(length(deadCol) > 0){
+    Fisher_cluster[i,2] <- sum(FiveWsurvAll) - as.vector(FiveWsurvAll[deadCol])
+  }else{
+    Fisher_cluster[i,2] <- sum(FiveWsurvAll)
+  }
+}
+print("Raw data for Fisher test: Cluster effect")
+print(Fisher_cluster)
+
+#Perform Fisher test
+print("Fisher test")
+
+#Perform Fisher test
+fisher.test(Fisher_cluster[,c(1,2)])
 ```
 
 
