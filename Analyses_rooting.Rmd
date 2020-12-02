@@ -630,7 +630,7 @@ DT::datatable(TreatMat, caption = "Data for treatment analyses sorted by plates.
 
 #### R code {#codeTreatdata}
 
-```{r prepTreatCode, echo=F, eval=T, }
+```{r prepTreatCode, echo=T, eval=F, }
 #Prepare an empty matrix to be populated 
 
 #How many rows? 5 treatments * 5 blocks * 3 replicates
