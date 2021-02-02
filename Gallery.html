@@ -13,6 +13,7 @@
 
 <title>Gallery</title>
 
+<script src="site_libs/header-attrs-2.6/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -33,7 +34,7 @@
   div.column{display: inline-block; vertical-align: top; width: 50%;}
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
-      </style>
+    </style>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -79,6 +80,7 @@ h6 {
   text-align: left;
 }
 </style>
+
 
 
 
@@ -394,11 +396,11 @@ div.tocify {
 </div>
 
 
-<div id="overview" class="section level1">
+<div id="overview" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Overview</h1>
 <p>We are providing here a set of images supporting data presented in this study.</p>
 </div>
-<div id="individual-lines" class="section level1">
+<div id="individual-lines" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> Individual lines</h1>
 <p>Figure <a href="#fig:mother">2.1</a> is an example of grown seedlings used as mother plants to initiate individual lines for the rooting experiment. Click <a href="https://svenbuerki.github.io/Sagebrush_rooting_in_vitro_prop/location_pop.html">here</a> to know more about the locations where seeds were collected. We have used seeds from one mother plant (or individual) per population.</p>
 <div class="figure" style="text-align: center"><span id="fig:mother"></span>
@@ -408,7 +410,7 @@ Figure 2.1: Example of a Magenta box containing individuals of diploid sagebrush
 </p>
 </div>
 </div>
-<div id="rooting-experiment" class="section level1">
+<div id="rooting-experiment" class="section level1" number="3">
 <h1><span class="header-section-number">3</span> Rooting experiment</h1>
 <p>Figure <a href="#fig:rootexp">3.1</a> provides a more visual understanding of the scoring method used for counting roots (arrows) and identifying callus (see zoomed area). We can also compare treatment effects on rooting.</p>
 <div class="figure"><span id="fig:rootexp"></span>
@@ -430,7 +432,7 @@ Figure 3.1: Representative observations of root and callus development in shoot 
 
 // add bootstrap table styles to pandoc tables
 function bootstrapStylePandocTables() {
-  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
 }
 $(document).ready(function () {
   bootstrapStylePandocTables();

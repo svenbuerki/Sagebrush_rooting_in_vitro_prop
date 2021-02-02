@@ -2,4 +2,4 @@
 title: "Citations"
 ---
 
-Martinez P, Barron R, Serpe M, Buerki S. Development of an in vitro method of propagation using growth regulators for Basin Big sagebrush (Artemisia tridentata subsp. tridentata: 2n=2x=18) to support genome sequencing and GxE research. xxx
+Barron, R.; Martinez, P.; Serpe, M.; Buerki, S. Development of an In Vitro Method of Propagation for Artemisia tridentata subsp. tridentata to Support Genome Sequencing and Genotype-by-Environment Research. *Plants* 2020, 9, 1717. [https://doi.org/10.3390/plants9121717](https://doi.org/10.3390/plants9121717)
